@@ -1,0 +1,6 @@
+{
+  "kty": "RSA",
+  "e": "AQAB",
+  "kid": "idTokenRsaKey",
+  "n": "gR-eAUeB9dI75gYyseugMsXg_t68aodE9Q9gKye4x2FWa0Es31HyQ1o8oTxZdnK81sffbN_PVrI2zrhdkOkGA5ebjSZW-q3f6ww7xPxd9C1uEatIoDboNFewRut5EazDSNeH5N5P7M15X5IQh0KOn_M_7YQd2cUDURf0FHMx3mDsxKrlv8YCLsh9CU0QF8oRCpcnzV6Cnr_uRtZIIpkcwrYHeF4nLJv2AU3IgeKN05sO_fFwtPwaHTp_CMSKadC0mGpR35oztWuOIZ21bmZrgA-WFzeWoRL8I7fz5lcrdyN28TX_UCi-o2sUypvr0-wkjAZTmA6truY1b-_2kkwpqQ"
+}
