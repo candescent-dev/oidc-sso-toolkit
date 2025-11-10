@@ -1,0 +1,15 @@
+{
+  "port": 9000,
+  "issuer": "http://localhost",
+  "authorization_endpoint": "",
+  "token_endpoint": "",
+  "response_type": ["code"],
+  "scopes": ["openid"],
+  "auth_code_expires_in": 300,
+  "alg": "RS256",
+  "idTokenRsaKey": "idTokenRsaKey",
+  "private_key": "",
+  "access_token_expires_in": 300,
+  "id_token_expires_in": 300,
+  "support_refresh_token": false
+}
