@@ -86,7 +86,7 @@ jobs:
           # --- Scripts ---
           mkdir -p "$TMP_DIR/sample-web-app/scripts"
           cp "$ROOT_DIR/scripts/init.sh" "$TMP_DIR/sample-web-app/scripts/" || true
-          cp "$ROOT_DIR/scripts/run-web-app.sh" "$TMP_DIR/ssample-web-app/cripts/" || true
+          cp "$ROOT_DIR/scripts/run-web-app.sh" "$TMP_DIR/ssample-web-app/scripts/" || true
           cp "$ROOT_DIR/scripts/selftest.sh" "$TMP_DIR/sample-web-app/scripts/" || true
  
            # --- Root files ---
@@ -99,6 +99,7 @@ jobs:
  
           # --- Root files ---
           cp "$ROOT_DIR/README.md" "$TMP_DIR/" || true
+          echo "prepared zip structure [DONE]"
  
       - name: Create flattened ZIP
         run: |
