@@ -1,32 +1,32 @@
-import React, { useEffect, useState, useRef } from "react";
-import { useAppDispatch, useAppSelector } from "../../app/hooks";
-import { useNavigate } from "react-router-dom";
+import React, { FC, useEffect, useState, useRef } from 'react';
+import { useAppDispatch, useAppSelector } from '../../app/hooks';
+import { useNavigate } from 'react-router-dom';
 import {
   setCredentials,
   setLoading,
   setError,
   setTimeLeftMs,
   setFormValues,
-} from "../../features/session/sessionSlice";
-import type { IframeSettings, Permissions } from "../../features/session/types";
-import { validateUrl, formatTime } from "../../utils/helpers";
-import { OpenMode } from "../../features/session/types";
-import downloadIcon from "../../assets/download.png";
-import api from "../../services/api";
-import "./HomePage.css";
+} from '../../features/session/sessionSlice';
+import type { IframeSettings, Permissions } from '../../features/session/types';
+import { validateUrl, formatTime } from '../../utils/helpers';
+import { OpenMode } from '../../features/session/types';
+import downloadIcon from '../../assets/download.png';
+import api from '../../services/api';
+import './HomePage.css';
 
-const HomePage: React.FC = () => {
+const HomePage: FC = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const { clientId, clientSecret, timeLeftMs, loading, error } = useAppSelector(
     (state) => state.session
   );
 
-  const [initUrl, setInitUrl] = useState<string>("");
-  const [callbackHost, setCallbackHost] = useState<string>("");
-  const [openOption, setOpenOption] = useState<"" | OpenMode>("");
-  const [uniqueId, setUniqueId] = useState<string>("");
-  const [displayWidth, setDisplayWidth] = useState<string>("");
+  const [initUrl, setInitUrl] = useState<string>('');
+  const [callbackHost, setCallbackHost] = useState<string>('');
+  const [openOption, setOpenOption] = useState<'' | OpenMode>('');
+  const [uniqueId, setUniqueId] = useState<string>('');
+  const [displayWidth, setDisplayWidth] = useState<string>('');
   const [permissions, setPermissions] = useState<Permissions>({
     enableCamera: false,
     enableMic: false,
@@ -52,7 +52,7 @@ const HomePage: React.FC = () => {
       dispatch(setLoading(true));
       dispatch(setError(null));
       try {
-        const response = await api.post("/client");
+        const response = await api.post('/client');
         dispatch(
           setCredentials({
             clientId: response.data.client_id,
@@ -60,7 +60,7 @@ const HomePage: React.FC = () => {
           })
         );
       } catch {
-        dispatch(setError("Error fetching credentials from the server."));
+        dispatch(setError('Error fetching credentials from the server.'));
       } finally {
         dispatch(setLoading(false));
       }
@@ -89,53 +89,47 @@ const HomePage: React.FC = () => {
   }, [dispatch, timeLeftMs]);
 
   /* ----------------------------- Input Handlers ----------------------------- */
-  const handleInitUrlChange = (
-    e: React.ChangeEvent<HTMLInputElement>
-  ): void => {
+  const handleInitUrlChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const value = e.target.value;
     setInitUrl(value);
     if (!value.trim()) {
-      setFieldErrors((prev) => ({ ...prev, initUrl: "Init URL is required" }));
+      setFieldErrors((prev) => ({ ...prev, initUrl: 'Init URL is required' }));
     } else if (!validateUrl(value)) {
-      setFieldErrors((prev) => ({ ...prev, initUrl: "Invalid URL" }));
+      setFieldErrors((prev) => ({ ...prev, initUrl: 'Invalid URL' }));
     } else {
       setFieldErrors((prev) => ({ ...prev, initUrl: null }));
     }
   };
 
-  const handleCallbackHostChange = (
-    e: React.ChangeEvent<HTMLInputElement>
-  ): void => {
+  const handleCallbackHostChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const value = e.target.value;
     setCallbackHost(value);
     if (!value.trim()) {
       setFieldErrors((prev) => ({
         ...prev,
-        callbackHost: "Callback Host is required",
+        callbackHost: 'Callback Host is required',
       }));
     } else if (!validateUrl(value)) {
-      setFieldErrors((prev) => ({ ...prev, callbackHost: "Invalid URL" }));
+      setFieldErrors((prev) => ({ ...prev, callbackHost: 'Invalid URL' }));
     } else {
       setFieldErrors((prev) => ({ ...prev, callbackHost: null }));
     }
   };
 
-  const handleDisplayWidthChange = (
-    e: React.ChangeEvent<HTMLInputElement>
-  ): void => {
+  const handleDisplayWidthChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const value = e.target.value;
     setDisplayWidth(value);
     if (!value.trim()) {
       setFieldErrors((prev) => ({
         ...prev,
-        displayWidth: "Display Width is required",
+        displayWidth: 'Display Width is required',
       }));
     } else {
       const width = parseInt(value, 10);
       if (isNaN(width) || width < 20 || width > 100) {
         setFieldErrors((prev) => ({
           ...prev,
-          displayWidth: "Value must be between 20 and 100",
+          displayWidth: 'Value must be between 20 and 100',
         }));
       } else {
         setFieldErrors((prev) => ({ ...prev, displayWidth: null }));
@@ -143,15 +137,13 @@ const HomePage: React.FC = () => {
     }
   };
 
-  const handleUniqueIdChange = (
-    e: React.ChangeEvent<HTMLInputElement>
-  ): void => {
+  const handleUniqueIdChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const value = e.target.value;
     setUniqueId(value);
     if (!value.trim()) {
       setFieldErrors((prev) => ({
         ...prev,
-        uniqueId: "Unique ID is required",
+        uniqueId: 'Unique ID is required',
       }));
     } else {
       setFieldErrors((prev) => ({ ...prev, uniqueId: null }));
@@ -164,8 +156,7 @@ const HomePage: React.FC = () => {
     if (!openOption) return false;
     if (openOption === OpenMode.IFRAME) {
       const width = parseInt(displayWidth, 10);
-      if (!uniqueId.trim() || isNaN(width) || width < 20 || width > 100)
-        return false;
+      if (!uniqueId.trim() || isNaN(width) || width < 20 || width > 100) return false;
     }
     return true;
   };
@@ -173,55 +164,51 @@ const HomePage: React.FC = () => {
   const handleSubmit = (e: React.FormEvent): void => {
     e.preventDefault();
     let hasError = false;
-
     // Init URL Validation
     if (!initUrl.trim()) {
-      setFieldErrors((prev) => ({ ...prev, initUrl: "Init URL is required" }));
+      setFieldErrors((prev) => ({ ...prev, initUrl: 'Init URL is required' }));
       hasError = true;
     } else if (!validateUrl(initUrl)) {
-      setFieldErrors((prev) => ({ ...prev, initUrl: "Invalid URL" }));
+      setFieldErrors((prev) => ({ ...prev, initUrl: 'Invalid URL' }));
       hasError = true;
     } else {
       setFieldErrors((prev) => ({ ...prev, initUrl: null }));
     }
-
     // Callback Host Validation
     if (!callbackHost.trim()) {
       setFieldErrors((prev) => ({
         ...prev,
-        callbackHost: "Callback Host is required",
+        callbackHost: 'Callback Host is required',
       }));
       hasError = true;
     } else if (!validateUrl(callbackHost)) {
-      setFieldErrors((prev) => ({ ...prev, callbackHost: "Invalid URL" }));
+      setFieldErrors((prev) => ({ ...prev, callbackHost: 'Invalid URL' }));
       hasError = true;
     } else {
       setFieldErrors((prev) => ({ ...prev, callbackHost: null }));
     }
-
     // Option Validation
     if (!openOption) {
       setFieldErrors((prev) => ({
         ...prev,
-        openOption: "Please select an option",
+        openOption: 'Please select an option',
       }));
       hasError = true;
     } else {
       setFieldErrors((prev) => ({ ...prev, openOption: null }));
     }
-
     if (openOption === OpenMode.IFRAME) {
       if (!uniqueId.trim()) {
         setFieldErrors((prev) => ({
           ...prev,
-          uniqueId: "Unique ID is required",
+          uniqueId: 'Unique ID is required',
         }));
         hasError = true;
       }
       if (!displayWidth.trim()) {
         setFieldErrors((prev) => ({
           ...prev,
-          displayWidth: "Display Width is required",
+          displayWidth: 'Display Width is required',
         }));
         hasError = true;
       } else {
@@ -229,34 +216,28 @@ const HomePage: React.FC = () => {
         if (isNaN(width) || width < 20 || width > 100) {
           setFieldErrors((prev) => ({
             ...prev,
-            displayWidth: "Value must be between 20 and 100",
+            displayWidth: 'Value must be between 20 and 100',
           }));
           hasError = true;
         }
       }
     }
     if (hasError) return;
-
     const iframeSettings: IframeSettings | undefined =
-      openOption === OpenMode.IFRAME
-        ? { uniqueId, displayWidth, permissions }
-        : undefined;
-
+      openOption === OpenMode.IFRAME ? { uniqueId, displayWidth, permissions } : undefined;
     const formValues = {
       initUrl,
       callbackHost,
       openOption,
       iframeSettings,
     };
-
     dispatch(setFormValues(formValues));
-
     // Reset
-    setInitUrl("");
-    setCallbackHost("");
-    setOpenOption("");
-    setUniqueId("");
-    setDisplayWidth("");
+    setInitUrl('');
+    setCallbackHost('');
+    setOpenOption('');
+    setUniqueId('');
+    setDisplayWidth('');
     setPermissions({ enableCamera: false, enableMic: false });
     setFieldErrors({
       initUrl: null,
@@ -265,7 +246,7 @@ const HomePage: React.FC = () => {
       uniqueId: null,
       openOption: null,
     });
-    navigate("/startOidcSso");
+    navigate('/startOidcSso');
   };
 
   if (loading) return <div>Loading...</div>;
@@ -275,92 +256,69 @@ const HomePage: React.FC = () => {
     <div className="home-container">
       <div className="header-row">
         <h1>Client Configuration</h1>
-        <div className="session-timer">
-          Session Expires in: {formatTime(timeLeftMs)}
-        </div>
+        <div className="session-timer">Session Expires in: {formatTime(timeLeftMs)}</div>
       </div>
-
       <div className="inputs">
+        {/* Client ID */}
         <div className="field-row">
           <label>Client ID</label>
-          <div className="field-value">{clientId || "Loading..."}</div>
+          <div className="field-value">{clientId || 'Loading...'}</div>
         </div>
+        {/* Client Secret */}
         <div className="field-row secret-key">
           <label>Secret Key</label>
-          <div className="field-value">{clientSecret || "Loading..."}</div>
+          <div className="field-value">{clientSecret || 'Loading...'}</div>
         </div>
-
         {/* Init URL */}
         <div className="inline-input-box">
           <label
             htmlFor="initUrl"
-            className={`inline-label ${
-              fieldErrors.initUrl ? "error-label" : ""
-            }`}
+            className={`inline-label ${fieldErrors.initUrl ? 'error-label' : ''}`}
           >
             Init URL *
           </label>
           <input
             type="text"
             id="initUrl"
-            className={`inline-input ${fieldErrors.initUrl ? "error" : ""}`}
+            className={`inline-input ${fieldErrors.initUrl ? 'error' : ''}`}
             placeholder="https://client-config.yourdomain.com/init"
             value={initUrl}
             onChange={handleInitUrlChange}
           />
-          {fieldErrors.initUrl && (
-            <p className="error-message">{fieldErrors.initUrl}</p>
-          )}
+          {fieldErrors.initUrl && <p className="error-message">{fieldErrors.initUrl}</p>}
         </div>
-
         {/* Callback Host */}
         <div className="inline-input-box">
           <label
             htmlFor="callbackHost"
-            className={`inline-label ${
-              fieldErrors.callbackHost ? "error-label" : ""
-            }`}
+            className={`inline-label ${fieldErrors.callbackHost ? 'error-label' : ''}`}
           >
             Callback Host *
           </label>
           <input
             type="text"
             id="callbackHost"
-            className={`inline-input ${
-              fieldErrors.callbackHost ? "error" : ""
-            }`}
+            className={`inline-input ${fieldErrors.callbackHost ? 'error' : ''}`}
             placeholder="https://yourapp.com/callback"
             value={callbackHost}
             onChange={handleCallbackHostChange}
           />
-          {fieldErrors.callbackHost && (
-            <p className="error-message">{fieldErrors.callbackHost}</p>
-          )}
+          {fieldErrors.callbackHost && <p className="error-message">{fieldErrors.callbackHost}</p>}
         </div>
-
         <div className="button-row">
           <a href="/metadata.json" download="metadata.json">
             <button type="button" className="icon-button">
-              <img
-                src={downloadIcon}
-                alt="Download"
-                className="download-icon"
-              />
+              <img src={downloadIcon} alt="Download" className="download-icon" />
               Meta Data
             </button>
           </a>
           <a href="/JWK.json" download="JWK.json">
             <button type="button" className="icon-button">
-              <img
-                src={downloadIcon}
-                alt="Download"
-                className="download-icon"
-              />
+              <img src={downloadIcon} alt="Download" className="download-icon" />
               JWKS
             </button>
           </a>
         </div>
-
         {/* Radio Buttons */}
         <div className="radio-section">
           <div className="radio-group">
@@ -385,11 +343,8 @@ const HomePage: React.FC = () => {
               <span>Open in new tab</span>
             </label>
           </div>
-          {fieldErrors.openOption && (
-            <p className="error-message">{fieldErrors.openOption}</p>
-          )}
+          {fieldErrors.openOption && <p className="error-message">{fieldErrors.openOption}</p>}
         </div>
-
         {/* iframe Fields */}
         {openOption === OpenMode.IFRAME && (
           <>
@@ -397,42 +352,31 @@ const HomePage: React.FC = () => {
             <div className="inline-input-box">
               <label
                 htmlFor="uniqueId"
-                className={`inline-label ${
-                  fieldErrors.uniqueId ? "error-label" : ""
-                }`}
+                className={`inline-label ${fieldErrors.uniqueId ? 'error-label' : ''}`}
               >
                 Unique ID *
               </label>
               <input
                 type="text"
                 id="uniqueId"
-                className={`inline-input ${
-                  fieldErrors.uniqueId ? "error" : ""
-                }`}
+                className={`inline-input ${fieldErrors.uniqueId ? 'error' : ''}`}
                 value={uniqueId}
                 onChange={handleUniqueIdChange}
                 placeholder="e.g., 001"
               />
-              {fieldErrors.uniqueId && (
-                <p className="error-message">{fieldErrors.uniqueId}</p>
-              )}
+              {fieldErrors.uniqueId && <p className="error-message">{fieldErrors.uniqueId}</p>}
             </div>
-
             <div className="inline-input-box">
               <label
                 htmlFor="displayWidth"
-                className={`inline-label ${
-                  fieldErrors.displayWidth ? "error-label" : ""
-                }`}
+                className={`inline-label ${fieldErrors.displayWidth ? 'error-label' : ''}`}
               >
                 Display Width (%) *
               </label>
               <input
                 type="text"
                 id="displayWidth"
-                className={`inline-input ${
-                  fieldErrors.displayWidth ? "error" : ""
-                }`}
+                className={`inline-input ${fieldErrors.displayWidth ? 'error' : ''}`}
                 value={displayWidth}
                 onChange={handleDisplayWidthChange}
                 placeholder="e.g., 100,80,20"
@@ -441,7 +385,6 @@ const HomePage: React.FC = () => {
                 <p className="error-message">{fieldErrors.displayWidth}</p>
               )}
             </div>
-
             <div className="permissions">
               <p>Permissions</p>
               <label>
@@ -473,12 +416,7 @@ const HomePage: React.FC = () => {
             </div>
           </>
         )}
-
-        <button
-          className="submit-btn"
-          onClick={handleSubmit}
-          disabled={!isFormValid()}
-        >
+        <button className="submit-btn" onClick={handleSubmit} disabled={!isFormValid()}>
           Submit
         </button>
       </div>

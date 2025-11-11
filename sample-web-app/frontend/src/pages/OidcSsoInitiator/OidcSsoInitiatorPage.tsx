@@ -1,8 +1,9 @@
 import React, { FC } from 'react';
-import { useDispatch } from 'react-redux';
+import "./OidcSsoInitiatorPage.css"
+// import { useDispatch } from 'react-redux';
 
 const OidcSsoInitiatorPage: FC = () => {
-  const dispatch = useDispatch();
+  // const dispatch = useDispatch();
   
   return (
     <main className="oidc-sso-initiator-page">

@@ -3,7 +3,7 @@
   max-width: 56.25rem;
   margin: 3.125rem auto;
   padding: 2.5rem;
-  font-family: "Inter", Arial, sans-serif;
+  font-family: 'Inter', Arial, sans-serif;
   display: flex;
   flex-direction: column;
   gap: 1.375rem;
@@ -58,8 +58,8 @@
 }
 
 .secret-key {
-  padding-bottom: 1rem;
-  border-bottom: 0.0625rem solid #e1e4e8;
+  padding-bottom: 0.0625rem;
+  border-bottom: 0.00390625rem solid #e1e4e8;
 }
 
 /* === Floating Label Inputs === */
@@ -73,7 +73,7 @@
   position: absolute;
   left: 1rem;
   font-size: 0.8rem;
-  background: #fff;
+  background: #ffffff;
   padding: 0 0.25rem;
   transition: color 0.2s ease, top 0.2s ease, font-size 0.2s ease;
   pointer-events: none;
@@ -85,18 +85,18 @@
 
 .inline-input {
   width: 100%;
-  border: 1px solid #d0d7de;
+  border: 0.0625rem solid #d0d7de;
   border-radius: 0.5rem;
   padding: 1.2rem 1rem 0.65rem 1.1rem;
   font-size: 0.95rem;
   outline: none;
-  color: #333;
-  background: #fff;
+  color: #333333;
+  background: #ffffff;
   transition: border-color 0.2s ease;
 }
 
 .inline-input::placeholder {
-  color: #999;
+  color: #999999;
 }
 
 .inline-input.error {
@@ -108,7 +108,7 @@
 .inline-input:focus + .inline-label {
   top: 0.35rem;
   font-size: 0.75rem;
-  color: #555;
+  color: #555555;
 }
 
 .inline-input.error:not(:placeholder-shown) + .inline-label,
@@ -189,7 +189,7 @@
   font-weight: 500;
 }
 
-.radio-group input[type="radio"] {
+.radio-group input[type='radio'] {
   accent-color: #007bff;
 }
 

@@ -13,8 +13,8 @@ export interface IframeSettings {
 
 /** Enum for selecting how to open the callback host URL */
 export enum OpenMode {
-  IFRAME = "iframe",
-  NEWTAB = "newTab",
+  IFRAME = 'iframe',
+  NEWTAB = 'newTab',
 }
 
 /** Overall session state stored in Redux */
@@ -26,7 +26,7 @@ export interface SessionState {
   error: string | null;
   initUrl: string;
   callbackHost: string;
-  openOption: "" | OpenMode;
+  openOption: '' | OpenMode;
   iframeSettings?: IframeSettings;
 }
 
@@ -34,6 +34,6 @@ export interface SessionState {
 export interface FormValuesPayload {
   initUrl: string;
   callbackHost: string;
-  openOption: "" | OpenMode;
+  openOption: '' | OpenMode;
   iframeSettings?: IframeSettings;
 }
