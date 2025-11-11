@@ -25,7 +25,7 @@ export class AuthService implements OnApplicationShutdown {
     this.cleanupInterval = setInterval(() => {
       this.cleanupExpiredAuthCode();
       this.cleanupExpiredAccessToken();
-    }, 60 * 1000);
+    }, 60 * 1000).unref();
   }
 
   // Lifecycle hook: called on app shutdown
