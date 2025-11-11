@@ -87,7 +87,6 @@ describe('AppController (e2e)', () => {
       console.log("authCode -> " + authCode);
     },3000);
 
-
   it('validate authorise api generating redirectUrl with code and state', async () => {
       const res = await agent
         .post(authoriseApi)
@@ -109,6 +108,51 @@ describe('AppController (e2e)', () => {
       state = res.body.redirectUrl.split("state=")[1];
       console.log(code + " ---- " + state);
      },3000);
+
+
+  it('validate authorise api generating invalidClientId in queryParams', async () => {
+    let invalidClientId = "invalidClientId123";
+    const res = await agent
+        .post(authoriseApi)
+        .query({
+          client_id: invalidClientId,
+          response_type: 'code',
+          scope: 'openid',
+          redirect_uri: redirect_uri,
+          state: stateVal
+        })
+        .catch((err:any) => {
+      console.error("Supertest Error:", err.res?.text || err);
+      throw err;}
+        );
+      console.log("authorise API Response Body for invalidClientId:", res.body);
+      expect(res.status).toBe(400);
+      expect(res.body).toHaveProperty('message', 'Invalid client_id or client not authenticated');
+      expect(res.body).toHaveProperty('error', 'Bad Request');
+      expect(res.body).toHaveProperty('statusCode', 400);
+     },3000);
+
+    it('validate authorise api generating invalidRedirect_uri in queryParams', async () => {
+    let invalid_redirect_uri = "invalidRedirectUri.com/callback";
+    const res = await agent
+        .post(authoriseApi)
+        .query({
+          client_id: fetchfromPost_client_id,
+          response_type: 'code',
+          scope: 'openid',
+          redirect_uri: invalid_redirect_uri,
+          state: stateVal
+        })
+        .catch((err:any) => {
+      console.error("Supertest Error:", err.res?.text || err);
+      throw err;}
+        );
+      console.log("authorise API Response Body for invalidRedirect_uri:", res.body);
+      expect(res.status).toBe(500);
+      expect(res.body).toHaveProperty('message', 'Internal server error');
+      expect(res.body).toHaveProperty('statusCode', 500);
+     },3000);   
+
 
   it('validate token api generating access token', async () => {
         const res = await agent
