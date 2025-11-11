@@ -54,13 +54,13 @@ jobs:
           npm run build
           echo "Backend build complete."
  
-      # - name: Run backend tests
-      #   working-directory: sample-web-app/backend
-      #   run: npm test
+      - name: Run backend tests
+        working-directory: sample-web-app/backend
+        run: npm test
 
-      # - name: Run backend e2e tests
-      #   working-directory: sample-web-app/backend
-      #   run: npm run test:e2e
+      - name: Run backend e2e tests
+        working-directory: sample-web-app/backend
+        run: npm run test:e2e
 
       - name: Build Docker Image
         run: |
