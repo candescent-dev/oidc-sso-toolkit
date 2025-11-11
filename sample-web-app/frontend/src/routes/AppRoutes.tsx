@@ -9,9 +9,6 @@ const ROUTES = {
   START_OIDC_SSO: '/startOidcSso',
 } as const;
 
-// Type for route paths
-type RoutePath = (typeof ROUTES)[keyof typeof ROUTES];
-
 const AppRoutes: FC = () => (
   <Router>
     <Routes>
