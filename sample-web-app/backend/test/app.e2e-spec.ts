@@ -19,11 +19,11 @@ describe('AppController (e2e)', () => {
       secret: 'test-secret', 
       resave: false, 
       saveUninitialized: false, 
-      cookie: { secure: false, maxAge: 300000 } }));
+      cookie: { secure: false } }));
     console.log('** BEFORE init **');
     await app.init();
     agent = request.agent(app.getHttpServer());
-    //jest.useFakeTimers();
+    jest.useFakeTimers();
     console.log('app initialized successfully');
   }catch (e) {
     console.error("Beforeall failed:", e);
@@ -110,7 +110,7 @@ describe('AppController (e2e)', () => {
      },3000);
 
 
-  it('validate authorise api generating invalidClientId in queryParams', async () => {
+  it('validate authorise api with invalidClientId in queryParams', async () => {
     let invalidClientId = "invalidClientId123";
     const res = await agent
         .post(authoriseApi)
@@ -132,7 +132,7 @@ describe('AppController (e2e)', () => {
       expect(res.body).toHaveProperty('statusCode', 400);
      },3000);
 
-    it('validate authorise api generating invalidRedirect_uri in queryParams', async () => {
+  it('validate authorise api with invalidRedirect_uri in queryParams', async () => {
     let invalid_redirect_uri = "invalidRedirectUri.com/callback";
     const res = await agent
         .post(authoriseApi)
@@ -173,7 +173,7 @@ describe('AppController (e2e)', () => {
         expect(res.body).toHaveProperty('token_type');
       });
 
-      it('validate token api with invalid authorisation', async () => {
+  it('validate token api with invalid authorisation', async () => {
         let invalidAuthCode = "abctesting";
       const res = await agent
         .post(tokenApi)
@@ -193,7 +193,7 @@ describe('AppController (e2e)', () => {
      });
 
 
-      it('validate token api with invalid code', async () => {
+  it('validate token api with invalid code', async () => {
         let invalidCode = "abctestingcode";
       const res = await agent
         .post(tokenApi)
@@ -212,7 +212,7 @@ describe('AppController (e2e)', () => {
       expect(res.body).toHaveProperty('statusCode', 400);
      });
 
-      it('validate token api with no requestbody', async () => {
+  it('validate token api with no requestbody', async () => {
       const res = await agent
         .post(tokenApi)
         .set('Authorization', `Basic ${authCode}`)
@@ -227,6 +227,19 @@ describe('AppController (e2e)', () => {
       expect(res.body).toHaveProperty('error', 'Bad Request');
       expect(res.body).toHaveProperty('statusCode', 400);
      });
+
+  it('should expire session after maxAge', async () => {
+      const resBefore = await agent.post(clientApi);
+      console.log("resBefore.body.session -> ",resBefore.body.session);
+        const debug = await agent.get('/debug-session');
+  console.log("debug -> ",debug.body);        // ✅ session here
+      const resAfter = await agent.post(clientApi);
+      console.log("Client API Response Body session expiry:", resAfter.body);
+      expect(resAfter.status).toBe(401);
+      //jest.useRealTimers();
+});  
+
+
 });
 
 
