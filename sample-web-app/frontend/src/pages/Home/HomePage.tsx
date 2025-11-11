@@ -298,7 +298,7 @@ const HomePage: FC = () => {
             <a href="/JWK.json" download="JWK.json">
               <button type="button" className="icon-button">
                 <img src={downloadIcon} alt="Download" className="download-icon" />
-                JWKS
+                JWK
               </button>
             </a>
           </div>
