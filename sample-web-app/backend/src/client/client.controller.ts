@@ -16,12 +16,6 @@ export class ClientController {
   createClient(@Req() req: Request): ClientCredentials {
     // Generate a new set of client credentials (clientId & clientSecret)
     const credentials = this.clientService.generateClientCredentials();
-    // Combine into "client_id:client_secret"
-    const combined = `${credentials.client_id}:${credentials.client_secret}`;
-    // Encode to Base64
-    const encoded = Buffer.from(combined).toString('base64');
-    // Console encoded "base64(client_id:client_secret) - for "/token" endpoint
-    console.log('Base64 Encoded Credentials:', encoded);
     // Store generated credentials in the session for subsequent validation
     req.session.clientCredentials = credentials;
     return credentials;
