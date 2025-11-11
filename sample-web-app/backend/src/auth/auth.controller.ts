@@ -31,22 +31,11 @@ export class AuthController {
    * @throws BadRequestException if the client_id is invalid or client is not authenticated
    */
   @Post('authorize')
-  async authorize(
-    @Req() req: Request,
-    @Query() query: AuthorizeDto,
-    @Res() res: Response,
-  ): Promise<Response> {
+  authorize(@Req() req: Request, @Query() query: AuthorizeDto, @Res() res: Response): Response {
     const { client_id, response_type, scope, redirect_uri, state } = query;
     // Validate client from session
-    if (
-      !this.authService.validateClientFromSession(
-        req.session ?? null,
-        client_id,
-      )
-    ) {
-      throw new BadRequestException(
-        'Invalid client_id or client not authenticated',
-      );
+    if (!this.authService.validateClientFromSession(req.session ?? null, client_id)) {
+      throw new BadRequestException('Invalid client_id or client not authenticated');
     }
     // Generate a one-time authorization code for valid client request
     const authCode = this.authService.generateAuthCode({
@@ -77,11 +66,7 @@ export class AuthController {
    * @throws UnauthorizedException if Authorization header or client credentials are invalid
    */
   @Post('token')
-  async token(
-    @Body() body: { code: string },
-    @Req() req: Request,
-    @Res() res: Response,
-  ): Promise<Response> {
+  token(@Body() body: { code: string }, @Req() req: Request, @Res() res: Response): Response {
     const { code } = body || {};
     // Check for authorization code in request body
     if (!code) {
@@ -90,30 +75,18 @@ export class AuthController {
     // Validate Authorization header
     const authHeader = req.headers['authorization'];
     if (!authHeader || !authHeader.startsWith('Basic ')) {
-      throw new UnauthorizedException(
-        'Missing or invalid Authorization header',
-      );
+      throw new UnauthorizedException('Missing or invalid Authorization header');
     }
     // Decode "Basic base64(client_id:client_secret)"
     const base64Credentials = authHeader.split(' ')[1];
     const decoded = Buffer.from(base64Credentials, 'base64').toString('utf-8');
     const [client_id, client_secret] = decoded.split(':');
     if (!client_id || !client_secret) {
-      throw new UnauthorizedException(
-        'Invalid Authorization header credentials',
-      );
+      throw new UnauthorizedException('Invalid Authorization header credentials');
     }
     // Validate client credentials (client_id + client_secret) from session
-    if (
-      !this.authService.validateClientFromSession(
-        req.session,
-        client_id,
-        client_secret,
-      )
-    ) {
-      throw new UnauthorizedException(
-        'Invalid Authorization header credentials',
-      );
+    if (!this.authService.validateClientFromSession(req.session, client_id, client_secret)) {
+      throw new UnauthorizedException('Invalid Authorization header credentials');
     }
     // Validate authorization code
     const authData = this.authService.validateAuthCode(code);
@@ -138,10 +111,7 @@ export class AuthController {
     return res.json({
       id_token,
       token_type: 'Bearer',
-      expires_in:
-        this.config.access_token_expires_in ??
-        this.config.id_token_expires_in ??
-        300,
+      expires_in: this.config.access_token_expires_in ?? this.config.id_token_expires_in ?? 300,
       // 5 minutes
       access_token: accessTokenData.access_token,
     });

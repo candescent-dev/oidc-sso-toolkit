@@ -1,17 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, OnApplicationShutdown } from '@nestjs/common';
 import { randomBytes } from 'crypto';
 import * as jwt from 'jsonwebtoken';
-import {
-  AuthCodeData,
-  AccessTokenData,
-  UserClaims,
-  ClientSession,
-} from './types/auth.types';
+import { AuthCodeData, AccessTokenData, UserClaims, ClientSession } from './types/auth.types';
 import { SSOConfig } from '../types/config.types';
 import loadConfig from '../config/loadConfig';
 
 @Injectable()
-export class AuthService {
+export class AuthService implements OnApplicationShutdown {
   // In-memory stores
   private readonly authCode: Record<string, AuthCodeData> = {};
   private readonly accessToken: Record<string, AccessTokenData> = {};
@@ -22,12 +17,20 @@ export class AuthService {
   private readonly alg: jwt.Algorithm = this.config.alg as jwt.Algorithm;
   private readonly kid: string = this.config.idTokenRsaKey;
 
+  // Interval reference
+  private cleanupInterval: ReturnType<typeof setInterval>;
+
   constructor() {
     // Run cleanup every minute (60000 ms)
-    setInterval(() => {
+    this.cleanupInterval = setInterval(() => {
       this.cleanupExpiredAuthCode();
       this.cleanupExpiredAccessToken();
     }, 60 * 1000);
+  }
+
+  // Lifecycle hook: called on app shutdown
+  onApplicationShutdown(signal?: string) {
+    clearInterval(this.cleanupInterval);
   }
 
   /**
@@ -56,8 +59,7 @@ export class AuthService {
    */
   private buildRandomString(length: number): string {
     // Allowed URL-safe characters (A–Z, a–z, 0–9)
-    const chars =
-      'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     // Generate cryptographically secure random bytes
     const bytes = randomBytes(length);
     // Map each random byte to a character in the allowed set
@@ -82,17 +84,13 @@ export class AuthService {
    * @param payload Object containing client_id, redirect_uri, response_type, and scope
    * @returns Newly generated authorization code
    */
-  generateAuthCode(
-    payload: Omit<AuthCodeData, 'created_at' | 'expiresAt'>,
-  ): string {
+  generateAuthCode(payload: Omit<AuthCodeData, 'created_at' | 'expiresAt'>): string {
     const code = this.buildAuthCode();
     // Expiration from SSO config, default to 5 minutes if not set
     // Note: auth_code_expires_in is in seconds, convert to milliseconds for timestamps
     const expiresInSec = this.config.auth_code_expires_in ?? 5 * 60;
     const expiresAt = Date.now() + expiresInSec * 1000;
     this.authCode[code] = { ...payload, created_at: Date.now(), expiresAt };
-    // Clean up expired code to keep memory usage optimized
-    this.cleanupExpiredAuthCode();
     return code;
   }
 
@@ -141,8 +139,6 @@ export class AuthService {
       expiresAt,
     };
     this.accessToken[token] = tokenData;
-    // Clean up expired access token to keep memory usage optimized
-    this.cleanupExpiredAccessToken();
     return tokenData;
   }
 
