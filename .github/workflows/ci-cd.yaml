@@ -84,7 +84,7 @@ jobs:
           cp "$ROOT_DIR/sample-web-app/README.md" "$TMP_DIR/sample-web-app/" || true
  
           # --- Scripts ---
-          mkdir -p "$TMP_DIR/scripts"
+          mkdir -p "$TMP_DIR/sample-web-app/scripts"
           cp "$ROOT_DIR/scripts/init.sh" "$TMP_DIR/sample-web-app/scripts/" || true
           cp "$ROOT_DIR/scripts/run-web-app.sh" "$TMP_DIR/ssample-web-app/cripts/" || true
           cp "$ROOT_DIR/scripts/selftest.sh" "$TMP_DIR/sample-web-app/scripts/" || true
