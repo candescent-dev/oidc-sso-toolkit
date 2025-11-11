@@ -24,9 +24,9 @@ describe('AppController (e2e)', () => {
     await app.init();
     agent = request.agent(app.getHttpServer());
     //jest.useFakeTimers();
-    console.log('✅ app initialized successfully');
+    console.log('app initialized successfully');
   }catch (e) {
-    console.error("❌ BEFOREALL FAILED:", e);
+    console.error("Beforeall failed:", e);
     throw e;
   }
 
@@ -56,6 +56,7 @@ describe('AppController (e2e)', () => {
       console.error("Supertest Error:", err.res?.text || err);
       throw err;}
         );
+       console.log("Post client API Response Body:", res.body);
       expect(res.status).toBe(201);
       expect(res.body).toHaveProperty('client_id');
       expect(res.body).toHaveProperty('client_secret');
@@ -63,7 +64,6 @@ describe('AppController (e2e)', () => {
       fetchfromPost_client_id = res.body.client_id;
       fetchfromPost_client_secret = res.body.client_secret;
       fetchfromPost_created_at = res.body.created_at;
-      console.log("client_id -> " + fetchfromPost_client_id + "\n", "client_secret -> " + fetchfromPost_client_secret + "\n", "created_at -> " + fetchfromPost_created_at);
     });
 
   it('validate GET client api should get same client details in respone', async () => {
@@ -73,6 +73,7 @@ describe('AppController (e2e)', () => {
       console.error("Supertest Error:", err.res?.text || err);
       throw err;}
         );
+      console.log("Get client API Response Body:", res.body);
       expect(res.status).toBe(200);
       expect(res.body).toHaveProperty('message', 'Credentials retrieved from session.');
       expect(res.body).toHaveProperty('credentials.client_id');
@@ -83,8 +84,6 @@ describe('AppController (e2e)', () => {
       expect(res.body.credentials.created_at).toBe(fetchfromPost_created_at);
 
       authCode = Buffer.from(fetchfromPost_client_id+":"+fetchfromPost_client_secret).toString("base64");
-
-      console.log("get_client_id -> " + res.body.credentials.client_id + "\n", "get_client_secret -> " + res.body.credentials.client_secret + "\n", "get_created_at -> " +res.body.credentials.created_at);
       console.log("authCode -> " + authCode);
     },3000);
 
@@ -103,18 +102,38 @@ describe('AppController (e2e)', () => {
       console.error("Supertest Error:", err.res?.text || err);
       throw err;}
         );
+      console.log("authorise API Response Body:", res.body);
       expect(res.status).toBe(201);
       expect(res.body).toHaveProperty('redirectUrl');
-      console.log("redirectUrl -> " + res.body.redirectUrl);
       code = res.body.redirectUrl.split("code=")[1].split("&")[0];
       state = res.body.redirectUrl.split("state=")[1];
       console.log(code + " ---- " + state);
      },3000);
 
- it('validate token api generating access token', async () => {
+  it('validate token api generating access token', async () => {
+        const res = await agent
+          .post(tokenApi)
+          .set('Authorization', `Basic ${authCode}`)
+          .send({
+            "code": code
+            })
+          .catch((err:any) => {
+        console.error("Supertest Error:", err.res?.text || err);
+        throw err;}
+          );
+        console.log("Token API Response Body:", res.body);
+        expect(res.status).toBe(201);
+        expect(res.body).toHaveProperty('access_token');
+        expect(res.body).toHaveProperty('id_token');
+        expect(res.body).toHaveProperty('expires_in');
+        expect(res.body).toHaveProperty('token_type');
+      });
+
+      it('validate token api with invalid authorisation', async () => {
+        let invalidAuthCode = "abctesting";
       const res = await agent
         .post(tokenApi)
-        .set('Authorization', `Basic ${authCode}`)
+        .set('Authorization', `Basic ${invalidAuthCode}`)
         .send({
           "code": code
           })
@@ -123,14 +142,47 @@ describe('AppController (e2e)', () => {
       throw err;}
         );
       console.log("Token API Response Body:", res.body);
-      expect(res.status).toBe(201);
-      expect(res.body).toHaveProperty('access_token');
-      expect(res.body).toHaveProperty('id_token');
-      expect(res.body).toHaveProperty('expires_in');
-      expect(res.body).toHaveProperty('token_type');
-      console.log("access_token -> " + res.body.access_token + "\n", "token_type -> " + res.body.token_type + "\n", "expires_in -> " + res.body.expires_in + "\n", "id_token -> " + res.body.id_token);
+      expect(res.status).toBe(401);
+      expect(res.body).toHaveProperty('message', 'Invalid Authorization header credentials');
+      expect(res.body).toHaveProperty('error', 'Unauthorized');
+      expect(res.body).toHaveProperty('statusCode', 401);
      });
 
+
+      it('validate token api with invalid code', async () => {
+        let invalidCode = "abctestingcode";
+      const res = await agent
+        .post(tokenApi)
+        .set('Authorization', `Basic ${authCode}`)
+        .send({
+          "code": invalidCode
+          })
+        .catch((err:any) => {
+      console.error("Supertest Error:", err.res?.text || err);
+      throw err;}
+        );
+      console.log("Token API Response Body:", res.body);
+      expect(res.status).toBe(400);
+      expect(res.body).toHaveProperty('message', 'Invalid or expired authorization code');
+      expect(res.body).toHaveProperty('error', 'Bad Request');
+      expect(res.body).toHaveProperty('statusCode', 400);
+     });
+
+      it('validate token api with no requestbody', async () => {
+      const res = await agent
+        .post(tokenApi)
+        .set('Authorization', `Basic ${authCode}`)
+        .send({})
+        .catch((err:any) => {
+      console.error("Supertest Error:", err.res?.text || err);
+      throw err;}
+        );
+      console.log("Token API Response Body:", res.body);
+      expect(res.status).toBe(400);
+      expect(res.body).toHaveProperty('message', 'Missing authorization code');
+      expect(res.body).toHaveProperty('error', 'Bad Request');
+      expect(res.body).toHaveProperty('statusCode', 400);
+     });
 });
 
 
