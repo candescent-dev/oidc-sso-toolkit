@@ -5,7 +5,6 @@ import { SessionState, FormValuesPayload, OpenMode } from './types';
 const initialState: SessionState = {
   clientId: '',
   clientSecret: '',
-  timeLeftMs: 300_000, // 5 minutes
   loading: false,
   error: null,
   initUrl: '',
@@ -26,10 +25,6 @@ const sessionSlice = createSlice({
     /** Set error message */
     setError: (state, action: PayloadAction<string | null>) => {
       state.error = action.payload;
-    },
-    /** Update remaining session time */
-    setTimeLeftMs: (state, action: PayloadAction<number>) => {
-      state.timeLeftMs = action.payload;
     },
     /** Set client credentials */
     setCredentials: (state, action: PayloadAction<{ clientId: string; clientSecret: string }>) => {
@@ -53,7 +48,6 @@ const sessionSlice = createSlice({
     resetSession: (state) => {
       state.clientId = '';
       state.clientSecret = '';
-      state.timeLeftMs = 300_000;
       state.loading = false;
       state.error = null;
       state.initUrl = '';
@@ -65,7 +59,7 @@ const sessionSlice = createSlice({
 });
 
 /* ------------------------- Exports ------------------------- */
-export const { setLoading, setError, setTimeLeftMs, setCredentials, setFormValues, resetSession } =
+export const { setLoading, setError, setCredentials, setFormValues, resetSession } =
   sessionSlice.actions;
 
 export default sessionSlice.reducer;

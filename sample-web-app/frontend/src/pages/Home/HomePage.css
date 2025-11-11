@@ -1,8 +1,14 @@
+.auto-reload-message {
+  font-size: 1rem;
+  color: #666666;
+  margin: 2rem 1rem 1rem 10rem;
+}
+
 /* === Main Layout === */
 .home-container {
   max-width: 56.25rem;
-  margin: 3.125rem auto;
-  padding: 2.5rem;
+  margin: 2rem auto;
+  padding: 2rem;
   font-family: 'Inter', Arial, sans-serif;
   display: flex;
   flex-direction: column;
@@ -24,12 +30,6 @@
   font-weight: 600;
   color: #2a2a2a;
   letter-spacing: 0.0125rem;
-}
-
-.session-timer {
-  font-size: 1.0625rem;
-  font-weight: 500;
-  color: #5a5a5a;
 }
 
 .inputs {
@@ -259,10 +259,6 @@
     font-size: 1.35rem;
   }
 
-  .session-timer {
-    font-size: 0.9rem;
-  }
-
   .inputs {
     gap: 1.25rem;
   }
@@ -377,10 +373,6 @@
 
   .header-row h1 {
     font-size: 1.75rem;
-  }
-
-  .session-timer {
-    font-size: 1.125rem;
   }
 
   .icon-button {

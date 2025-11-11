@@ -1,15 +1,14 @@
-import React, { FC, useEffect, useState, useRef } from 'react';
+import React, { FC, useEffect, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { useNavigate } from 'react-router-dom';
 import {
   setCredentials,
   setLoading,
   setError,
-  setTimeLeftMs,
   setFormValues,
 } from '../../features/session/sessionSlice';
 import type { IframeSettings, Permissions } from '../../features/session/types';
-import { validateUrl, formatTime } from '../../utils/helpers';
+import { validateUrl } from '../../utils/helpers';
 import { OpenMode } from '../../features/session/types';
 import downloadIcon from '../../assets/download.png';
 import api from '../../services/api';
@@ -18,9 +17,7 @@ import './HomePage.css';
 const HomePage: FC = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const { clientId, clientSecret, timeLeftMs, loading, error } = useAppSelector(
-    (state) => state.session
-  );
+  const { clientId, clientSecret, loading, error } = useAppSelector((state) => state.session);
 
   const [initUrl, setInitUrl] = useState<string>('');
   const [callbackHost, setCallbackHost] = useState<string>('');
@@ -45,8 +42,6 @@ const HomePage: FC = () => {
     openOption: null,
   });
 
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
-
   useEffect(() => {
     const fetchClientCredentials = async (): Promise<void> => {
       dispatch(setLoading(true));
@@ -67,26 +62,6 @@ const HomePage: FC = () => {
     };
     fetchClientCredentials();
   }, [dispatch]);
-
-  useEffect(() => {
-    if (timerRef.current) clearInterval(timerRef.current);
-    const interval = 1000;
-    const startTime = Date.now();
-    const endTime = startTime + timeLeftMs;
-    timerRef.current = setInterval(() => {
-      const now = Date.now();
-      const remaining = Math.max(endTime - now, 0);
-      dispatch(setTimeLeftMs(remaining));
-      if (remaining === 0) {
-        clearInterval(timerRef.current!);
-        window.location.reload();
-      }
-    }, interval);
-
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
-  }, [dispatch, timeLeftMs]);
 
   /* ----------------------------- Input Handlers ----------------------------- */
   const handleInitUrlChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
@@ -253,174 +228,185 @@ const HomePage: FC = () => {
   if (error) return <div>Error: {error}</div>;
 
   return (
-    <div className="home-container">
-      <div className="header-row">
-        <h1>Client Configuration</h1>
-        <div className="session-timer">Session Expires in: {formatTime(timeLeftMs)}</div>
+    <>
+      <div className="auto-reload-message">
+        This page will automatically reload after 5 minutes, as the client_id and client_secret
+        expire and are regenerated every 5 minutes.
       </div>
-      <div className="inputs">
-        {/* Client ID */}
-        <div className="field-row">
-          <label>Client ID</label>
-          <div className="field-value">{clientId || 'Loading...'}</div>
+      <div className="home-container">
+        <div className="header-row">
+          <h1>Client Configuration</h1>
         </div>
-        {/* Client Secret */}
-        <div className="field-row secret-key">
-          <label>Secret Key</label>
-          <div className="field-value">{clientSecret || 'Loading...'}</div>
-        </div>
-        {/* Init URL */}
-        <div className="inline-input-box">
-          <label
-            htmlFor="initUrl"
-            className={`inline-label ${fieldErrors.initUrl ? 'error-label' : ''}`}
-          >
-            Init URL *
-          </label>
-          <input
-            type="text"
-            id="initUrl"
-            className={`inline-input ${fieldErrors.initUrl ? 'error' : ''}`}
-            placeholder="https://client-config.yourdomain.com/init"
-            value={initUrl}
-            onChange={handleInitUrlChange}
-          />
-          {fieldErrors.initUrl && <p className="error-message">{fieldErrors.initUrl}</p>}
-        </div>
-        {/* Callback Host */}
-        <div className="inline-input-box">
-          <label
-            htmlFor="callbackHost"
-            className={`inline-label ${fieldErrors.callbackHost ? 'error-label' : ''}`}
-          >
-            Callback Host *
-          </label>
-          <input
-            type="text"
-            id="callbackHost"
-            className={`inline-input ${fieldErrors.callbackHost ? 'error' : ''}`}
-            placeholder="https://yourapp.com/callback"
-            value={callbackHost}
-            onChange={handleCallbackHostChange}
-          />
-          {fieldErrors.callbackHost && <p className="error-message">{fieldErrors.callbackHost}</p>}
-        </div>
-        <div className="button-row">
-          <a href="/metadata.json" download="metadata.json">
-            <button type="button" className="icon-button">
-              <img src={downloadIcon} alt="Download" className="download-icon" />
-              Meta Data
-            </button>
-          </a>
-          <a href="/JWK.json" download="JWK.json">
-            <button type="button" className="icon-button">
-              <img src={downloadIcon} alt="Download" className="download-icon" />
-              JWKS
-            </button>
-          </a>
-        </div>
-        {/* Radio Buttons */}
-        <div className="radio-section">
-          <div className="radio-group">
-            <label>
-              <input
-                type="radio"
-                name="openOption"
-                value={OpenMode.IFRAME}
-                checked={openOption === OpenMode.IFRAME}
-                onChange={() => setOpenOption(OpenMode.IFRAME)}
-              />
-              <span>Open in iframe</span>
-            </label>
-            <label>
-              <input
-                type="radio"
-                name="openOption"
-                value={OpenMode.NEWTAB}
-                checked={openOption === OpenMode.NEWTAB}
-                onChange={() => setOpenOption(OpenMode.NEWTAB)}
-              />
-              <span>Open in new tab</span>
-            </label>
+        <div className="inputs">
+          {/* Client ID */}
+          <div className="field-row">
+            <label>Client ID</label>
+            <div className="field-value">{clientId || 'Loading...'}</div>
           </div>
-          {fieldErrors.openOption && <p className="error-message">{fieldErrors.openOption}</p>}
+          {/* Client Secret */}
+          <div className="field-row secret-key">
+            <label>Secret Key</label>
+            <div className="field-value">{clientSecret || 'Loading...'}</div>
+          </div>
+          {/* Init URL */}
+          <div className="inline-input-box">
+            <label
+              htmlFor="initUrl"
+              className={`inline-label ${fieldErrors.initUrl ? 'error-label' : ''}`}
+            >
+              Init URL *
+            </label>
+            <input
+              type="text"
+              id="initUrl"
+              autoComplete="off"
+              className={`inline-input ${fieldErrors.initUrl ? 'error' : ''}`}
+              placeholder="https://client-config.yourdomain.com/init"
+              value={initUrl}
+              onChange={handleInitUrlChange}
+            />
+            {fieldErrors.initUrl && <p className="error-message">{fieldErrors.initUrl}</p>}
+          </div>
+          {/* Callback Host */}
+          <div className="inline-input-box">
+            <label
+              htmlFor="callbackHost"
+              className={`inline-label ${fieldErrors.callbackHost ? 'error-label' : ''}`}
+            >
+              Callback Host *
+            </label>
+            <input
+              type="text"
+              id="callbackHost"
+              autoComplete="off"
+              className={`inline-input ${fieldErrors.callbackHost ? 'error' : ''}`}
+              placeholder="https://yourapp.com/callback"
+              value={callbackHost}
+              onChange={handleCallbackHostChange}
+            />
+            {fieldErrors.callbackHost && (
+              <p className="error-message">{fieldErrors.callbackHost}</p>
+            )}
+          </div>
+          <div className="button-row">
+            <a href="/metadata.json" download="metadata.json">
+              <button type="button" className="icon-button">
+                <img src={downloadIcon} alt="Download" className="download-icon" />
+                Meta Data
+              </button>
+            </a>
+            <a href="/JWK.json" download="JWK.json">
+              <button type="button" className="icon-button">
+                <img src={downloadIcon} alt="Download" className="download-icon" />
+                JWKS
+              </button>
+            </a>
+          </div>
+          {/* Radio Buttons */}
+          <div className="radio-section">
+            <div className="radio-group">
+              <label>
+                <input
+                  type="radio"
+                  name="openOption"
+                  value={OpenMode.IFRAME}
+                  checked={openOption === OpenMode.IFRAME}
+                  onChange={() => setOpenOption(OpenMode.IFRAME)}
+                />
+                <span>Open in iframe</span>
+              </label>
+              <label>
+                <input
+                  type="radio"
+                  name="openOption"
+                  value={OpenMode.NEWTAB}
+                  checked={openOption === OpenMode.NEWTAB}
+                  onChange={() => setOpenOption(OpenMode.NEWTAB)}
+                />
+                <span>Open in new tab</span>
+              </label>
+            </div>
+            {fieldErrors.openOption && <p className="error-message">{fieldErrors.openOption}</p>}
+          </div>
+          {/* iframe Fields */}
+          {openOption === OpenMode.IFRAME && (
+            <>
+              {/* Unique ID */}
+              <div className="inline-input-box">
+                <label
+                  htmlFor="uniqueId"
+                  className={`inline-label ${fieldErrors.uniqueId ? 'error-label' : ''}`}
+                >
+                  Unique ID *
+                </label>
+                <input
+                  type="text"
+                  id="uniqueId"
+                  autoComplete="off"
+                  className={`inline-input ${fieldErrors.uniqueId ? 'error' : ''}`}
+                  value={uniqueId}
+                  onChange={handleUniqueIdChange}
+                  placeholder="e.g., 001"
+                />
+                {fieldErrors.uniqueId && <p className="error-message">{fieldErrors.uniqueId}</p>}
+              </div>
+              <div className="inline-input-box">
+                <label
+                  htmlFor="displayWidth"
+                  className={`inline-label ${fieldErrors.displayWidth ? 'error-label' : ''}`}
+                >
+                  Display Width (%) *
+                </label>
+                <input
+                  type="text"
+                  id="displayWidth"
+                  autoComplete="off"
+                  className={`inline-input ${fieldErrors.displayWidth ? 'error' : ''}`}
+                  value={displayWidth}
+                  onChange={handleDisplayWidthChange}
+                  placeholder="e.g., 100,80,20"
+                />
+                {fieldErrors.displayWidth && (
+                  <p className="error-message">{fieldErrors.displayWidth}</p>
+                )}
+              </div>
+              <div className="permissions">
+                <p>Permissions</p>
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={permissions.enableCamera}
+                    onChange={(e) =>
+                      setPermissions((prev) => ({
+                        ...prev,
+                        enableCamera: e.target.checked,
+                      }))
+                    }
+                  />
+                  Enable Camera for this iframe
+                </label>
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={permissions.enableMic}
+                    onChange={(e) =>
+                      setPermissions((prev) => ({
+                        ...prev,
+                        enableMic: e.target.checked,
+                      }))
+                    }
+                  />
+                  Enable Microphone for this iframe
+                </label>
+              </div>
+            </>
+          )}
+          <button className="submit-btn" onClick={handleSubmit} disabled={!isFormValid()}>
+            Submit
+          </button>
         </div>
-        {/* iframe Fields */}
-        {openOption === OpenMode.IFRAME && (
-          <>
-            {/* Unique ID */}
-            <div className="inline-input-box">
-              <label
-                htmlFor="uniqueId"
-                className={`inline-label ${fieldErrors.uniqueId ? 'error-label' : ''}`}
-              >
-                Unique ID *
-              </label>
-              <input
-                type="text"
-                id="uniqueId"
-                className={`inline-input ${fieldErrors.uniqueId ? 'error' : ''}`}
-                value={uniqueId}
-                onChange={handleUniqueIdChange}
-                placeholder="e.g., 001"
-              />
-              {fieldErrors.uniqueId && <p className="error-message">{fieldErrors.uniqueId}</p>}
-            </div>
-            <div className="inline-input-box">
-              <label
-                htmlFor="displayWidth"
-                className={`inline-label ${fieldErrors.displayWidth ? 'error-label' : ''}`}
-              >
-                Display Width (%) *
-              </label>
-              <input
-                type="text"
-                id="displayWidth"
-                className={`inline-input ${fieldErrors.displayWidth ? 'error' : ''}`}
-                value={displayWidth}
-                onChange={handleDisplayWidthChange}
-                placeholder="e.g., 100,80,20"
-              />
-              {fieldErrors.displayWidth && (
-                <p className="error-message">{fieldErrors.displayWidth}</p>
-              )}
-            </div>
-            <div className="permissions">
-              <p>Permissions</p>
-              <label>
-                <input
-                  type="checkbox"
-                  checked={permissions.enableCamera}
-                  onChange={(e) =>
-                    setPermissions((prev) => ({
-                      ...prev,
-                      enableCamera: e.target.checked,
-                    }))
-                  }
-                />
-                Enable Camera for this iframe
-              </label>
-              <label>
-                <input
-                  type="checkbox"
-                  checked={permissions.enableMic}
-                  onChange={(e) =>
-                    setPermissions((prev) => ({
-                      ...prev,
-                      enableMic: e.target.checked,
-                    }))
-                  }
-                />
-                Enable Microphone for this iframe
-              </label>
-            </div>
-          </>
-        )}
-        <button className="submit-btn" onClick={handleSubmit} disabled={!isFormValid()}>
-          Submit
-        </button>
       </div>
-    </div>
+    </>
   );
 };
 

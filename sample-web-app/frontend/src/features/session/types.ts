@@ -21,7 +21,6 @@ export enum OpenMode {
 export interface SessionState {
   clientId: string;
   clientSecret: string;
-  timeLeftMs: number;
   loading: boolean;
   error: string | null;
   initUrl: string;
