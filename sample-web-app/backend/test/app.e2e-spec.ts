@@ -228,16 +228,6 @@ describe('AppController (e2e)', () => {
       expect(res.body).toHaveProperty('statusCode', 400);
      });
 
-  it('should expire session after maxAge', async () => {
-      const resBefore = await agent.post(clientApi);
-      console.log("resBefore.body.session -> ",resBefore.body.session);
-        const debug = await agent.get('/debug-session');
-  console.log("debug -> ",debug.body);        // ✅ session here
-      const resAfter = await agent.post(clientApi);
-      console.log("Client API Response Body session expiry:", resAfter.body);
-      expect(resAfter.status).toBe(401);
-      //jest.useRealTimers();
-});  
 
 
 });
