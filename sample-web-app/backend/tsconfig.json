@@ -25,6 +25,6 @@
     "typeRoots": ["./node_modules/@types", "./src/types"],
     "rootDir": "."
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "types", "test", "__tests__", "**/*.spec.ts", "**/*.test.ts"],
   "exclude": ["node_modules", "dist"]
 }
