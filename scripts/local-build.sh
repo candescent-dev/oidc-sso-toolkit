@@ -65,7 +65,8 @@ build_backend() {
   pushd "$ROOT_DIR/sample-web-app/backend" > /dev/null
   npm ci
   npm run build
-  # npm test
+  npm test
+  npm test:e2e
   popd > /dev/null
 }
  
