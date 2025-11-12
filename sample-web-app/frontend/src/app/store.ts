@@ -1,9 +1,9 @@
 import { configureStore } from '@reduxjs/toolkit';
-import sessionReducer from '../features/session/sessionSlice';
+import homeReducer from '../features/home/homeSlice';
 
 export const store = configureStore({
   reducer: {
-    session: sessionReducer,
+    home: homeReducer,
   },
   devTools: process.env.NODE_ENV !== 'production',
 });

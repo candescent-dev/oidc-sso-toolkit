@@ -1,8 +1,8 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { SessionState, FormValuesPayload, OpenMode } from './types';
+import { HomeState, HomeConfigPayload, OpenMode } from './types';
 
 /* ------------------------- Initial State ------------------------- */
-const initialState: SessionState = {
+const initialState: HomeState = {
   clientId: '',
   clientSecret: '',
   loading: false,
@@ -14,8 +14,8 @@ const initialState: SessionState = {
 };
 
 /* ------------------------- Slice ------------------------- */
-const sessionSlice = createSlice({
-  name: 'session',
+const homeSlice = createSlice({
+  name: 'home',
   initialState,
   reducers: {
     /** Set loading state */
@@ -31,21 +31,21 @@ const sessionSlice = createSlice({
       state.clientId = action.payload.clientId;
       state.clientSecret = action.payload.clientSecret;
     },
-    /** Set form values (including iframe settings if applicable) */
-    setFormValues: (state, action: PayloadAction<FormValuesPayload>) => {
+    /** Set home configuration (including iframe settings if applicable) */
+    setHomeConfigData: (state, action: PayloadAction<HomeConfigPayload>) => {
       const { initUrl, callbackHost, openOption, iframeSettings } = action.payload;
       state.initUrl = initUrl;
       state.callbackHost = callbackHost;
       state.openOption = openOption;
-      // use enum for comparison
+      // Use enum for comparison
       if (openOption === OpenMode.IFRAME && iframeSettings) {
         state.iframeSettings = iframeSettings;
       } else {
         state.iframeSettings = undefined;
       }
     },
-    /** Reset the session to initial values */
-    resetSession: (state) => {
+    /** Reset the home state to initial values */
+    resetHome: (state) => {
       state.clientId = '';
       state.clientSecret = '';
       state.loading = false;
@@ -59,7 +59,7 @@ const sessionSlice = createSlice({
 });
 
 /* ------------------------- Exports ------------------------- */
-export const { setLoading, setError, setCredentials, setFormValues, resetSession } =
-  sessionSlice.actions;
+export const { setLoading, setError, setCredentials, setHomeConfigData, resetHome } =
+  homeSlice.actions;
 
-export default sessionSlice.reducer;
+export default homeSlice.reducer;

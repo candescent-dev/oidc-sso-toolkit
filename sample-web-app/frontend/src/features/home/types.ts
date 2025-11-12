@@ -17,8 +17,8 @@ export enum OpenMode {
   NEWTAB = 'newTab',
 }
 
-/** Overall session state stored in Redux */
-export interface SessionState {
+/** Overall home state stored in Redux */
+export interface HomeState {
   clientId: string;
   clientSecret: string;
   loading: boolean;
@@ -29,8 +29,8 @@ export interface SessionState {
   iframeSettings?: IframeSettings;
 }
 
-/** Payload structure for setting form values */
-export interface FormValuesPayload {
+/** Payload structure for setting home data */
+export interface HomeConfigPayload {
   initUrl: string;
   callbackHost: string;
   openOption: '' | OpenMode;

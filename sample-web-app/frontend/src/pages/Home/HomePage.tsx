@@ -5,12 +5,12 @@ import {
   setCredentials,
   setLoading,
   setError,
-  setFormValues,
-} from '../../features/session/sessionSlice';
-import type { IframeSettings, Permissions } from '../../features/session/types';
+  setHomeConfigData,
+} from '../../features/home/homeSlice';
+import type { IframeSettings, Permissions } from '../../features/home/types';
 import { validateUrl } from '../../utils/helpers';
-import { OpenMode } from '../../features/session/types';
-import downloadIcon from '../../assets/download.png';
+import { OpenMode } from '../../features/home/types';
+import downloadIcon from '../../assets/download.svg';
 import api from '../../services/api';
 import './HomePage.css';
 
@@ -22,7 +22,7 @@ enum DownloadType {
 const HomePage: FC = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const { clientId, clientSecret, loading, error } = useAppSelector((state) => state.session);
+  const { clientId, clientSecret, loading, error } = useAppSelector((state) => state.home);
 
   const [initUrl, setInitUrl] = useState<string>('');
   const [callbackHost, setCallbackHost] = useState<string>('');
@@ -233,13 +233,13 @@ const HomePage: FC = () => {
     if (hasError) return;
     const iframeSettings: IframeSettings | undefined =
       openOption === OpenMode.IFRAME ? { uniqueId, displayWidth, permissions } : undefined;
-    const formValues = {
+    const homeConfigData = {
       initUrl,
       callbackHost,
       openOption,
       iframeSettings,
     };
-    dispatch(setFormValues(formValues));
+    dispatch(setHomeConfigData(homeConfigData));
     // Reset
     setInitUrl('');
     setCallbackHost('');
