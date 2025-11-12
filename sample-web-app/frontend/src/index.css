@@ -1,7 +1,9 @@
 body {
   margin: auto;
-  padding: 1rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  padding: 0.5rem;
+}
+
+.loader, .error {
+  padding: 2rem;
+  text-align: center;
 }

@@ -70,8 +70,15 @@ const HomePage: FC = () => {
             clientSecret: response.data.client_secret,
           })
         );
-      } catch {
-        dispatch(setError('Error fetching credentials from the server.'));
+      } catch (err: any) {
+        // Check if the error has a response from backend
+        if (err.response && err.response.data) {
+          // Use the message from backend
+          dispatch(setError(err.response.data.message || 'An unknown error occurred'));
+        } else {
+          // Fallback if it's a network error or something else
+          dispatch(setError('Error fetching credentials from the server'));
+        }
       } finally {
         dispatch(setLoading(false));
       }
@@ -257,8 +264,8 @@ const HomePage: FC = () => {
     navigate('/startOidcSso');
   };
 
-  if (loading) return <div>Loading...</div>;
-  if (error) return <div>Error: {error}</div>;
+  if (loading) return <div className="loader">Fetching Client Credentials......</div>;
+  if (error) return <div className="error">Error: {error}</div>;
 
   return (
     <>
@@ -328,7 +335,7 @@ const HomePage: FC = () => {
               onClick={() => handleDownloadClick(DownloadType.METADATA)}
             >
               <button type="button" className="icon-button">
-                <img src={downloadIcon} alt="Download" className="download-icon" />
+                <img src={downloadIcon} className="download-icon" alt="Download" loading="lazy" />
                 Meta Data
               </button>
             </a>
@@ -338,7 +345,7 @@ const HomePage: FC = () => {
               onClick={() => handleDownloadClick(DownloadType.JWK)}
             >
               <button type="button" className="icon-button">
-                <img src={downloadIcon} alt="Download" className="download-icon" />
+                <img src={downloadIcon} className="download-icon" alt="Download" loading="lazy" />
                 JWK
               </button>
             </a>
