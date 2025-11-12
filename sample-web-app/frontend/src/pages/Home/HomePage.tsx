@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useState } from 'react';
+import React, { FC, useEffect, useState, useRef } from 'react';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -14,6 +14,11 @@ import downloadIcon from '../../assets/download.png';
 import api from '../../services/api';
 import './HomePage.css';
 
+enum DownloadType {
+  METADATA = 'metadata',
+  JWK = 'JWK',
+}
+
 const HomePage: FC = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
@@ -21,6 +26,7 @@ const HomePage: FC = () => {
 
   const [initUrl, setInitUrl] = useState<string>('');
   const [callbackHost, setCallbackHost] = useState<string>('');
+  const [downloadMessage, setDownloadMessage] = useState<string | null>(null);
   const [openOption, setOpenOption] = useState<'' | OpenMode>('');
   const [uniqueId, setUniqueId] = useState<string>('');
   const [displayWidth, setDisplayWidth] = useState<string>('');
@@ -42,6 +48,16 @@ const HomePage: FC = () => {
     openOption: null,
   });
 
+  const downloadTimerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (downloadTimerRef.current) {
+        clearTimeout(downloadTimerRef.current);
+      }
+    };
+  }, []);
+
   useEffect(() => {
     const fetchClientCredentials = async (): Promise<void> => {
       dispatch(setLoading(true));
@@ -62,6 +78,13 @@ const HomePage: FC = () => {
     };
     fetchClientCredentials();
   }, [dispatch]);
+
+  useEffect(() => {
+    if (downloadMessage) {
+      const timer = setTimeout(() => setDownloadMessage(null), 10000);
+      return () => clearTimeout(timer);
+    }
+  }, [downloadMessage]);
 
   /* ----------------------------- Input Handlers ----------------------------- */
   const handleInitUrlChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
@@ -89,6 +112,16 @@ const HomePage: FC = () => {
     } else {
       setFieldErrors((prev) => ({ ...prev, callbackHost: null }));
     }
+  };
+
+  const handleDownloadClick = (fileType: DownloadType) => {
+    if (downloadTimerRef.current) {
+      clearTimeout(downloadTimerRef.current);
+    }
+    downloadTimerRef.current = window.setTimeout(() => {
+      if (fileType === DownloadType.METADATA) setDownloadMessage('metadata.json downloaded');
+      else if (fileType === DownloadType.JWK) setDownloadMessage('JWK.json downloaded');
+    }, 2000);
   };
 
   const handleDisplayWidthChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
@@ -289,13 +322,21 @@ const HomePage: FC = () => {
             )}
           </div>
           <div className="button-row">
-            <a href="/metadata.json" download="metadata.json">
+            <a
+              href="/metadata.json"
+              download="metadata.json"
+              onClick={() => handleDownloadClick(DownloadType.METADATA)}
+            >
               <button type="button" className="icon-button">
                 <img src={downloadIcon} alt="Download" className="download-icon" />
                 Meta Data
               </button>
             </a>
-            <a href="/JWK.json" download="JWK.json">
+            <a
+              href="/JWK.json"
+              download="JWK.json"
+              onClick={() => handleDownloadClick(DownloadType.JWK)}
+            >
               <button type="button" className="icon-button">
                 <img src={downloadIcon} alt="Download" className="download-icon" />
                 JWK
@@ -406,6 +447,14 @@ const HomePage: FC = () => {
           </button>
         </div>
       </div>
+      {downloadMessage && (
+        <div className="download-toast">
+          <span>{downloadMessage}</span>
+          <button className="toast-close" onClick={() => setDownloadMessage(null)}>
+            ×
+          </button>
+        </div>
+      )}
     </>
   );
 };
