@@ -1,5 +1,7 @@
-import { NestFactory } from '@nestjs/core';
+import * as fs from 'fs';
+import * as path from 'path';
 import session from 'express-session';
+import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
 import loadConfig from './config/loadConfig';
@@ -9,6 +11,21 @@ async function bootstrap() {
   const port = loadConfig.port || 9000;
   // Create a new NestJS application instance
   const app = await NestFactory.create(AppModule);
+
+  // Update frontend/public/config.json dynamically
+  const frontendConfig = {
+    baseURL: `http://localhost:${port}`,
+  };
+  // Step 1: Define project root (sample-web-app)
+  const projectRoot = path.resolve(__dirname, '../../../');
+  // Step 2: Build frontend config path relative to project root
+  const frontendConfigPath = path.join(projectRoot, 'frontend', 'public', 'config.json');
+  try {
+    fs.writeFileSync(frontendConfigPath, JSON.stringify(frontendConfig, null, 2));
+    console.log(`Updated frontend config.json with backendBaseUrl: ${frontendConfig.baseURL}`);
+  } catch (err) {
+    console.warn('Could not update frontend config.json:', err.message);
+  }
 
   // Enable custom CORS options
   app.enableCors({
