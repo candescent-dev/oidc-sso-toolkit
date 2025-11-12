@@ -3,6 +3,10 @@ import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { AppModule } from './../src/app.module';
 const session = require('express-session');
+import { plainToInstance } from 'class-transformer';
+import { validate } from 'class-validator';
+import { AuthorizeDto } from './../src/auth/dto/authorize.dto';
+
 
 describe('AppController (e2e)', () => {
   let app: INestApplication;
@@ -130,6 +134,69 @@ describe('AppController (e2e)', () => {
       expect(res.body).toHaveProperty('message', 'Invalid client_id or client not authenticated');
       expect(res.body).toHaveProperty('error', 'Bad Request');
       expect(res.body).toHaveProperty('statusCode', 400);
+     },3000);
+
+  it('validate authorise api with no client_id in queryParams', async () => {
+    const payload = {
+          response_type: 'code',
+          scope: 'openid',
+          redirect_uri: redirect_uri,
+          state: stateVal};
+        const dto = plainToInstance(AuthorizeDto, payload);
+        const errors = await validate(dto);
+        console.log("errors no client_id -> ",errors);
+        const clientIdError = errors.find(err => err.property === 'client_id');
+        expect(Object.values(clientIdError!.constraints!)).toEqual( expect.arrayContaining([
+          'client_id should not be empty',
+          'client_id must be a string']));       
+     },3000);
+
+  it('validate authorise api with no response_type in queryParams', async () => {
+    const payload = {
+          client_id: fetchfromPost_client_id,
+          scope: 'openid',
+          redirect_uri: redirect_uri,
+          state: stateVal
+    };
+      const dto = plainToInstance(AuthorizeDto, payload);
+      const errors = await validate(dto);
+      console.log("errors no response_type -> ",errors);
+        const responseTypeError = errors.find(err => err.property === 'response_type');
+        expect(Object.values(responseTypeError!.constraints!)).toEqual( expect.arrayContaining([
+          'response_type should not be empty',
+          'response_type must be a string']));  
+     },3000);
+
+
+  it('validate authorise api with no scope in queryParams', async () => {
+    const payload = {
+          client_id: fetchfromPost_client_id,
+          response_type: 'code',
+          redirect_uri: redirect_uri,
+          state: stateVal
+    };
+      const dto = plainToInstance(AuthorizeDto, payload);
+      const errors = await validate(dto);
+      console.log("errors no scope -> ",errors);
+        const scopeError = errors.find(err => err.property === 'scope');
+        expect(Object.values(scopeError!.constraints!)).toEqual( expect.arrayContaining([
+          'scope should not be empty',
+          'scope must be a string']));  
+     },3000);
+
+  it('validate authorise api with no redirect_uri in queryParams', async () => {
+    const payload = {
+          client_id: fetchfromPost_client_id,
+          response_type: 'code',
+          scope: 'openid',
+          state: stateVal};
+        const dto = plainToInstance(AuthorizeDto, payload);
+        const errors = await validate(dto);
+        console.log("errors no redirect_uri -> ",errors);
+        const redirect_uriError = errors.find(err => err.property === 'redirect_uri');
+        expect(Object.values(redirect_uriError!.constraints!)).toEqual( expect.arrayContaining([
+          'redirect_uri should not be empty',
+          'redirect_uri must be a string']));       
      },3000);
 
   it('validate authorise api with invalidRedirect_uri in queryParams', async () => {
