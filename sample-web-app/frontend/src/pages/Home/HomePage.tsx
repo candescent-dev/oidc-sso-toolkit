@@ -267,7 +267,7 @@ const HomePage: FC = () => {
   };
 
   if (loading) return <div className="loader">Fetching Client Credentials......</div>;
-  if (error) return <div className="error">Error: {error}</div>;
+  if (error) return <div className="api-error">Error: {error}</div>;
 
   return (
     <>

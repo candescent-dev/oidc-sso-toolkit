@@ -1,9 +1,10 @@
 .auto-reload-message {
-  font-size: clamp(0.875rem, 1vw + 0.5rem, 1rem);
   color: #666666;
   margin: 1.5rem 1rem 0 1rem;
   line-height: 1.4;
-  max-width: 56.25rem;
+  max-width: 60rem;
+  font-size: clamp(0.75rem, 1vw + 0.35rem, 0.9rem);
+  font-family: 'Inter', Arial, sans-serif;
 }
 
 /* === Main Layout === */
