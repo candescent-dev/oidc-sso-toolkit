@@ -1,5 +1,4 @@
 export interface SSOConfig {
-  port: number;
   issuer: string;
   authorization_endpoint: string;
   token_endpoint: string;

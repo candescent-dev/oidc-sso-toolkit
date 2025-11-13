@@ -2,25 +2,30 @@ import { Injectable, OnApplicationShutdown } from '@nestjs/common';
 import { randomBytes } from 'crypto';
 import * as jwt from 'jsonwebtoken';
 import { AuthCodeData, AccessTokenData, UserClaims, ClientSession } from './types/auth.types';
-import { SSOConfig } from '../types/config.types';
-import loadConfig from '../config/loadConfig';
+import { SsoConfigService } from '../ssoConfig/ssoConfig.service';
+import { SSOConfig } from '../ssoConfig/types/ssoConfig.types';
 
 @Injectable()
 export class AuthService implements OnApplicationShutdown {
-  // In-memory stores
+  // In-memory stores for OAuth2 data
   private readonly authCode: Record<string, AuthCodeData> = {};
   private readonly accessToken: Record<string, AccessTokenData> = {};
 
-  // Config properties
-  private readonly config: SSOConfig = loadConfig;
-  private readonly privateKey: string = this.config.private_key;
-  private readonly alg: jwt.Algorithm = this.config.alg as jwt.Algorithm;
-  private readonly kid: string = this.config.idTokenRsaKey;
+  // Cached configuration
+  private readonly ssoConfig: SSOConfig;
+  private readonly privateKey: string;
+  private readonly alg: jwt.Algorithm;
+  private readonly kid: string;
 
   // Interval reference
   private cleanupInterval: ReturnType<typeof setInterval>;
 
-  constructor() {
+  constructor(private readonly ssoConfigService: SsoConfigService) {
+    // Initialize configuration from the injected service
+    this.ssoConfig = this.ssoConfigService.getConfig();
+    this.privateKey = this.ssoConfig.private_key;
+    this.alg = this.ssoConfig.alg as jwt.Algorithm;
+    this.kid = this.ssoConfig.idTokenRsaKey;
     // Run cleanup every minute (60000 ms)
     this.cleanupInterval = setInterval(() => {
       this.cleanupExpiredAuthCode();
@@ -88,7 +93,7 @@ export class AuthService implements OnApplicationShutdown {
     const code = this.buildAuthCode();
     // Expiration from SSO config, default to 5 minutes if not set
     // Note: auth_code_expires_in is in seconds, convert to milliseconds for timestamps
-    const expiresInSec = this.config.auth_code_expires_in ?? 5 * 60;
+    const expiresInSec = this.ssoConfig.auth_code_expires_in ?? 5 * 60;
     const expiresAt = Date.now() + expiresInSec * 1000;
     this.authCode[code] = { ...payload, created_at: Date.now(), expiresAt };
     return code;
@@ -130,7 +135,7 @@ export class AuthService implements OnApplicationShutdown {
     const token = this.buildAccessToken();
     // Expiration from SSO config, default to 5 minutes if not set
     // Note: access_token_expires_in is in seconds, convert to milliseconds for timestamps
-    const expiresInSec = this.config.access_token_expires_in ?? 5 * 60;
+    const expiresInSec = this.ssoConfig.access_token_expires_in ?? 5 * 60;
     const expiresAt = Date.now() + expiresInSec * 1000;
     const tokenData: AccessTokenData = {
       access_token: token,
@@ -149,7 +154,7 @@ export class AuthService implements OnApplicationShutdown {
    */
   generateIdToken(user: UserClaims): string {
     const now = Math.floor(Date.now() / 1000); // JWT uses seconds
-    const expiresInSec = this.config.id_token_expires_in ?? 5 * 60; // expiration in seconds
+    const expiresInSec = this.ssoConfig.id_token_expires_in ?? 5 * 60; // expiration in seconds
     const exp = now + expiresInSec; // exp must be in seconds
     const payload = {
       ...user,

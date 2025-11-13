@@ -1,5 +1,4 @@
 {
-  "port": 9000,
   "issuer": "http://localhost",
   "authorization_endpoint": "",
   "token_endpoint": "",

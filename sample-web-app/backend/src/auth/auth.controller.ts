@@ -8,18 +8,23 @@ import {
   BadRequestException,
   UnauthorizedException,
 } from '@nestjs/common';
-import loadConfig from '../config/loadConfig';
-import { SSOConfig } from '../types/config.types';
+import { SsoConfigService } from '../ssoConfig/ssoConfig.service';
+import { SSOConfig } from '../ssoConfig/types/ssoConfig.types';
 import type { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { AuthorizeDto } from './dto/authorize.dto';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  // SSO Config properties
+  private readonly ssoConfig: SSOConfig;
 
-  // Config properties
-  private readonly config: SSOConfig = loadConfig;
+  constructor(
+    private readonly authService: AuthService,
+    private readonly ssoConfigService: SsoConfigService,
+  ) {
+    this.ssoConfig = this.ssoConfigService.getConfig();
+  }
 
   /**
    * Handle authorization requests to generate an authorization code
@@ -111,7 +116,8 @@ export class AuthController {
     return res.json({
       id_token,
       token_type: 'Bearer',
-      expires_in: this.config.access_token_expires_in ?? this.config.id_token_expires_in ?? 300,
+      expires_in:
+        this.ssoConfig.access_token_expires_in ?? this.ssoConfig.id_token_expires_in ?? 300,
       // 5 minutes
       access_token: accessTokenData.access_token,
     });
