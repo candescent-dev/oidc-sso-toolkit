@@ -1,0 +1,1 @@
+import downloadIcon from '../../assets/download.svg';

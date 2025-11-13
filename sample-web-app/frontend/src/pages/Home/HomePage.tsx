@@ -350,7 +350,7 @@ const HomePage: FC = () => {
             )}
           </div>
           <div className="button-row">
-            <button type="button" className="icon-button" onClick={downloadMetadata}>
+            <button type="button" className="icon-button" data-testid="metadata-button" onClick={downloadMetadata}>
               <img src={downloadIcon} className="download-icon" alt="Download" loading="lazy" />
               Meta Data
             </button>
@@ -358,6 +358,7 @@ const HomePage: FC = () => {
               <button
                 type="button"
                 className="icon-button"
+                data-testid="jwk-button"
                 onClick={() => {
                   if (downloadTimerRef.current) clearTimeout(downloadTimerRef.current);
                   downloadTimerRef.current = window.setTimeout(() => {
@@ -475,7 +476,7 @@ const HomePage: FC = () => {
         </div>
       </div>
       {downloadMessage && (
-        <div className="download-toast">
+        <div className="download-toast" data-testid="message">
           <span>{downloadMessage}</span>
           <button className="toast-close" onClick={() => setDownloadMessage(null)}>
             ×
