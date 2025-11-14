@@ -14,11 +14,6 @@ import downloadIcon from '../../assets/download.svg';
 import { getApi } from '../../services/api';
 import './HomePage.css';
 
-enum DownloadType {
-  METADATA = 'metadata',
-  JWK = 'JWK',
-}
-
 const HomePage: FC = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
@@ -122,14 +117,39 @@ const HomePage: FC = () => {
     }
   };
 
-  const handleDownloadClick = (fileType: DownloadType) => {
-    if (downloadTimerRef.current) {
-      clearTimeout(downloadTimerRef.current);
+  const downloadMetadata = async (): Promise<void> => {
+    try {
+      const fileName = 'metadata.json';
+      // Fetch API config from public folder
+      const configResponse: Response = await fetch('/api.config.json');
+      const apiConfig: { apiBaseURL: string } = await configResponse.json();
+      // Fetch the static metadata.json
+      const response: Response = await fetch('/metadata.json');
+      const metadata: any = await response.json();
+      // Updating authorization_endpoint & token_endpoint keeping rest of the fields untouched
+      const fileData = {
+        ...metadata,
+        authorization_endpoint: `${apiConfig.apiBaseURL}/auth/authorize`,
+        token_endpoint: `${apiConfig.apiBaseURL}/auth/token`,
+      };
+      // Trigger download
+      const blob: Blob = new Blob([JSON.stringify(fileData, null, 2)], {
+        type: 'application/json',
+      });
+      const url: string = URL.createObjectURL(blob);
+      const a: HTMLAnchorElement = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      a.click();
+      URL.revokeObjectURL(url);
+      // Show download message after 2 seconds
+      if (downloadTimerRef.current) clearTimeout(downloadTimerRef.current);
+      downloadTimerRef.current = window.setTimeout(() => {
+        setDownloadMessage(`${fileName} downloaded`);
+      }, 2000);
+    } catch (error) {
+      console.error('Metadata download failed:', error);
     }
-    downloadTimerRef.current = window.setTimeout(() => {
-      if (fileType === DownloadType.METADATA) setDownloadMessage('metadata.json downloaded');
-      else if (fileType === DownloadType.JWK) setDownloadMessage('JWK.json downloaded');
-    }, 2000);
   };
 
   const handleDisplayWidthChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
@@ -330,22 +350,21 @@ const HomePage: FC = () => {
             )}
           </div>
           <div className="button-row">
-            <a
-              href="/metadata.json"
-              download="metadata.json"
-              onClick={() => handleDownloadClick(DownloadType.METADATA)}
-            >
-              <button type="button" className="icon-button">
-                <img src={downloadIcon} className="download-icon" alt="Download" loading="lazy" />
-                Meta Data
-              </button>
-            </a>
-            <a
-              href="/JWK.json"
-              download="JWK.json"
-              onClick={() => handleDownloadClick(DownloadType.JWK)}
-            >
-              <button type="button" className="icon-button">
+            <button type="button" className="icon-button" onClick={downloadMetadata}>
+              <img src={downloadIcon} className="download-icon" alt="Download" loading="lazy" />
+              Meta Data
+            </button>
+            <a href="/JWK.json" download="JWK.json">
+              <button
+                type="button"
+                className="icon-button"
+                onClick={() => {
+                  if (downloadTimerRef.current) clearTimeout(downloadTimerRef.current);
+                  downloadTimerRef.current = window.setTimeout(() => {
+                    setDownloadMessage('JWK.json downloaded');
+                  }, 2000);
+                }}
+              >
                 <img src={downloadIcon} className="download-icon" alt="Download" loading="lazy" />
                 JWK
               </button>
