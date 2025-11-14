@@ -11,7 +11,7 @@ import type { IframeSettings, Permissions } from '../../features/home/types';
 import { validateUrl } from '../../utils/helpers';
 import { OpenMode } from '../../features/home/types';
 import downloadIcon from '../../assets/download.svg';
-import { initializeApi, getApi } from '../../api';
+import { getApi } from '../../services/api';
 import './HomePage.css';
 
 enum DownloadType {
@@ -62,9 +62,8 @@ const HomePage: FC = () => {
     const fetchClientCredentials = async (): Promise<void> => {
       dispatch(setLoading(true));
       dispatch(setError(null));
-      await initializeApi();
-      const api = getApi();
       try {
+        const api = getApi();
         const response = await api.post('/client');
         dispatch(
           setCredentials({
