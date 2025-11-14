@@ -1,5 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthService } from './auth.service';
+import { SsoConfigService } from '../ssoConfig/ssoConfig.service';
+import { SsoConfigServiceMock } from '../ssoConfig/ssoConfig.service.mock';
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -7,13 +9,19 @@ describe('AuthService', () => {
 
   beforeEach(async () => {
     module = await Test.createTestingModule({
-      providers: [AuthService],
+      providers: [
+        AuthService,
+        {
+          provide: SsoConfigService,
+          useValue: SsoConfigServiceMock,
+        },
+      ],
     }).compile();
     service = module.get<AuthService>(AuthService);
   });
 
   afterEach(async () => {
-    // clean up the interval
+    // Stop interval to avoid Jest open handle warnings
     service.onApplicationShutdown();
     await module.close();
   });
