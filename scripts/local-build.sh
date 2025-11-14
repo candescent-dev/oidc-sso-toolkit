@@ -66,7 +66,7 @@ build_backend() {
   npm ci
   npm run build
   npm test
-  npm test:e2e
+  npm run test:e2e
   popd > /dev/null
 }
  
