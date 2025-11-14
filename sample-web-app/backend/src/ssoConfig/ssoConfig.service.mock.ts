@@ -1,4 +1,14 @@
 import { SSOConfig } from './types/ssoConfig.types';
+import * as fs from 'fs';
+import * as path from 'path';
+
+const PRIVATE_KEY_PATH = 'certs/private.pem';
+
+// Read the private key from a file
+const privateKeyPath = path.resolve(process.cwd(), PRIVATE_KEY_PATH);
+if (!fs.existsSync(privateKeyPath))
+  throw new Error(`Private key file not found at: ${privateKeyPath}`);
+let privateKey = fs.readFileSync(privateKeyPath, 'utf-8');
 
 export const mockSsoConfig: SSOConfig = {
   issuer: 'http://localhost',
@@ -9,7 +19,7 @@ export const mockSsoConfig: SSOConfig = {
   auth_code_expires_in: 300,
   alg: 'RS256',
   idTokenRsaKey: 'idTokenRsaKey',
-  private_key: 'MOCK_PRIVATE_KEY',
+  private_key: privateKey,
   access_token_expires_in: 300,
   id_token_expires_in: 300,
   support_refresh_token: false,
