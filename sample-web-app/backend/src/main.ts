@@ -1,14 +1,30 @@
+import * as fs from 'fs';
+import * as path from 'path';
 import session from 'express-session';
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
 import { TOOLKIT_CONFIG } from './config/toolkit-config.provider';
 
+const FRONTEND_CONFIG_PATH = '../../../frontend/public/api.config.json';
+
 async function bootstrap() {
   // Create a new NestJS application instance
   const app = await NestFactory.create(AppModule);
   const toolkitConfig = app.get<{ backendPort: number }>(TOOLKIT_CONFIG);
   const port = toolkitConfig.backendPort;
+
+  // Update frontend/public/config.json dynamically
+  const frontendConfig = {
+    apiBaseURL: `http://localhost:${port}/api`,
+  };
+  const frontendConfigPath = path.resolve(__dirname, FRONTEND_CONFIG_PATH);
+  try {
+    fs.writeFileSync(frontendConfigPath, JSON.stringify(frontendConfig, null, 2));
+    console.log(`Updated frontend config.json with baseURL: ${frontendConfig.apiBaseURL}`);
+  } catch (err: any) {
+    console.warn('Could not update frontend config.json:', err.message);
+  }
 
   // Enable custom CORS options
   app.enableCors({
@@ -38,7 +54,7 @@ async function bootstrap() {
     }),
   );
 
-  // Start the application on port 9000 (default port)
+  // Start the application on dynamic port (default port - 9000)
   await app.listen(port);
   console.log(`Server listening on http://localhost:${port}`);
 }
