@@ -1,4 +1,5 @@
 import {
+  Get,
   Post,
   Query,
   Req,
@@ -35,7 +36,7 @@ export class AuthController {
    * @returns JSON object containing the redirect URL with appended auth code and state (for API/testing purposes)
    * @throws BadRequestException if the client_id is invalid or client is not authenticated
    */
-  @Post('authorize')
+  @Get('authorize')
   authorize(@Req() req: Request, @Query() query: AuthorizeDto, @Res() res: Response): Response {
     const { client_id, response_type, scope, redirect_uri, state } = query;
     // Validate client from session
