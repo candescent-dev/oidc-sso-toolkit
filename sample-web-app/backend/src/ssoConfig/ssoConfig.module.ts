@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
-import { ToolkitConfigModule } from '../config/toolkit-config.module';
+import { ConfigModule } from '../config/config.module';
 import { SsoConfigService } from './ssoConfig.service';
 
 @Module({
-  imports: [ToolkitConfigModule],
+  imports: [ConfigModule],
   providers: [SsoConfigService],
   exports: [SsoConfigService],
 })

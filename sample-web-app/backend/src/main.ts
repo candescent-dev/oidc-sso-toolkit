@@ -4,15 +4,15 @@ import session from 'express-session';
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
-import { TOOLKIT_CONFIG } from './config/toolkit-config.provider';
+import { CONFIG } from './config/config.provider';
 
 const FRONTEND_CONFIG_PATH = '../../../frontend/public/api.config.json';
 
 async function bootstrap() {
   // Create a new NestJS application instance
   const app = await NestFactory.create(AppModule);
-  const toolkitConfig = app.get<{ backendPort: number }>(TOOLKIT_CONFIG);
-  const port = toolkitConfig.backendPort;
+  const config = app.get<{ backendPort: number }>(CONFIG);
+  const port = config.backendPort;
 
   // Update frontend/public/config.json dynamically
   const frontendConfig = {
