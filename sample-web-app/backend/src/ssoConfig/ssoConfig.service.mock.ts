@@ -2,10 +2,10 @@ import { SSOConfig } from './types/ssoConfig.types';
 import * as fs from 'fs';
 import * as path from 'path';
 
-const PRIVATE_KEY_PATH = 'certs/private.pem';
+const PRIVATE_KEY_PATH = '../../certs/private.pem';
 
 // Read the private key from a file
-const privateKeyPath = path.resolve(process.cwd(), PRIVATE_KEY_PATH);
+const privateKeyPath = path.resolve(__dirname, PRIVATE_KEY_PATH);
 if (!fs.existsSync(privateKeyPath))
   throw new Error(`Private key file not found at: ${privateKeyPath}`);
 let privateKey = fs.readFileSync(privateKeyPath, 'utf-8');
