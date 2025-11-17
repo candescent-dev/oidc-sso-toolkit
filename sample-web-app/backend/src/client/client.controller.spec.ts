@@ -16,7 +16,8 @@ describe('ClientController', () => {
           useValue: {
             get: jest.fn(),
             set: jest.fn(),
-          },
+            del: jest.fn(),
+          }, // simple mock for cache manager
         },
       ],
     }).compile();

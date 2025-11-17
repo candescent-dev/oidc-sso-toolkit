@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { AuthService } from './auth.service';
 import { SsoConfigService } from '../ssoConfig/ssoConfig.service';
 import { SsoConfigServiceMock } from '../ssoConfig/ssoConfig.service.mock';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -14,6 +15,14 @@ describe('AuthService', () => {
         {
           provide: SsoConfigService,
           useValue: SsoConfigServiceMock,
+        },
+        {
+          provide: CACHE_MANAGER,
+          useValue: {
+            get: jest.fn(),
+            set: jest.fn(),
+            del: jest.fn(),
+          }, // simple mock for cache manager
         },
       ],
     }).compile();
