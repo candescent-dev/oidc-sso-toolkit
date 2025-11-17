@@ -1,12 +1,3 @@
-.auto-reload-message {
-  color: #666666;
-  margin: 1.5rem 1rem 0 1rem;
-  line-height: 1.4;
-  max-width: 60rem;
-  font-size: clamp(0.75rem, 1vw + 0.35rem, 0.9rem);
-  font-family: 'Inter', Arial, sans-serif;
-}
-
 /* === Main Layout === */
 .home-container {
   padding: 2rem;
@@ -74,7 +65,10 @@
   font-size: 0.8rem;
   background: #ffffff;
   padding: 0 0.25rem;
-  transition: color 0.2s ease, top 0.2s ease, font-size 0.2s ease;
+  transition:
+    color 0.2s ease,
+    top 0.2s ease,
+    font-size 0.2s ease;
   pointer-events: none;
 }
 
@@ -226,7 +220,9 @@
   cursor: pointer;
   width: 11rem;
   max-width: none;
-  transition: background-color 0.25s ease, transform 0.1s ease;
+  transition:
+    background-color 0.25s ease,
+    transform 0.1s ease;
   box-shadow: none;
   text-align: center;
 }
@@ -291,11 +287,6 @@
 
 /* --- Small Devices (Phones < 600px) --- */
 @media (max-width: 37.5rem) {
-  .auto-reload-message {
-    margin: 1rem;
-    font-size: 0.9rem;
-  }
-
   .header-row {
     flex-direction: column;
     align-items: flex-start;
@@ -341,11 +332,6 @@
 
 /* --- Medium Devices (Tablets: 600px–767px) --- */
 @media (min-width: 37.5rem) and (max-width: 47.99rem) {
-  .auto-reload-message {
-    margin: 1.25rem 1.5rem 0 1.5rem;
-    font-size: 0.95rem;
-  }
-
   .inputs {
     gap: 1.25rem;
   }
@@ -376,12 +362,6 @@
 
 /* --- Large Devices (Desktops ≥ 768px) --- */
 @media (min-width: 48rem) {
-  .auto-reload-message {
-    margin: 1.5rem auto 0 auto;
-    padding-left: 0;
-    text-align: left;
-  }
-
   .inputs {
     display: grid;
     grid-template-columns: 1fr 1fr;

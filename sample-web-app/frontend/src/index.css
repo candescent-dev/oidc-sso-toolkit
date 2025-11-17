@@ -3,7 +3,42 @@ body {
   padding: 0.5rem;
 }
 
-.loader, .api-error {
+.loader,
+.api-error {
   padding: 2rem;
   text-align: center;
+}
+
+.auto-reload-message {
+  color: #666666;
+  margin: 1.5rem 1rem 0 1rem;
+  line-height: 1.4;
+  max-width: 60rem;
+  font-size: clamp(0.75rem, 1vw + 0.35rem, 0.9rem);
+  font-family: 'Inter', Arial, sans-serif;
+}
+
+/* --- Small Devices (Phones < 600px) --- */
+@media (max-width: 37.5rem) {
+  .auto-reload-message {
+    margin: 1rem;
+    font-size: 0.9rem;
+  }
+}
+
+/* --- Medium Devices (Tablets: 600px–767px) --- */
+@media (min-width: 37.5rem) and (max-width: 47.99rem) {
+  .auto-reload-message {
+    margin: 1.25rem 1.5rem 0 1.5rem;
+    font-size: 0.95rem;
+  }
+}
+
+/* --- Large Devices (Desktops ≥ 768px) --- */
+@media (min-width: 48rem) {
+  .auto-reload-message {
+    margin: 1.5rem auto 0 auto;
+    padding-left: 0;
+    text-align: left;
+  }
 }

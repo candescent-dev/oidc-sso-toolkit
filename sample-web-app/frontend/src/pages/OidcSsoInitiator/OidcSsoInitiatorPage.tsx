@@ -1,39 +1,51 @@
-import React, { FC, useState } from "react";
-import { Link } from "@mui/material";
-import "./OidcSsoInitiatorPage.css";
+import React, { FC, useState } from 'react';
+import './OidcSsoInitiatorPage.css';
 import { useAppSelector } from '../../app/hooks';
 
+export const TargetOptions = {
+  NEW_TAB: '_blank',
+  IFRAME: 'OIDC_iFrame',
+};
 
 const OidcSsoInitiatorPage: FC = () => {
-  const { openOption, iframeSettings, initUrl } = useAppSelector((state: any) => state.session);
-   const [showIframe, setShowIframe] = useState(false);
+  const { openOption, iframeSettings, initUrl } = useAppSelector((state: any) => state.home);
+  const [showIframe, setShowIframe] = useState(false);
 
   const handleClick = () => {
     // Show iframe only when link is clicked
     setShowIframe(true);
   };
-  console.log(iframeSettings,'iframeSettingsiframeSettings');
+
   return (
-    <main className="oidc-sso-initiator-page">
-      <div>
+    <>
+      <div className="auto-reload-message">
+        This page will automatically reload after 5 minutes, as the client_id and client_secret
+        expire and are regenerated every 5 minutes.
+      </div>
+      <div className="sign-url">
         <h3>Sign in Securely</h3>
-        <Link
+        <a
           href={initUrl}
-          underline="always"
-          color="primary"
-          target={openOption === 'newTab' ? '_blank' : 'OIDC_iFrame'}
+          target={openOption === 'newTab' ? TargetOptions.NEW_TAB : TargetOptions.IFRAME}
           rel="noopener noreferrer"
           onClick={handleClick}
         >
           Start OIDC SSO
-        </Link>
-        {(iframeSettings && showIframe) &&<iframe
-          name="OIDC_iFrame"
-          title="OIDC SSO Frame"
-          style={{ width: "100%", height: "500px", border: "1px solid #ccc", marginTop: "20px" }}
-        ></iframe>}
+        </a>
+        {iframeSettings && showIframe && (
+          <iframe
+            name={TargetOptions.IFRAME}
+            title="OIDC SSO Frame"
+            style={{
+              width: `${iframeSettings.displayWidth}%`,
+              height: '500px',
+              border: '1px solid #ccc',
+              marginTop: '20px',
+            }}
+          />
+        )}
       </div>
-    </main>
+    </>
   );
 };
 
