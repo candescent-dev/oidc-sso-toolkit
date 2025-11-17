@@ -37,12 +37,13 @@ export class AuthController {
    * @throws BadRequestException if the client_id is invalid or client is not authenticated
    */
   @Get('authorize')
-  authorize(@Req() req: Request, @Query() query: AuthorizeDto, @Res() res: Response): Response {
+  async authorize(@Query() query: AuthorizeDto, @Res() res: Response): Promise<Response> {
     const { client_id, response_type, scope, redirect_uri, state } = query;
-    // Validate client from session
-    // if (!this.authService.validateClientFromSession(req.session ?? null, client_id)) {
-    //   throw new BadRequestException('Invalid client_id or client not authenticated');
-    // }
+    // Validate client from cache
+    const isValidClient = await this.authService.validateClientFromCache(client_id);
+    if (!isValidClient) {
+      throw new BadRequestException('Invalid client_id or client not authenticated');
+    }
     // Generate a one-time authorization code for valid client request
     const authCode = this.authService.generateAuthCode({
       client_id,
@@ -72,7 +73,11 @@ export class AuthController {
    * @throws UnauthorizedException if Authorization header or client credentials are invalid
    */
   @Post('token')
-  token(@Body() body: { code: string }, @Req() req: Request, @Res() res: Response): Response {
+  async token(
+    @Body() body: { code: string },
+    @Req() req: Request,
+    @Res() res: Response,
+  ): Promise<Response> {
     const { code } = body || {};
     // Check for authorization code in request body
     if (!code) {
@@ -90,10 +95,11 @@ export class AuthController {
     if (!client_id || !client_secret) {
       throw new UnauthorizedException('Invalid Authorization header credentials');
     }
-    // Validate client credentials (client_id + client_secret) from session
-    // if (!this.authService.validateClientFromSession(req.session, client_id, client_secret)) {
-    //   throw new UnauthorizedException('Invalid Authorization header credentials');
-    // }
+    // Validate client credentials (client_id + client_secret) from cache
+    const isValidClient = await this.authService.validateClientFromCache(client_id, client_secret);
+    if (!isValidClient) {
+      throw new UnauthorizedException('Invalid Authorization header credentials');
+    }
     // Validate authorization code
     const authData = this.authService.validateAuthCode(code);
     if (!authData || authData.client_id !== client_id) {

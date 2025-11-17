@@ -2,7 +2,6 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { AppModule } from './../src/app.module';
-const session = require('express-session');
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 import { AuthorizeDto } from './../src/auth/dto/authorize.dto';
@@ -28,14 +27,6 @@ describe('AppController (e2e)', () => {
         .compile();
 
       app = moduleFixture.createNestApplication();
-      app.use(
-        session({
-          secret: 'test-secret',
-          resave: false,
-          saveUninitialized: false,
-          cookie: { secure: false },
-        }),
-      );
       console.log('** BEFORE init **');
       await app.init();
       agent = request.agent(app.getHttpServer());
@@ -85,14 +76,13 @@ describe('AppController (e2e)', () => {
     });
     console.log('Get client API Response Body:', res.body);
     expect(res.status).toBe(200);
-    expect(res.body).toHaveProperty('message', 'Credentials retrieved from session.');
+    expect(res.body).toHaveProperty('message', 'Credentials retrieved from cache.');
     expect(res.body).toHaveProperty('credentials.client_id');
     expect(res.body.credentials.client_id).toBe(fetchfromPost_client_id);
     expect(res.body).toHaveProperty('credentials.client_secret');
     expect(res.body.credentials.client_secret).toBe(fetchfromPost_client_secret);
     expect(res.body).toHaveProperty('credentials.created_at');
     expect(res.body.credentials.created_at).toBe(fetchfromPost_created_at);
-
     authCode = Buffer.from(fetchfromPost_client_id + ':' + fetchfromPost_client_secret).toString(
       'base64',
     );

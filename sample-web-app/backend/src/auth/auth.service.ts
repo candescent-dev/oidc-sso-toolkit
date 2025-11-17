@@ -1,12 +1,16 @@
-import { Injectable, OnApplicationShutdown } from '@nestjs/common';
+import { Inject, Injectable, OnApplicationShutdown } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import type { Cache } from 'cache-manager';
 import { randomBytes } from 'crypto';
 import * as jwt from 'jsonwebtoken';
 import { AuthCodeData, AccessTokenData, UserClaims } from './types/auth.types';
 import { SsoConfigService } from '../ssoConfig/ssoConfig.service';
 import { SSOConfig } from '../ssoConfig/types/ssoConfig.types';
+import type { ClientCredentials } from '../client/types/client.types';
 
 @Injectable()
 export class AuthService implements OnApplicationShutdown {
+  private readonly CACHE_KEY = 'client_credentials';
   // In-memory stores for OAuth2 data
   private readonly authCode: Record<string, AuthCodeData> = {};
   private readonly accessToken: Record<string, AccessTokenData> = {};
@@ -20,7 +24,10 @@ export class AuthService implements OnApplicationShutdown {
   // Interval reference
   private cleanupInterval: ReturnType<typeof setInterval>;
 
-  constructor(private readonly ssoConfigService: SsoConfigService) {
+  constructor(
+    private readonly ssoConfigService: SsoConfigService,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
+  ) {
     // Initialize configuration from the injected service
     this.ssoConfig = this.ssoConfigService.getConfig();
     this.privateKey = this.ssoConfig.private_key;
@@ -36,6 +43,27 @@ export class AuthService implements OnApplicationShutdown {
   // Lifecycle hook: called on app shutdown
   onApplicationShutdown(signal?: string) {
     clearInterval(this.cleanupInterval);
+  }
+
+  /**
+   * Validate client credentials against cache
+   * @param client_id Client ID to validate
+   * @param client_secret Optional Client Secret to validate
+   * @returns true if valid, false otherwise
+   */
+  public async validateClientFromCache(
+    client_id: string,
+    client_secret?: string,
+  ): Promise<boolean> {
+    const stored: ClientCredentials | undefined = await this.cacheManager.get<ClientCredentials>(
+      this.CACHE_KEY,
+    );
+    if (!stored) return false; // no credentials in cache
+    // Always check client_id
+    if (stored.client_id !== client_id) return false;
+    // If client_secret is provided, check that too
+    if (client_secret && stored.client_secret !== client_secret) return false;
+    return true;
   }
 
   /**
