@@ -101,7 +101,7 @@ describe('AppController (e2e)', () => {
 
   it('validate authorise api generating redirectUrl with code and state', async () => {
     const res = await agent
-      .post(authoriseApi)
+      .get(authoriseApi)
       .query({
         client_id: fetchfromPost_client_id,
         response_type: 'code',
@@ -114,7 +114,7 @@ describe('AppController (e2e)', () => {
         throw err;
       });
     console.log('authorise API Response Body:', res.body);
-    expect(res.status).toBe(201);
+    expect(res.status).toBe(200);
     expect(res.body).toHaveProperty('redirectUrl');
     code = res.body.redirectUrl.split('code=')[1].split('&')[0];
     state = res.body.redirectUrl.split('state=')[1];
@@ -124,7 +124,7 @@ describe('AppController (e2e)', () => {
   it('validate authorise api with invalidClientId in queryParams', async () => {
     let invalidClientId = 'invalidClientId123';
     const res = await agent
-      .post(authoriseApi)
+      .get(authoriseApi)
       .query({
         client_id: invalidClientId,
         response_type: 'code',
@@ -213,7 +213,7 @@ describe('AppController (e2e)', () => {
   it('validate authorise api with invalidRedirect_uri in queryParams', async () => {
     let invalid_redirect_uri = 'invalidRedirectUri.com/callback';
     const res = await agent
-      .post(authoriseApi)
+      .get(authoriseApi)
       .query({
         client_id: fetchfromPost_client_id,
         response_type: 'code',
