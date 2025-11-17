@@ -25,10 +25,3 @@ export interface UserClaims {
   preferred_username: string;
   phone_number: string;
 }
-
-export interface ClientSession {
-  clientCredentials?: {
-    client_id: string;
-    client_secret?: string;
-  };
-}

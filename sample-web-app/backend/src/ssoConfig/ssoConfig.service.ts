@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { Injectable, Inject } from '@nestjs/common';
 import { SSOConfig } from './types/ssoConfig.types';
-import { CONFIG } from '../config/config.provider';
+import { APP_CONFIG } from '../appConfig/appConfig.provider';
 
 const SSO_CONFIG_PATH = './sso-config.json';
 const PRIVATE_KEY_PATH = '../../certs/private.pem';
@@ -11,7 +11,7 @@ const PRIVATE_KEY_PATH = '../../certs/private.pem';
 export class SsoConfigService {
   private readonly ssoConfig: SSOConfig;
 
-  constructor(@Inject(CONFIG) private readonly config: { backendPort: number }) {
+  constructor(@Inject(APP_CONFIG) private readonly config: { backendPort: number }) {
     // Load SSO config
     const ssoConfigPath = path.resolve(__dirname, SSO_CONFIG_PATH);
     if (!fs.existsSync(ssoConfigPath)) throw new Error(`Missing SSO config at ${ssoConfigPath}`);

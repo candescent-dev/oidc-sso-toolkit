@@ -1,18 +1,17 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import session from 'express-session';
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
-import { CONFIG } from './config/config.provider';
+import { APP_CONFIG } from './appConfig/appConfig.provider';
 
 const FRONTEND_CONFIG_PATH = '../../../frontend/public/api.config.json';
 
 async function bootstrap() {
   // Create a new NestJS application instance
   const app = await NestFactory.create(AppModule);
-  const config = app.get<{ backendPort: number }>(CONFIG);
-  const port = config.backendPort;
+  const appConfig = app.get<{ backendPort: number }>(APP_CONFIG);
+  const port = appConfig.backendPort;
 
   // Update frontend/public/config.json dynamically
   const frontendConfig = {
@@ -35,16 +34,6 @@ async function bootstrap() {
 
   // Set global prefix for all routes
   app.setGlobalPrefix('api'); // makes all routes start with /api
-
-  // Set up session middleware (stores session data on the server)
-  app.use(
-    session({
-      secret: 'my-dev-secret', // secret used to sign the session ID cookie
-      resave: false, // don't save session if unmodified
-      saveUninitialized: false, // don't create session until something is stored
-      cookie: { maxAge: 5 * 60 * 1000 }, // session expires in 5 minutes
-    }),
-  );
 
   // Enable global validation for incoming requests
   app.useGlobalPipes(

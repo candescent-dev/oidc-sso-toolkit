@@ -1,7 +1,7 @@
 import { Injectable, OnApplicationShutdown } from '@nestjs/common';
 import { randomBytes } from 'crypto';
 import * as jwt from 'jsonwebtoken';
-import { AuthCodeData, AccessTokenData, UserClaims, ClientSession } from './types/auth.types';
+import { AuthCodeData, AccessTokenData, UserClaims } from './types/auth.types';
 import { SsoConfigService } from '../ssoConfig/ssoConfig.service';
 import { SSOConfig } from '../ssoConfig/types/ssoConfig.types';
 
@@ -36,25 +36,6 @@ export class AuthService implements OnApplicationShutdown {
   // Lifecycle hook: called on app shutdown
   onApplicationShutdown(signal?: string) {
     clearInterval(this.cleanupInterval);
-  }
-
-  /**
-   * Validate client credentials (client_id and optionally client_secret) from the session
-   * If only client_id is provided, validates only client_id
-   * If both client_id and client_secret are provided, validates both
-   */
-  validateClientFromSession(
-    session: ClientSession | null,
-    client_id: string,
-    client_secret?: string,
-  ): boolean {
-    if (!session?.clientCredentials) return false;
-    const stored = session.clientCredentials;
-    // Always check client_id
-    if (stored.client_id !== client_id) return false;
-    // If client_secret is provided, check that too
-    if (client_secret && stored.client_secret !== client_secret) return false;
-    return true;
   }
 
   /**

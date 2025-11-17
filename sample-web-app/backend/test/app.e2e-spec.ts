@@ -8,7 +8,7 @@ import { validate } from 'class-validator';
 import { AuthorizeDto } from './../src/auth/dto/authorize.dto';
 import { SsoConfigService } from '../src/ssoConfig/ssoConfig.service';
 import { SsoConfigServiceMock } from '../src/ssoConfig/ssoConfig.service.mock';
-import { CONFIG } from '../src/config/config.provider';
+import { APP_CONFIG } from '../src/appConfig/appConfig.provider';
 
 describe('AppController (e2e)', () => {
   let app: INestApplication;
@@ -21,7 +21,7 @@ describe('AppController (e2e)', () => {
       })
         .overrideProvider(SsoConfigService)
         .useValue(SsoConfigServiceMock)
-        .overrideProvider(CONFIG)
+        .overrideProvider(APP_CONFIG)
         .useValue({
           backendPort: 9999,
         })
