@@ -2,8 +2,8 @@ export interface AuthValidatorConfig {
   client_id: string;
   client_secret: string;
   redirect_uri: string;
+  redirectUrl: string;
   state?: string;
-  code: string;
 }
 
 export interface AuthorizePayload {
@@ -12,4 +12,11 @@ export interface AuthorizePayload {
   response_type: string;
   scope: string;
   state?: string;
+}
+
+export interface TokenResponse {
+  id_token: string;
+  token_type: string;
+  expires_in: number;
+  access_token: string;
 }

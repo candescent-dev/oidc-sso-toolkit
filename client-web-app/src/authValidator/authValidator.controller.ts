@@ -1,52 +1,82 @@
-import { Controller, Get, Res, HttpStatus } from '@nestjs/common';
+import { Controller, Get } from '@nestjs/common';
 import { AuthValidatorService } from './authValidator.service';
-import { AuthValidatorConfig, AuthorizePayload } from '../types/authValidator.types';
-import type { Response } from 'express';
+import { AuthValidatorConfig, AuthorizePayload, TokenResponse } from '../types/authValidator.types';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as url from 'url';
+
+/** Return type: either TokenResponse on success, or raw external API error */
+type AuthorizeAndTokenResult = TokenResponse | Record<string, unknown>;
 
 @Controller('auth-validator')
 export class AuthValidatorController {
   private readonly configPath = path.resolve('src/authValidatorConfig/config.json');
+  private config: AuthValidatorConfig;
 
   constructor(private readonly authValidatorService: AuthValidatorService) {}
 
-  /**
-   * Endpoint to validate "/authorize" endpoint using JSON config.
-   * @param query Optional query parameter 'state'
-   * @param res Express response object used to send redirect URL or JSON
-   */
-  @Get('call-authorize')
-  async authorize(@Res() res: Response): Promise<Response> {
-    try {
-      // Check if config file exists
+  /** Load config from file */
+  private loadAuthValidatorConfig(): AuthValidatorConfig {
+    if (!this.config) {
       if (!fs.existsSync(this.configPath)) {
-        return res
-          .status(HttpStatus.INTERNAL_SERVER_ERROR)
-          .json({ message: 'AuthValidatorConfig file not found' });
+        throw new Error('AuthValidatorConfig file not found');
       }
-      // Read and parse config file
-      const configFile = fs.readFileSync(this.configPath, 'utf-8');
-      const config: AuthValidatorConfig = JSON.parse(configFile);
-      // Build payload to send to service
+      const file = fs.readFileSync(this.configPath, 'utf8');
+      this.config = JSON.parse(file) as AuthValidatorConfig;
+    }
+    return this.config;
+  }
+
+  /** Save config to file */
+  private saveAuthValidatorConfig(): void {
+    fs.writeFileSync(this.configPath, JSON.stringify(this.config, null, 2), 'utf8');
+  }
+  /** Combined endpoint: calls authorize and then exchangeToken */
+  @Get('call-authorize-and-token')
+  async authorizeAndExchangeToken(): Promise<AuthorizeAndTokenResult> {
+    try {
+      const config = this.loadAuthValidatorConfig();
+      // Build authorize payload
       const payload: AuthorizePayload = {
         client_id: config.client_id,
         redirect_uri: config.redirect_uri,
         response_type: 'code',
         scope: 'openid',
       };
-      // Add state only if present in config
       if (config.state) {
         payload.state = config.state;
       }
-      // Call service
-      const result = await this.authValidatorService.authorizeClient(payload);
-      // Return JSON with redirect URL
-      return res.status(HttpStatus.OK).json({ redirectUrl: result.redirectUrl });
-    } catch (error) {
-      return res
-        .status(HttpStatus.BAD_REQUEST)
-        .json({ message: error.message || 'Authorization failed' });
+      //  Call authorize Api
+      const authorizeResult = await this.authValidatorService.authorizeClient(payload);
+      if (!authorizeResult.success) {
+        return authorizeResult.error;
+      }
+      const redirectUrl = authorizeResult.data.redirectUrl;
+      // Extract auth code
+      const parsedUrl = new url.URL(redirectUrl);
+      const authCode = parsedUrl.searchParams.get('code');
+      if (!authCode) {
+        return { message: '"/authorize" - Missing authorization code in redirectUrl' };
+      }
+      // Update config file
+      config.redirectUrl = redirectUrl;
+      this.saveAuthValidatorConfig();
+      // Call token Api
+      const tokenResult = await this.authValidatorService.exchangeToken(
+        config.client_id,
+        config.client_secret,
+        authCode,
+      );
+      if (!tokenResult.success) {
+        return tokenResult.error;
+      }
+      // Return token response
+      return tokenResult.data;
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        return { message: err.message };
+      }
+      return { error: err };
     }
   }
 }

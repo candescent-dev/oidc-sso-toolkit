@@ -1,7 +1,7 @@
 {
-  "client_id": "XVs4bByhcNB3GMOKwEWzpQ",
-  "client_secret": "xXZ4ZcILwtNSB0OuJR2XiqzSCOImheQj5c0hDjjqBJQ",
+  "client_id": "iIQZEUMJJDRGNbDaXOrcBQ",
+  "client_secret": "tzQpsox9UcCp-JRXUzgb9PUdgMQzfIGKB0u9qmyAX20",
   "redirect_uri": "https://yourapp.com/callback",
-  "state": "",
-  "code": ""
+  "redirectUrl": "https://yourapp.com/callback?code=SzRjFjAOY&state=jt4ozs",
+  "state": "jt4ozs"
 }
