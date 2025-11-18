@@ -1,8 +1,16 @@
+.auto-reload-message {
+  color: #666666;
+  margin: 1.5rem 1rem 0 1rem;
+  line-height: 1.4;
+  font-size: clamp(0.75rem, 1vw + 0.35rem, 0.9rem);
+  font-family: 'Inter', Arial, sans-serif;
+}
+
 /* === Main Layout === */
 .home-container {
   padding: 2rem;
   margin: 1rem auto;
-  max-width: 56.25rem;
+  max-width: 600px;
   font-family: 'Inter', Arial, sans-serif;
 }
 
@@ -16,10 +24,10 @@
 
 .header-row h1 {
   margin: 0 0 0.25rem 0;
-  font-size: 1.5rem;
-  font-weight: 600;
+  font-size: 25px;
+  font-weight: 650;
   color: #2a2a2a;
-  letter-spacing: 0.0125rem;
+  letter-spacing: -0.4px;
 }
 
 .inputs {
@@ -36,20 +44,21 @@
 
 /* === Client ID & Secret Key === */
 .field-row label {
-  color: #444444;
-  font-weight: 600;
+  color: #212121;
+  font-weight: 500;
+  font-size: 16px;
 }
 
 .field-value {
-  font-size: 0.9375rem;
-  color: #222222;
-  font-weight: 500;
-  word-break: break-all;
+  font-size: 16px;
+  color: #656565;
+  font-weight: 400;
+  letter-spacing: -0.16px;
 }
 
 .secret-key {
-  padding-bottom: 0.0625rem;
-  border-bottom: 0.00390625rem solid #e1e4e8;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #e1e4e8;
 }
 
 /* === Floating Label Inputs === */
@@ -62,13 +71,12 @@
 .inline-label {
   position: absolute;
   left: 1rem;
+  top: -6px;
   font-size: 0.8rem;
   background: #ffffff;
+  color: #767676;
   padding: 0 0.25rem;
-  transition:
-    color 0.2s ease,
-    top 0.2s ease,
-    font-size 0.2s ease;
+  transition: color 0.2s ease, top 0.2s ease, font-size 0.2s ease;
   pointer-events: none;
 }
 
@@ -77,14 +85,15 @@
 }
 
 .inline-input {
-  border: 0.0625rem solid #d0d7de;
+  border: 0.0625rem solid #919191;
   border-radius: 0.5rem;
-  padding: 1.2rem 1rem 0.65rem 1.1rem;
+  padding: 25px 1rem 0.65rem 1.1rem;
   font-size: 0.95rem;
   outline: none;
-  color: #333333;
+  color: #767676;
   background: #ffffff;
   transition: border-color 0.2s ease;
+
 }
 
 .inline-input::placeholder {
@@ -96,15 +105,15 @@
 }
 
 /* === Label float & error color === */
-.inline-input:not(:placeholder-shown) + .inline-label,
-.inline-input:focus + .inline-label {
+.inline-input:not(:placeholder-shown)+.inline-label,
+.inline-input:focus+.inline-label {
   top: 0.35rem;
   font-size: 0.75rem;
   color: #555555;
 }
 
-.inline-input.error:not(:placeholder-shown) + .inline-label,
-.inline-input.error:focus + .inline-label {
+.inline-input.error:not(:placeholder-shown)+.inline-label,
+.inline-input.error:focus+.inline-label {
   color: #d93025;
 }
 
@@ -121,6 +130,7 @@
   display: flex;
   gap: 0.75rem;
   flex-wrap: wrap;
+  margin-top: 15px;
 }
 
 .button-row a {
@@ -133,16 +143,17 @@
   justify-content: center;
   gap: 0.4rem;
   background-color: #ffffff;
-  border: 0.0625rem solid #d0d7de;
+  border: 0.0625rem solid rgba(36, 58, 81, 0.50);
   border-radius: 0.375rem;
   padding: 0.6rem 1rem;
-  font-size: 0.875rem;
+  font-size: 15px;
   color: #444444;
   cursor: pointer;
   transition: all 0.2s ease;
   max-width: 14rem;
   width: 11rem;
   text-align: center;
+  font-weight: 500px;
 }
 
 .icon-button:hover {
@@ -151,8 +162,8 @@
 }
 
 .download-icon {
-  width: 1rem;
-  height: 1rem;
+  width: 22px;
+  height: 22px;
   object-fit: contain;
   vertical-align: middle;
 }
@@ -175,14 +186,20 @@
   display: flex;
   align-items: center;
   gap: 0.375rem;
-  font-size: 0.95rem;
-  color: #555555;
+  font-size: 14px;
+  color: #656565;
   cursor: pointer;
   font-weight: 500;
+
+  span {
+    padding-top: 4px;
+  }
 }
 
 .radio-group input[type='radio'] {
   accent-color: #007bff;
+  height: 20px;
+  width: 20px;
 }
 
 .permissions {
@@ -203,26 +220,29 @@
   display: flex;
   align-items: center;
   gap: 0.375rem;
-  font-size: 0.9rem;
-  color: #555555;
+  font-size: 16px;
+  color: #212121;
+  margin-bottom: 10px;
+
+  input {
+    height: 24px;
+    width: 24px;
+  }
 }
 
 /* === Submit Button === */
 .submit-btn {
-  margin-top: 1.875rem;
   padding: 0.75rem 1.25rem;
   font-size: 1rem;
   font-weight: 500;
-  background-color: #0069d9;
+  background-color: #1A6CDA;
   color: #ffffff;
   border: none;
   border-radius: 0.5rem;
   cursor: pointer;
-  width: 11rem;
+  width: 300px;
   max-width: none;
-  transition:
-    background-color 0.25s ease,
-    transform 0.1s ease;
+  transition: background-color 0.25s ease, transform 0.1s ease;
   box-shadow: none;
   text-align: center;
 }
@@ -277,6 +297,7 @@
     opacity: 0;
     transform: translate(-50%, 1rem);
   }
+
   to {
     opacity: 1;
     transform: translate(-50%, 0);
@@ -287,6 +308,11 @@
 
 /* --- Small Devices (Phones < 600px) --- */
 @media (max-width: 37.5rem) {
+  .auto-reload-message {
+    margin: 2rem;
+    font-size: 0.9rem;
+  }
+
   .header-row {
     flex-direction: column;
     align-items: flex-start;
@@ -302,36 +328,42 @@
   }
 
   .button-row {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.625rem;
+    display: grid;
+    grid-auto-flow: column;
+    gap: 10px;
   }
 
   .icon-button {
-    width: 11rem;
+    width: 155px;
     max-width: none;
     font-size: 0.85rem;
     padding: 0.5rem 0.9rem;
   }
 
   .radio-group {
-    flex-direction: column;
     gap: 0.5rem;
   }
 
   .submit-btn {
-    width: 11rem;
+    width: 100%;
     font-size: 0.95rem;
   }
 
   .inline-input {
     padding: 1rem;
     font-size: 0.9rem;
+    padding-top: 25px;
+    padding-left: 20px;
   }
 }
 
 /* --- Medium Devices (Tablets: 600px–767px) --- */
 @media (min-width: 37.5rem) and (max-width: 47.99rem) {
+  .auto-reload-message {
+    margin: 1.25rem 1.5rem 0 1.5rem;
+    font-size: 0.95rem;
+  }
+
   .inputs {
     gap: 1.25rem;
   }
@@ -362,6 +394,12 @@
 
 /* --- Large Devices (Desktops ≥ 768px) --- */
 @media (min-width: 48rem) {
+  .auto-reload-message {
+    margin: 1.5rem auto 0 auto;
+    padding-left: 0;
+    text-align: center;
+  }
+
   .inputs {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -395,7 +433,7 @@
 
   .submit-btn {
     justify-self: start;
-    width: 11rem;
+    width: 345px;
   }
 }
 
@@ -411,7 +449,6 @@
   }
 
   .submit-btn {
-    width: 11rem;
-    font-size: 1rem;
+    font-size: 15px;
   }
 }
