@@ -53,6 +53,10 @@ jobs:
           echo "Building backend..."
           npm run build
           echo "Backend build complete."
+
+      - name: Install dependencies (root) playwright
+        working-directory: sample-web-app
+        run: npm ci
  
       - name: Run backend tests
         working-directory: sample-web-app/backend
@@ -78,6 +82,10 @@ jobs:
         uses: test-summary/action@v2
         with:
           paths: sample-web-app/backend/test-results/junit/jest-e2e.xml
+
+      - name: Install Playwright Browsers
+        working-directory: sample-web-app
+        run: npx playwright install chromium
 
       - name: Run frontend e2e tests
         working-directory: sample-web-app
