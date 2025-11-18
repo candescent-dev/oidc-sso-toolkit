@@ -39,7 +39,7 @@ describe('AppController (e2e)', () => {
   });
 
   afterAll(async () => {
-    await app.close();
+    //await app.close();
   });
 
   let fetchfromPost_client_id: string;
