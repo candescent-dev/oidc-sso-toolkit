@@ -3,7 +3,6 @@ import {
   Post,
   Query,
   Req,
-  Res,
   Body,
   Controller,
   BadRequestException,
@@ -36,7 +35,7 @@ export class AuthController {
    * @throws BadRequestException if the client_id is invalid or client is not authenticated
    */
   @Get('authorize')
-  async authorize(@Query() query: AuthorizeDto, @Res() res: Response): Promise<Response> {
+  async authorize(@Query() query: AuthorizeDto): Promise<{ redirectUrl: string }> {
     const { client_id, response_type, scope, redirect_uri, state } = query;
     // Validate client from cache
     const isValidClient = await this.authService.validateClientFromCache(client_id);
@@ -60,7 +59,7 @@ export class AuthController {
     //   return res.redirect(redirectUrl.toString());
     // }
     // For testing/API response: return redirect URL JSON
-    return res.json({ redirectUrl: redirectUrl.toString() });
+    return { redirectUrl: redirectUrl.toString() };
   }
 
   /**
@@ -75,8 +74,12 @@ export class AuthController {
   async token(
     @Body() body: { code: string },
     @Req() req: Request,
-    @Res() res: Response,
-  ): Promise<Response> {
+  ): Promise<{
+    id_token: string;
+    token_type: string;
+    expires_in: number;
+    access_token: string;
+  }> {
     const { code } = body || {};
     // Check for authorization code in request body
     if (!code) {
@@ -119,13 +122,12 @@ export class AuthController {
       phone_number: '+0000000000',
     });
     // Return OAuth2-compliant response with 5-min expiry
-    return res.json({
+    return {
       id_token,
       token_type: 'Bearer',
       expires_in:
         this.ssoConfig.access_token_expires_in ?? this.ssoConfig.id_token_expires_in ?? 300,
-      // 5 minutes
       access_token: accessTokenData.access_token,
-    });
+    };
   }
 }
