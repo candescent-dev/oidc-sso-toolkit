@@ -39,6 +39,10 @@ jobs:
       - name: Install backend dependencies
         working-directory: sample-web-app/backend
         run: npm ci
+
+      - name: Install dependencies (root) playwright
+        working-directory: sample-web-app
+        run: npm ci
  
       - name: Build frontend
         working-directory: sample-web-app/frontend
@@ -53,10 +57,6 @@ jobs:
           echo "Building backend..."
           npm run build
           echo "Backend build complete."
-
-      - name: Install dependencies (root) playwright
-        working-directory: sample-web-app
-        run: npm ci
  
       - name: Run backend tests
         working-directory: sample-web-app/backend
