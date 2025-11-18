@@ -20,3 +20,10 @@ export interface TokenResponse {
   expires_in: number;
   access_token: string;
 }
+
+export interface JWKKeys {
+  kty: 'RSA';
+  kid: string;
+  n: string;
+  e: string;
+}

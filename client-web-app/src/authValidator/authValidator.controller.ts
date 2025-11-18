@@ -7,11 +7,13 @@ import * as url from 'url';
 
 /** Return type: either TokenResponse on success, or raw external API error */
 type AuthorizeAndTokenResult = TokenResponse | Record<string, unknown>;
+const issuer = 'https://www.digitalinsight.com';
 
 @Controller('auth-validator')
 export class AuthValidatorController {
   private readonly configPath = path.resolve('src/authValidatorConfig/config.json');
   private config: AuthValidatorConfig;
+  private tokenApiResponse: TokenResponse | null = null;
 
   constructor(private readonly authValidatorService: AuthValidatorService) {}
 
@@ -70,6 +72,8 @@ export class AuthValidatorController {
       if (!tokenResult.success) {
         return tokenResult.error;
       }
+      // Store token response for later use
+      this.tokenApiResponse = tokenResult.data;
       // Return token response
       return tokenResult.data;
     } catch (err: unknown) {
@@ -77,6 +81,28 @@ export class AuthValidatorController {
         return { message: err.message };
       }
       return { error: err };
+    }
+  }
+
+  /** Endpoint to validate stored id_token */
+  @Get('validate-id-token')
+  async validateLastIdToken() {
+    if (!this.tokenApiResponse?.id_token) {
+      return {
+        isValid: false,
+        error: 'id_token not found. Call "/call-authorize-and-token" endpoint first',
+      };
+    }
+    const config = this.loadAuthValidatorConfig();
+    try {
+      const payload = await this.authValidatorService.validateIdToken(
+        this.tokenApiResponse.id_token,
+        issuer,
+        config.client_id,
+      );
+      return { isValid: true, payload };
+    } catch (err: any) {
+      return { isValid: false, error: err.message };
     }
   }
 }

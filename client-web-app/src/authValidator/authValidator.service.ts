@@ -1,9 +1,13 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom, catchError, of } from 'rxjs';
 import { AxiosResponse } from 'axios';
 import { AuthorizeDto } from './dto/authorize.dto';
 import { TokenResponse } from 'src/types/authValidator.types';
+import { jwtVerify, importJWK, JWTPayload } from 'jose';
+import { JWKKeys } from '../types/authValidator.types';
+import * as fs from 'fs';
+import * as path from 'path';
 
 export interface ServiceSuccess<T> {
   success: true;
@@ -20,8 +24,16 @@ export type ServiceResult<T> = ServiceSuccess<T> | ServiceError;
 export class AuthValidatorService {
   private readonly AUTHORIZE_ENDPOINT_URL = 'http://localhost:9000/api/auth/authorize';
   private readonly TOKEN_ENDPOINT_URL = 'http://localhost:9000/api/auth/token';
+  private readonly JWK: JWKKeys;
 
-  constructor(private readonly httpService: HttpService) {}
+  constructor(private readonly httpService: HttpService) {
+    const JWKPath = path.resolve('src/authValidatorConfig/JWK.json');
+    if (!fs.existsSync(JWKPath)) {
+      throw new InternalServerErrorException('JWK file not found');
+    }
+    const JWKFile = fs.readFileSync(JWKPath, 'utf8');
+    this.JWK = JSON.parse(JWKFile) as JWKKeys;
+  }
 
   /**
    * Calls external authorization API with query parameters.
@@ -94,5 +106,15 @@ export class AuthValidatorService {
       success: true,
       data: axiosResponse.data,
     };
+  }
+
+  /** Validate ID token signature + iss + aud */
+  async validateIdToken(idToken: string, issuer: string, audience: string): Promise<JWTPayload> {
+    const publicKey = await importJWK(this.JWK, 'RS256');
+    const { payload } = await jwtVerify(idToken, publicKey, {
+      issuer,
+      audience,
+    });
+    return payload;
   }
 }
