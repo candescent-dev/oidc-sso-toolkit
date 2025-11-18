@@ -39,6 +39,10 @@ jobs:
       - name: Install backend dependencies
         working-directory: sample-web-app/backend
         run: npm ci
+
+      - name: Install dependencies (root) playwright
+        working-directory: sample-web-app
+        run: npm ci
  
       - name: Build frontend
         working-directory: sample-web-app/frontend
@@ -79,9 +83,13 @@ jobs:
         with:
           paths: sample-web-app/backend/test-results/junit/jest-e2e.xml
 
+      - name: Install Playwright Browsers
+        working-directory: sample-web-app
+        run: npx playwright install chromium
+
       - name: Run frontend e2e tests
-        working-directory: sample-web-app/frontend
-        run: npm run test:e2e
+        working-directory: sample-web-app
+        run: npx playwright test
 
       - name: Upload e2e HTML frontend Report
         uses: actions/upload-artifact@v4
