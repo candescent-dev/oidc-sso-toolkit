@@ -6,50 +6,10 @@ import { AuthorizeDto } from './dto/authorize.dto';
 
 @Injectable()
 export class AuthValidatorService {
+  private readonly AUTHORIZE_ENDPOINT_URL = 'http://localhost:9000/api/auth/authorize';
+  private readonly TOKEN_ENDPOINT_URL = 'http://localhost:9000/api/auth/token';
+
   constructor(private readonly httpService: HttpService) {}
-
-  // private sessionCookie?: string;
-  // private extractSessionCookie(headers?: Record<string, any>): string | undefined {
-  //   if (!headers) return undefined;
-  //   const raw = headers['set-cookie'];
-  //   if (!raw) return undefined;
-  //   return Array.isArray(raw) ? raw[0] : raw;
-  // }
-
-  // /**
-  //  * Fetches session cookie & credentials from external API.
-  //  * Stores ONLY the session cookie.
-  //  */
-  // async fetchClientCredentials(): Promise<void> {
-  //   try {
-  //     const response: AxiosResponse<any> = await firstValueFrom(
-  //       this.httpService
-  //         .get('http://localhost:9000/api/client', {
-  //           withCredentials: true,
-  //         })
-  //         .pipe(
-  //           catchError((error) => {
-  //             if (error.response?.data) {
-  //               throw error.response.data;
-  //             } else {
-  //               throw { message: error.message || 'External API request failed' };
-  //             }
-  //           }),
-  //         ),
-  //     );
-  //     // Extract session cookie
-  //     const sessionCookie = this.extractSessionCookie(response?.headers);
-  //     if (sessionCookie) this.sessionCookie = sessionCookie;
-  //     if (!response.data?.credentials) {
-  //       throw {
-  //         message:
-  //           'External API did not return any session, no credentials found in session or session expired',
-  //       };
-  //     }
-  //   } catch (error) {
-  //     throw error;
-  //   }
-  // }
 
   /**
    * Calls external authorization API with query parameters.
@@ -59,25 +19,16 @@ export class AuthValidatorService {
    */
   async authorizeClient(dto: AuthorizeDto): Promise<{ redirectUrl: string }> {
     try {
-      // await this.fetchClientCredentials();
       const response: AxiosResponse<any> = await firstValueFrom(
-        this.httpService
-          .get('http://localhost:9000/api/auth/authorize', {
-            params: dto,
-            // headers: {
-            //   Cookie: this.sessionCookie,
-            // },
-            // withCredentials: true,
-          })
-          .pipe(
-            catchError((error) => {
-              if (error.response?.data) {
-                throw error.response.data;
-              } else {
-                throw { message: error.message || 'External API request failed' };
-              }
-            }),
-          ),
+        this.httpService.get(this.AUTHORIZE_ENDPOINT_URL, { params: dto }).pipe(
+          catchError((error) => {
+            if (error.response?.data) {
+              throw error.response.data;
+            } else {
+              throw { message: error.message || 'External API request failed' };
+            }
+          }),
+        ),
       );
       if (!response.data?.redirectUrl) {
         throw { message: 'External API did not return redirectUrl' };
