@@ -29,8 +29,7 @@ export class AuthController {
 
   /**
    * Handle authorization requests to generate an authorization code
-   * Validates client from session, then creates a one-time auth code
-   * @param req Express request object containing session info
+   * Validates client from cache, then creates a one-time auth code
    * @param query Query parameters including client_id, response_type, scope, redirect_uri, and optional state
    * @param res Express response object used to send redirect URL or JSON
    * @returns JSON object containing the redirect URL with appended auth code and state (for API/testing purposes)
