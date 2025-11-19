@@ -25,7 +25,10 @@ export class AuthorizeDto {
   // URL to redirect the client after authorization
   @IsString()
   @IsNotEmpty()
-  @IsUrl()
+  @IsUrl({
+    require_protocol: true, // must have http/https
+    require_tld: false, // allow localhost
+  })
   redirect_uri: string;
 
   /**

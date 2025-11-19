@@ -1,7 +1,7 @@
 {
-  "client_id": "iIQZEUMJJDRGNbDaXOrcBQ",
-  "client_secret": "tzQpsox9UcCp-JRXUzgb9PUdgMQzfIGKB0u9qmyAX20",
-  "redirect_uri": "https://yourapp.com/callback",
-  "redirectUrl": "https://yourapp.com/callback?code=SzRjFjAOY&state=jt4ozs",
+  "client_id": "Q4Byoxr1obRZFfGqH6MuaA",
+  "client_secret": "AizTvZHHF-YMJYGEOX4PsFZBw--8FzA1SFnCBoo6QUw",
+  "redirect_uri": "http://localhost:7000/api/auth-validator/call-authorize-and-token",
+  "redirectUrl": "http://localhost:7000/api/auth-validator/call-authorize-and-token?code=lcyel1Y2A&state=jt4ozs",
   "state": "jt4ozs"
 }
