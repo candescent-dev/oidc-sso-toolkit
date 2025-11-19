@@ -1,8 +1,9 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import { HttpService } from '@nestjs/axios';
-import { firstValueFrom, catchError, of } from 'rxjs';
 import { AxiosResponse } from 'axios';
+import { HttpService } from '@nestjs/axios';
+import { ConfigService } from '@nestjs/config';
 import { AuthorizeDto } from './dto/authorize.dto';
+import { firstValueFrom, catchError, of } from 'rxjs';
 import { TokenResponse } from 'src/types/authValidator.types';
 import { jwtVerify, importJWK, JWTPayload } from 'jose';
 import { JWKKeys } from '../types/authValidator.types';
@@ -22,11 +23,22 @@ export type ServiceResult<T> = ServiceSuccess<T> | ServiceError;
 
 @Injectable()
 export class AuthValidatorService {
-  private readonly AUTHORIZE_ENDPOINT_URL = 'http://localhost:9000/api/auth/authorize';
-  private readonly TOKEN_ENDPOINT_URL = 'http://localhost:9000/api/auth/token';
+  private AUTHORIZE_ENDPOINT_URL: string;
+  private TOKEN_ENDPOINT_URL: string;
   private readonly JWK: JWKKeys;
 
-  constructor(private readonly httpService: HttpService) {
+  constructor(
+    private readonly httpService: HttpService,
+    private readonly configService: ConfigService,
+  ) {
+    const port = this.configService.get<number>('backendPort');
+    if (!port) {
+      throw new InternalServerErrorException(
+        'authServerPort not found in sample-web-app/config.json',
+      );
+    }
+    this.AUTHORIZE_ENDPOINT_URL = `http://localhost:${port}/api/auth/authorize`;
+    this.TOKEN_ENDPOINT_URL = `http://localhost:${port}/api/auth/token`;
     const JWKPath = path.resolve('src/authValidatorConfig/JWK.json');
     if (!fs.existsSync(JWKPath)) {
       throw new InternalServerErrorException('JWK file not found');
