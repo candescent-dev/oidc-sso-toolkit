@@ -1,36 +1,68 @@
+/* ============================================
+   CSS Custom Properties (Design Tokens)
+   ============================================ */
+:root {
+  /* Colors */
+  --color-text-primary: #000;
+  --color-link: #1a6cda;
+
+  /* Typography */
+  --font-family: 'Inter', Arial, sans-serif;
+  --font-size-heading: 22px;
+  --font-size-link: 16px;
+  --font-weight-normal: 400;
+  --font-weight-bold: 650;
+  --line-height-base: 28px;
+  --letter-spacing-heading: -0.32px;
+  --letter-spacing-link: -0.16px;
+
+  /* Spacing */
+  --spacing-xs: 5px;
+  --spacing-zero: 0;
+  --spacing-md: 1rem;
+
+  /* Layout */
+  --height-full: 100vh;
+  --auto-reload-height: 60px;
+}
+
+/* ============================================
+   Main Container
+   ============================================ */
 .sign-url {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100vh;
-  margin: 0;
+  height: calc(var(--height-full) - var(--auto-reload-height));
+  margin: var(--spacing-zero);
   text-align: center;
-  vertical-align: middle;
   flex-direction: column;
-  font-family: 'Inter', Arial, sans-serif;
+  font-family: var(--font-family);
+  gap: var(--spacing-md);
+}
 
-  h3 {
-    color: #000;
-    text-align: center;
-    font-feature-settings:
-      'liga' off,
-      'clig' off;
-    font-size: 22px;
-    font-style: normal;
-    font-weight: 650;
-    line-height: 28px;
-    letter-spacing: -0.32px;
-    margin: 5px;
-  }
+/* ============================================
+   Typography
+   ============================================ */
+.sign-url h3 {
+  color: var(--color-text-primary);
+  text-align: center;
+  font-feature-settings: 'liga' off, 'clig' off;
+  font-size: var(--font-size-heading);
+  font-style: normal;
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-base);
+  letter-spacing: var(--letter-spacing-heading);
+  margin: 0; /* Remove margin to ensure proper centering */
+}
 
-  a {
-    font-size: 16px;
-    font-style: normal;
-    font-weight: 400;
-    line-height: 28px;
-    letter-spacing: -0.16px;
-    text-decoration: underline;
-    color: #1a6cda;
-    cursor: pointer;
-  }
+.sign-url a {
+  font-size: var(--font-size-link);
+  font-style: normal;
+  font-weight: var(--font-weight-normal);
+  line-height: var(--line-height-base);
+  letter-spacing: var(--letter-spacing-link);
+  text-decoration: underline;
+  color: var(--color-link);
+  cursor: pointer;
 }
