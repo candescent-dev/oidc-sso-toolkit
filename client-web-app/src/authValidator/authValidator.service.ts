@@ -34,7 +34,7 @@ export class AuthValidatorService {
     const port = this.configService.get<number>('backendPort');
     if (!port) {
       throw new InternalServerErrorException(
-        'authServerPort not found in sample-web-app/config.json',
+        'backendPort not found in sample-web-app/config.json',
       );
     }
     this.AUTHORIZE_ENDPOINT_URL = `http://localhost:${port}/api/auth/authorize`;
