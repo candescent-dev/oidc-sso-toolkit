@@ -13,8 +13,16 @@ FROM node:18-alpine
 COPY --from=backend /app/backend /app/backend
 COPY --from=frontend /usr/share/nginx/html /app/frontend
 
+COPY config.json /app/config.json
+
 RUN npm install -g serve
 
-EXPOSE 8000 9000
+RUN apk update && apk add --no-cache jq
 
-CMD sh -c "node /app/backend/dist/src/main.js & serve -s /app/frontend -l 8000"
+CMD sh -c '\
+  BACKEND_PORT=$(jq -r ".backendPort" /app/config.json); \
+  echo $BACKEND_PORT;\
+  FRONTEND_PORT=8000; \
+  node /app/backend/dist/src/main.js --port $BACKEND_PORT & \
+  serve -s /app/frontend -l $FRONTEND_PORT \
+'

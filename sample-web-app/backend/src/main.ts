@@ -6,7 +6,7 @@ import { AppModule } from './app.module';
 import { APP_CONFIG } from './appConfig/appConfig.provider';
 
 const FRONTEND_PUBLIC_CONFIG_PATH = '../../../frontend/public/api.config.json';
-const FRONTEND_BUILD_CONFIG_PATH = '../../../frontend/build/api.config.json';
+const FRONTEND_BUILD_CONFIG_PATH = '../../../frontend/api.config.json';
 
 async function bootstrap() {
   // Create a new NestJS application instance
