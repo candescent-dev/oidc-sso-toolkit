@@ -5,7 +5,8 @@ import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
 import { APP_CONFIG } from './appConfig/appConfig.provider';
 
-const FRONTEND_CONFIG_PATH = '../../../frontend/public/api.config.json';
+const FRONTEND_PUBLIC_CONFIG_PATH = '../../../frontend/public/api.config.json';
+const FRONTEND_BUILD_CONFIG_PATH = '../../../frontend/build/api.config.json';
 
 async function bootstrap() {
   // Create a new NestJS application instance
@@ -13,16 +14,21 @@ async function bootstrap() {
   const appConfig = app.get<{ backendPort: number }>(APP_CONFIG);
   const port = appConfig.backendPort;
 
-  // Update frontend/public/config.json dynamically
+  // Update frontend config both (local + build)
   const frontendConfig = {
     apiBaseURL: `http://localhost:${port}/api`,
   };
-  const frontendConfigPath = path.resolve(__dirname, FRONTEND_CONFIG_PATH);
-  try {
-    fs.writeFileSync(frontendConfigPath, JSON.stringify(frontendConfig, null, 2));
-    console.log(`Updated frontend config.json with baseURL: ${frontendConfig.apiBaseURL}`);
-  } catch (err: any) {
-    console.warn('Could not update frontend config.json:', err.message);
+  const pathsToUpdate = [
+    path.resolve(__dirname, FRONTEND_PUBLIC_CONFIG_PATH),
+    path.resolve(__dirname, FRONTEND_BUILD_CONFIG_PATH),
+  ];
+  for (const filePath of pathsToUpdate) {
+    try {
+      fs.writeFileSync(filePath, JSON.stringify(frontendConfig, null, 2));
+      console.log(`Updated ${filePath} with baseURL: ${frontendConfig.apiBaseURL}`);
+    } catch (err: any) {
+      console.warn(`Could not update ${filePath}:`, err.message);
+    }
   }
 
   // Enable custom CORS options
