@@ -13,7 +13,7 @@
   --color-text-placeholder-light: #999999;
   --color-text-disabled: #f1f1f1;
   --color-error: #d93025;
-  --color-primary: #1A6CDA;
+  --color-primary: #1a6cda;
   --color-primary-hover: #007bff;
   --color-disabled: #c7c7c7;
   --color-background: #ffffff;
@@ -190,7 +190,10 @@
   background: var(--color-background);
   color: var(--color-text-placeholder);
   padding: 0 var(--spacing-xs);
-  transition: color var(--transition-base), top var(--transition-base), font-size var(--transition-base);
+  transition:
+    color var(--transition-base),
+    top var(--transition-base),
+    font-size var(--transition-base);
   pointer-events: none;
 }
 
@@ -201,7 +204,8 @@
 .inline-input {
   border: 0.0625rem solid var(--color-border);
   border-radius: var(--radius-md);
-  padding: var(--input-padding-top) var(--input-padding-horizontal) var(--input-padding-bottom) var(--input-padding-horizontal-large);
+  padding: var(--input-padding-top) var(--input-padding-horizontal) var(--input-padding-bottom)
+    var(--input-padding-horizontal-large);
   font-size: var(--font-size-lg);
   outline: none;
   color: var(--color-text-placeholder);
@@ -218,15 +222,15 @@
 }
 
 /* Label float & error color */
-.inline-input:not(:placeholder-shown)+.inline-label,
-.inline-input:focus+.inline-label {
+.inline-input:not(:placeholder-shown) + .inline-label,
+.inline-input:focus + .inline-label {
   top: var(--label-top-focused);
   font-size: var(--font-size-xs);
   color: var(--color-text-muted);
 }
 
-.inline-input.error:not(:placeholder-shown)+.inline-label,
-.inline-input.error:focus+.inline-label {
+.inline-input.error:not(:placeholder-shown) + .inline-label,
+.inline-input.error:focus + .inline-label {
   color: var(--color-error);
 }
 
@@ -244,7 +248,6 @@
   display: flex;
   gap: var(--spacing-lg);
   flex-wrap: wrap;
-  margin-top: var(--spacing-xl);
 }
 
 .button-row a {
@@ -293,7 +296,9 @@
   cursor: pointer;
   width: var(--button-width-lg);
   max-width: none;
-  transition: background-color var(--transition-slow), transform var(--transition-fast);
+  transition:
+    background-color var(--transition-slow),
+    transform var(--transition-fast);
   box-shadow: none;
   text-align: center;
 }
@@ -344,7 +349,6 @@
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
-  margin-top: 0.3rem;
   color: var(--color-text-muted);
 }
 
