@@ -33,6 +33,7 @@ export class AuthValidatorController {
   private saveAuthValidatorConfig(): void {
     fs.writeFileSync(this.configPath, JSON.stringify(this.config, null, 2), 'utf8');
   }
+
   /** Combined endpoint: calls authorize and then exchangeToken */
   @Get('call-authorize-and-token')
   async authorizeAndExchangeToken(): Promise<AuthorizeAndTokenResult> {
@@ -47,9 +48,10 @@ export class AuthValidatorController {
         response_type: 'code',
         scope: 'openid',
       };
-      if (config.state) {
-        payload.state = config.state;
-      }
+      //  Generate State
+      console.log('[Auth Validator] generating random state for "/authorize" endpoint');
+      const state = this.authValidatorService.generateState();
+      payload.state = state;
       //  Call authorize Api
       console.log('[Auth Validator] Making a call to "/authorize" endpoint');
       const authorizeResult = await this.authValidatorService.authorizeClient(payload);
@@ -58,14 +60,22 @@ export class AuthValidatorController {
         return authorizeResult.error;
       }
       const redirectUrl = authorizeResult.data.redirectUrl;
-      console.log('[Auth Validator] /authorize succeeded, redirectUrl received - ', redirectUrl);
+      console.log('[Auth Validator] /authorize succeeded, redirectUrl received -', redirectUrl);
       // Extract auth code
       const parsedUrl = new url.URL(redirectUrl);
       const authCode = parsedUrl.searchParams.get('code');
-      console.log('[Auth Validator] Parsing redirect URL to extract authorization code - ', authCode);
+      const returnedState = parsedUrl.searchParams.get('state');
+      console.log(
+        '[Auth Validator] Parsing redirect URL to extract authorization code -',
+        authCode,
+      );
       if (!authCode) {
         console.error('[Auth Validator] Missing authorization code in redirectUrl');
         return { message: '"/authorize" - Missing authorization code in redirectUrl' };
+      }
+      if (state && returnedState !== state) {
+        console.error('[Auth Validator] State mismatch – CSRF validation failed');
+        return { message: 'State mismatch – CSRF validation failed' };
       }
       // Update config file
       console.log('[Auth Validator] Updating config with redirectUrl');

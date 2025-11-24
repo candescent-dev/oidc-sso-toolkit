@@ -7,6 +7,7 @@ import { firstValueFrom, catchError, of } from 'rxjs';
 import { TokenResponse } from 'src/types/authValidator.types';
 import { jwtVerify, importJWK, JWTPayload } from 'jose';
 import { JWKKeys } from '../types/authValidator.types';
+import { randomBytes } from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -33,9 +34,7 @@ export class AuthValidatorService {
   ) {
     const port = this.configService.get<number>('backendPort');
     if (!port) {
-      throw new InternalServerErrorException(
-        'backendPort not found in sample-web-app/config.json',
-      );
+      throw new InternalServerErrorException('backendPort not found in sample-web-app/config.json');
     }
     this.AUTHORIZE_ENDPOINT_URL = `http://localhost:${port}/api/auth/authorize`;
     this.TOKEN_ENDPOINT_URL = `http://localhost:${port}/api/auth/token`;
@@ -48,7 +47,26 @@ export class AuthValidatorService {
   }
 
   /**
-   * Calls external authorization API with query parameters.
+   * Generates a short, cryptographically-secure random string for OAuth2 state
+   * This string is URL-safe and suitable for OAuth2/OIDC `state` parameters
+   * It protects against CSRF and authorization-code injection attacks
+   * @param length - The length of the state string to generate (default: 6)
+   * @returns A randomly generated alphanumeric string, e.g. "jt4ozs"
+   */
+  generateState(length = 6): string {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    // Generate secure random bytes
+    const bytes = randomBytes(length);
+    // Convert bytes to characters
+    let result = '';
+    for (let i = 0; i < length; i++) {
+      result += chars[bytes[i] % chars.length];
+    }
+    return result;
+  }
+
+  /**
+   * Calls external authorization API with query parameters
    * @param Object containing client_id, response_type, scope, redirect_uri, state
    * @returns Response from external API containing redirect URL
    * @throws Throws error if API call fails or response is invalid
