@@ -17,7 +17,7 @@ async function bootstrap() {
     }),
   );
 
-  // Start the application on dynamic port (default port - 9000)
+  // Start the application on port - 7000
   await app.listen(7000);
   console.log(`Server listening on http://localhost:7000`);
 }
