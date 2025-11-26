@@ -7,6 +7,7 @@ import {
   Controller,
   BadRequestException,
   UnauthorizedException,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { SsoConfigService } from '../ssoConfig/ssoConfig.service';
 import { SSOConfig } from '../ssoConfig/types/ssoConfig.types';
@@ -57,9 +58,8 @@ export class AuthController {
     });
 
     if (!authCode) {
-        throw new InternalServerErrorException(ERROR_CODE.AUTH_CODE_GENERATION_FAILED);
-      }
-
+      throw new InternalServerErrorException(ERROR_CODE.AUTH_CODE_GENERATION_FAILED);
+    }
 
     // Build redirect URL with auth code
     const redirectUrl = new URL(redirect_uri);
