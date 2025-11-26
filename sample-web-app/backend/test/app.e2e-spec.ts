@@ -8,6 +8,7 @@ import { AuthorizeDto } from './../src/auth/dto/authorize.dto';
 import { SsoConfigService } from '../src/ssoConfig/ssoConfig.service';
 import { SsoConfigServiceMock } from '../src/ssoConfig/ssoConfig.service.mock';
 import { APP_CONFIG } from '../src/appConfig/appConfig.provider';
+import { ERROR_CODE } from './../src/auth/errors/auth.errors';
 
 describe('AppController (e2e)', () => {
   let app: INestApplication;
@@ -132,7 +133,7 @@ describe('AppController (e2e)', () => {
       });
     console.log('authorise API Response Body for invalidClientId:', res.body);
     expect(res.status).toBe(400);
-    expect(res.body).toHaveProperty('message', 'Invalid client_id or client not authenticated');
+    expect(res.body).toHaveProperty('message', ERROR_CODE.INVALID_CLIENT);
     expect(res.body).toHaveProperty('error', 'Bad Request');
     expect(res.body).toHaveProperty('statusCode', 400);
   }, 3000);
@@ -265,7 +266,7 @@ describe('AppController (e2e)', () => {
       });
     console.log('Token API Response Body:', res.body);
     expect(res.status).toBe(401);
-    expect(res.body).toHaveProperty('message', 'Invalid Authorization header credentials');
+    expect(res.body).toHaveProperty('message', ERROR_CODE.AUTH_CREDENTIALS_MISSING);
     expect(res.body).toHaveProperty('error', 'Unauthorized');
     expect(res.body).toHaveProperty('statusCode', 401);
   });
@@ -285,7 +286,7 @@ describe('AppController (e2e)', () => {
       });
     console.log('Token API Response Body:', res.body);
     expect(res.status).toBe(400);
-    expect(res.body).toHaveProperty('message', 'Invalid or expired authorization code');
+    expect(res.body).toHaveProperty('message', ERROR_CODE.INVALID_EXPIRE_AUTH_CODE);
     expect(res.body).toHaveProperty('error', 'Bad Request');
     expect(res.body).toHaveProperty('statusCode', 400);
   });
@@ -302,8 +303,31 @@ describe('AppController (e2e)', () => {
       });
     console.log('Token API Response Body:', res.body);
     expect(res.status).toBe(400);
-    expect(res.body).toHaveProperty('message', 'Missing authorization code');
+    expect(res.body).toHaveProperty('message', ERROR_CODE.AUTH_CODE_MISSING);
     expect(res.body).toHaveProperty('error', 'Bad Request');
     expect(res.body).toHaveProperty('statusCode', 400);
   });
+
+  it('validate authorize api with missing required queryParams', async () => {
+    console.log('validate authorize api with missing required queryParams');
+    let invalidClientId = 'invalidClientId123';
+    const res = await agent
+      .get(authoriseApi)
+      .query({
+        client_id: '',
+        response_type: '',
+        scope: 'openid',
+        redirect_uri: redirect_uri,
+        state: stateVal,
+      })
+      .catch((err: any) => {
+        console.error('Supertest Error:', err.res?.text || err);
+        throw err;
+      });
+    console.log('authorize API Response Body for missing required queryParams:', res.body);
+    expect(res.status).toBe(400);
+    expect(res.body).toHaveProperty('message', ERROR_CODE.MISSING_REQUIRED_PARAMS);
+    expect(res.body).toHaveProperty('error', 'Bad Request');
+    expect(res.body).toHaveProperty('statusCode', 400);
+  }, 3000);
 });

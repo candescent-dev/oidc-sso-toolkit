@@ -13,6 +13,7 @@ import { SSOConfig } from '../ssoConfig/types/ssoConfig.types';
 import type { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { AuthorizeDto } from './dto/authorize.dto';
+import { ERROR_CODE } from './errors/auth.errors';
 
 @Controller('auth')
 export class AuthController {
@@ -37,10 +38,15 @@ export class AuthController {
   @Get('authorize')
   async authorize(@Query() query: AuthorizeDto): Promise<{ redirectUrl: string }> {
     const { client_id, response_type, scope, redirect_uri, state } = query;
+
+    if (!client_id || !redirect_uri || !response_type) {
+      throw new BadRequestException(ERROR_CODE.MISSING_REQUIRED_PARAMS);
+    }
+
     // Validate client from cache
     const isValidClient = await this.authService.validateClientFromCache(client_id);
     if (!isValidClient) {
-      throw new BadRequestException('Invalid client_id or client not authenticated');
+      throw new BadRequestException(ERROR_CODE.INVALID_CLIENT);
     }
     // Generate a one-time authorization code for valid client request
     const authCode = this.authService.generateAuthCode({
@@ -49,6 +55,12 @@ export class AuthController {
       response_type,
       scope,
     });
+
+    if (!authCode) {
+        throw new InternalServerErrorException(ERROR_CODE.AUTH_CODE_GENERATION_FAILED);
+      }
+
+
     // Build redirect URL with auth code
     const redirectUrl = new URL(redirect_uri);
     redirectUrl.searchParams.append('code', authCode);
@@ -83,29 +95,29 @@ export class AuthController {
     const { code } = body || {};
     // Check for authorization code in request body
     if (!code) {
-      throw new BadRequestException('Missing authorization code');
+      throw new BadRequestException(ERROR_CODE.AUTH_CODE_MISSING);
     }
     // Validate Authorization header
     const authHeader = req.headers['authorization'];
     if (!authHeader || !authHeader.startsWith('Basic ')) {
-      throw new UnauthorizedException('Missing or invalid Authorization header');
+      throw new UnauthorizedException(ERROR_CODE.REQUEST_HEADER_MISSING_AUTHORIZATION);
     }
     // Decode "Basic base64(client_id:client_secret)"
     const base64Credentials = authHeader.split(' ')[1];
     const decoded = Buffer.from(base64Credentials, 'base64').toString('utf-8');
     const [client_id, client_secret] = decoded.split(':');
     if (!client_id || !client_secret) {
-      throw new UnauthorizedException('Invalid Authorization header credentials');
+      throw new UnauthorizedException(ERROR_CODE.AUTH_CREDENTIALS_MISSING);
     }
     // Validate client credentials (client_id + client_secret) from cache
     const isValidClient = await this.authService.validateClientFromCache(client_id, client_secret);
     if (!isValidClient) {
-      throw new UnauthorizedException('Invalid Authorization header credentials');
+      throw new UnauthorizedException(ERROR_CODE.AUTH_CREDENTIALS_MISSING);
     }
     // Validate authorization code
     const authData = this.authService.validateAuthCode(code);
     if (!authData || authData.client_id !== client_id) {
-      throw new BadRequestException('Invalid or expired authorization code');
+      throw new BadRequestException(ERROR_CODE.INVALID_EXPIRE_AUTH_CODE);
     }
     // Generate access token
     const accessTokenData = this.authService.generateAccessToken({ client_id });
