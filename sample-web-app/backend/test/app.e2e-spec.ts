@@ -253,6 +253,24 @@ describe('AppController (e2e)', () => {
     expect(res.body).toHaveProperty('token_type');
   });
 
+  it('validate authorise api missing required params', async () => {
+    console.log('validate authorise api missing required params');
+    const res = await agent
+      .get(authoriseApi)
+      .query({
+        response_type: 'code',
+        scope: 'openid',
+        state: stateVal,
+      })
+      .catch((err: any) => {
+        console.error('Supertest Error:', err.res?.text || err);
+        throw err;
+      });
+    console.log('authorise API Response Body:', res.body);
+    expect(res.status).toBe(400);
+    expect(res.body).toHaveProperty('message', ERROR_CODE.MISSING_REQUIRED_PARAMS);
+  }, 3000);
+
   it('validate token api with invalid authorisation', async () => {
     console.log('validate token api with invalid authorisation');
     let invalidAuthCode = 'abctesting';
@@ -310,6 +328,24 @@ describe('AppController (e2e)', () => {
     expect(res.body).toHaveProperty('statusCode', 400);
   });
 
+
+  it('validate token api with no auth header', async () => {
+    console.log('validate token api with no auth header');
+    const res = await agent
+      .post(tokenApi)
+      .send({code: code})
+      .catch((err: any) => {
+        console.error('Supertest Error:', err.res?.text || err);
+        throw err;
+      });
+    console.log('Token API Response Body:', res.body);
+    expect(res.status).toBe(401);
+    expect(res.body).toHaveProperty('message', ERROR_CODE.REQUEST_HEADER_MISSING_AUTHORIZATION);
+    expect(res.body).toHaveProperty('error', 'Unauthorized');
+    expect(res.body).toHaveProperty('statusCode', 401);
+  });
+
+
 it('should delete the cache', async () => {
   const cache = app.get(CACHE_MANAGER);
   const cached = await cache.get('client_credentials');
@@ -317,7 +353,7 @@ it('should delete the cache', async () => {
     // cache del
   await cache.del('client_credentials');
   await cache.get('client_credentials').then((cached_afterExpry) => {
-    console.log('Cache cannot be deleted from the API because cache is managed internally in the application and hence after using the jest timers we cannot shift the expiry time, hence we are clearning the cache manually, Cached credentials after expiration is : -> ', cached_afterExpry);
+    console.log('Cache cannot be deleted from the API because cache is managed internally in the application and hence after using the jest timers we cannot shift the expiry time, hence we are clearning the cache manually, Cached credentials after clearing is : -> ', cached_afterExpry);
     expect(cached_afterExpry).toBeUndefined();
   });
 });
