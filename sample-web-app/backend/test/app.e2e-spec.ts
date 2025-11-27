@@ -8,6 +8,19 @@ import { AuthorizeDto } from './../src/auth/dto/authorize.dto';
 import { SsoConfigService } from '../src/ssoConfig/ssoConfig.service';
 import { SsoConfigServiceMock } from '../src/ssoConfig/ssoConfig.service.mock';
 import { APP_CONFIG } from '../src/appConfig/appConfig.provider';
+import { CACHE_MANAGER } from '@nestjs/cache-manager/dist';
+
+  let fetchfromPost_client_id: string;
+  let fetchfromPost_client_secret: string;
+  let fetchfromPost_created_at: string;
+  let redirect_uri = 'https://yourapp.com/callback';
+  let stateVal = 'statetest123';
+  let code: string, state: string;
+  let authCode: string;
+
+  const authoriseApi = '/auth/authorize';
+  const clientApi = '/client';
+  const tokenApi = '/auth/token';
 
 describe('AppController (e2e)', () => {
   let app: INestApplication;
@@ -42,17 +55,6 @@ describe('AppController (e2e)', () => {
     //await app.close();
   });
 
-  let fetchfromPost_client_id: string;
-  let fetchfromPost_client_secret: string;
-  let fetchfromPost_created_at: string;
-  let redirect_uri = 'https://yourapp.com/callback';
-  let stateVal = 'statetest123';
-  let code: string, state: string;
-  let authCode: string;
-
-  const authoriseApi = '/auth/authorize';
-  const clientApi = '/client';
-  const tokenApi = '/auth/token';
 
   it('validate POST client api should have client details in response', async () => {
     const res = await agent.post(clientApi).catch((err: any) => {
@@ -293,4 +295,20 @@ describe('AppController (e2e)', () => {
     expect(res.body).toHaveProperty('error', 'Bad Request');
     expect(res.body).toHaveProperty('statusCode', 400);
   });
+
+it('should delete the cache', async () => {
+  const cache = app.get(CACHE_MANAGER);
+  const cached = await cache.get('client_credentials');
+  console.log('Cached credentials before expiration:', cached);
+    // cache del
+  await cache.del('client_credentials');
+  await cache.get('client_credentials').then((cached_afterExpry) => {
+    console.log('Cache cannot be deleted from the API because cache is managed internally in the application and hence after using the jest timers we cannot shift the expiry time, hence we are clearning the cache manually, Cached credentials after expiration is : -> ', cached_afterExpry);
+    expect(cached_afterExpry).toBeUndefined();
+  });
 });
+
+
+
+});
+
