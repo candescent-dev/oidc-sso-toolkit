@@ -44,6 +44,10 @@ jobs:
         working-directory: sample-web-app
         run: npm ci
  
+      - name: Install client-web-app dependencies
+        working-directory: client-web-app
+        run: npm ci
+
       - name: Build frontend
         working-directory: sample-web-app/frontend
         run: |
