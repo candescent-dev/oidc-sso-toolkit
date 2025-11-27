@@ -26,6 +26,9 @@ export default defineConfig({
     }
   ],
   use: {
+    screenshot: "on",
+    video: "retain-on-failure",
+    trace: "retain-on-failure",
     baseURL: 'http://localhost:8000',
     acceptDownloads: true,
     headless: true,
