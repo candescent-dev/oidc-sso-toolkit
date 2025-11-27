@@ -9,6 +9,7 @@ import { SsoConfigService } from '../src/ssoConfig/ssoConfig.service';
 import { SsoConfigServiceMock } from '../src/ssoConfig/ssoConfig.service.mock';
 import { APP_CONFIG } from '../src/appConfig/appConfig.provider';
 import { CACHE_MANAGER } from '@nestjs/cache-manager/dist';
+import { ERROR_CODE } from '../src/auth/errors/auth.errors';
 
   let fetchfromPost_client_id: string;
   let fetchfromPost_client_secret: string;
