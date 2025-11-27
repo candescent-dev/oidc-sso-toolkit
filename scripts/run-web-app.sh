@@ -7,7 +7,6 @@ IMAGE_NAME="oidc-sso-toolkit"
 TAG="latest"
 CONTAINER_NAME="oidc-sso-toolkit-container"
 FRONTEND_PORT=${1:-8000}
-BACKEND_PORT=${2:-9000}
 
 # ---- Helpers ----
 log() {
@@ -32,19 +31,25 @@ if docker ps -a | grep -q "$CONTAINER_NAME"; then
   docker stop "$CONTAINER_NAME" > /dev/null 2>&1 || true
   docker rm "$CONTAINER_NAME" > /dev/null 2>&1 || true
 fi
+
+# ---- Extract backend port from config.json inside the image ----
+log "Reading backend port from config.json inside the image..."
+BACKEND_PORT=$(docker run --rm "$IMAGE_NAME:$TAG" sh -c 'jq -r ".backendPort" /app/config.json')
+
+if [[ -z "$BACKEND_PORT" || "$BACKEND_PORT" == "null" ]]; then
+  error_exit "Failed to read backendPort from config.json. Please check the file inside the image."
+fi
+
 # ---- Run the container ----
 log "Starting container: $CONTAINER_NAME"
-log "Port mapping: $FRONTEND_PORT:$FRONTEND_PORT (frontend), $BACKEND_PORT:$BACKEND_PORT (backend)"
+log "Port mapping: $BACKEND_PORT:$BACKEND_PORT (backend), $FRONTEND_PORT:$FRONTEND_PORT (frontend)"
 log "Image: $IMAGE_NAME:$TAG"
 
 docker run -d \
   --name "$CONTAINER_NAME" \
-  -p "$FRONTEND_PORT:$FRONTEND_PORT" \
   -p "$BACKEND_PORT:$BACKEND_PORT" \
+  -p "$FRONTEND_PORT:$FRONTEND_PORT" \
   "$IMAGE_NAME:$TAG"
-
-# ---- Check logs for errors ----
-log "Checking container logs for errors..."
 
 # ---- Check logs for errors ----
 log "Checking container logs for errors..."
@@ -57,16 +62,10 @@ fi
 # ---- Success Message ----
 log "Container started successfully!"
 log "Container ID: $(docker ps -q -f name=$CONTAINER_NAME)"
-log "Frontend: http://localhost:$FRONTEND_PORT"
 log "Backend: http://localhost:$BACKEND_PORT"
+log "Frontend: http://localhost:$FRONTEND_PORT"
 log ""
 log "To view logs: docker logs -f $CONTAINER_NAME"
 log "To stop container: docker stop $CONTAINER_NAME"
 log "To remove container: docker rm $CONTAINER_NAME"
 log "Web application is now running!"
-
-
-
-
-
-

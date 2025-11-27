@@ -8,7 +8,7 @@ const PRIVATE_KEY_PATH = '../../certs/private.pem';
 const privateKeyPath = path.resolve(__dirname, PRIVATE_KEY_PATH);
 if (!fs.existsSync(privateKeyPath))
   throw new Error(`Private key file not found at: ${privateKeyPath}`);
-let privateKey = fs.readFileSync(privateKeyPath, 'utf-8');
+const privateKey = fs.readFileSync(privateKeyPath, 'utf-8');
 
 export const mockSsoConfig: SSOConfig = {
   issuer: 'http://localhost',

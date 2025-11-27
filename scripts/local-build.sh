@@ -116,6 +116,8 @@ cp "$ROOT_DIR/sample-web-app/README.md" "$TMP_DIR/sample-web-app/" || warn "Main
 # Copy Dockerfile
 cp "$ROOT_DIR/sample-web-app/Dockerfile" "$TMP_DIR/sample-web-app/" || warn "Dockerfile not found"
 
+cp "$ROOT_DIR/sample-web-app/config.json" "$TMP_DIR/sample-web-app/config.json" || warn "config.json not found"
+
 # Copy main README.md
 cp "$ROOT_DIR/README.md" "$TMP_DIR/" || warn "Main README.md not found"
 

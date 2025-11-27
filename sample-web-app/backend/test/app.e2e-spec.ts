@@ -52,11 +52,12 @@ describe('AppController (e2e)', () => {
   });
 
   afterAll(async () => {
-    //await app.close();
+    // await app.close();
   });
 
 
   it('validate POST client api should have client details in response', async () => {
+    console.log('validate POST client api should have client details in response');
     const res = await agent.post(clientApi).catch((err: any) => {
       console.error('Supertest Error:', err.res?.text || err);
       throw err;
@@ -72,6 +73,7 @@ describe('AppController (e2e)', () => {
   });
 
   it('validate GET client api should get same client details in respone', async () => {
+    console.log('validate GET client api should get same client details in respone');
     const res = await agent.get(clientApi).catch((err: any) => {
       console.error('Supertest Error:', err.res?.text || err);
       throw err;
@@ -92,6 +94,7 @@ describe('AppController (e2e)', () => {
   }, 3000);
 
   it('validate authorise api generating redirectUrl with code and state', async () => {
+    console.log('validate authorise api generating redirectUrl with code and state');
     const res = await agent
       .get(authoriseApi)
       .query({
@@ -114,6 +117,7 @@ describe('AppController (e2e)', () => {
   }, 3000);
 
   it('validate authorise api with invalidClientId in queryParams', async () => {
+    console.log('validate authorise api with invalidClientId in queryParams');
     let invalidClientId = 'invalidClientId123';
     const res = await agent
       .get(authoriseApi)
@@ -130,12 +134,13 @@ describe('AppController (e2e)', () => {
       });
     console.log('authorise API Response Body for invalidClientId:', res.body);
     expect(res.status).toBe(400);
-    expect(res.body).toHaveProperty('message', 'Invalid client_id or client not authenticated');
+    expect(res.body).toHaveProperty('message', ERROR_CODE.INVALID_CLIENT);
     expect(res.body).toHaveProperty('error', 'Bad Request');
     expect(res.body).toHaveProperty('statusCode', 400);
   }, 3000);
 
   it('validate authorise api with no client_id in queryParams', async () => {
+    console.log('validate authorise api with no client_id in queryParams');
     const payload = {
       response_type: 'code',
       scope: 'openid',
@@ -152,6 +157,7 @@ describe('AppController (e2e)', () => {
   }, 3000);
 
   it('validate authorise api with no response_type in queryParams', async () => {
+    console.log('validate authorise api with no response_type in queryParams');
     const payload = {
       client_id: fetchfromPost_client_id,
       scope: 'openid',
@@ -171,6 +177,7 @@ describe('AppController (e2e)', () => {
   }, 3000);
 
   it('validate authorise api with no scope in queryParams', async () => {
+    console.log('validate authorise api with no scope in queryParams');
     const payload = {
       client_id: fetchfromPost_client_id,
       response_type: 'code',
@@ -187,6 +194,7 @@ describe('AppController (e2e)', () => {
   }, 3000);
 
   it('validate authorise api with no redirect_uri in queryParams', async () => {
+    console.log('validate authorise api with no redirect_uri in queryParams');
     const payload = {
       client_id: fetchfromPost_client_id,
       response_type: 'code',
@@ -203,6 +211,7 @@ describe('AppController (e2e)', () => {
   }, 3000);
 
   it('validate authorise api with invalidRedirect_uri in queryParams', async () => {
+    console.log('validate authorise api with invalidRedirect_uri in queryParams');
     let invalid_redirect_uri = 'invalidRedirectUri.com/callback';
     const res = await agent
       .get(authoriseApi)
@@ -224,6 +233,7 @@ describe('AppController (e2e)', () => {
   }, 3000);
 
   it('validate token api generating access token', async () => {
+    console.log('validate token api generating access token');
     const res = await agent
       .post(tokenApi)
       .set('Authorization', `Basic ${authCode}`)
@@ -243,6 +253,7 @@ describe('AppController (e2e)', () => {
   });
 
   it('validate token api with invalid authorisation', async () => {
+    console.log('validate token api with invalid authorisation');
     let invalidAuthCode = 'abctesting';
     const res = await agent
       .post(tokenApi)
@@ -256,12 +267,13 @@ describe('AppController (e2e)', () => {
       });
     console.log('Token API Response Body:', res.body);
     expect(res.status).toBe(401);
-    expect(res.body).toHaveProperty('message', 'Invalid Authorization header credentials');
+    expect(res.body).toHaveProperty('message', ERROR_CODE.AUTH_CREDENTIALS_MISSING);
     expect(res.body).toHaveProperty('error', 'Unauthorized');
     expect(res.body).toHaveProperty('statusCode', 401);
   });
 
   it('validate token api with invalid code', async () => {
+    console.log('validate token api with invalid code');
     let invalidCode = 'abctestingcode';
     const res = await agent
       .post(tokenApi)
@@ -275,12 +287,13 @@ describe('AppController (e2e)', () => {
       });
     console.log('Token API Response Body:', res.body);
     expect(res.status).toBe(400);
-    expect(res.body).toHaveProperty('message', 'Invalid or expired authorization code');
+    expect(res.body).toHaveProperty('message', ERROR_CODE.INVALID_EXPIRE_AUTH_CODE);
     expect(res.body).toHaveProperty('error', 'Bad Request');
     expect(res.body).toHaveProperty('statusCode', 400);
   });
 
   it('validate token api with no requestbody', async () => {
+    console.log('validate token api with no requestbody');
     const res = await agent
       .post(tokenApi)
       .set('Authorization', `Basic ${authCode}`)
@@ -291,7 +304,7 @@ describe('AppController (e2e)', () => {
       });
     console.log('Token API Response Body:', res.body);
     expect(res.status).toBe(400);
-    expect(res.body).toHaveProperty('message', 'Missing authorization code');
+    expect(res.body).toHaveProperty('message', ERROR_CODE.AUTH_CODE_MISSING);
     expect(res.body).toHaveProperty('error', 'Bad Request');
     expect(res.body).toHaveProperty('statusCode', 400);
   });

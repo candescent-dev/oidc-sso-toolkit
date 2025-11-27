@@ -20,7 +20,7 @@ export class SsoConfigService {
     const privateKeyPath = path.resolve(__dirname, PRIVATE_KEY_PATH);
     if (!fs.existsSync(privateKeyPath))
       throw new Error(`Private key file not found at: ${privateKeyPath}`);
-    let privateKey = fs.readFileSync(privateKeyPath, 'utf-8');
+    const privateKey = fs.readFileSync(privateKeyPath, 'utf-8');
     // Build URLs using the backend port from config
     const issuerUrl = `${loadConfig.issuer}:${this.config.backendPort}`;
     this.ssoConfig = {
