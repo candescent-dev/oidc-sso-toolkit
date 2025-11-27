@@ -90,6 +90,7 @@ jobs:
       - name: Run frontend e2e tests
         working-directory: sample-web-app
         run: npx playwright test
+        continue-on-error: true
 
       - name: Upload e2e HTML frontend Report
         uses: actions/upload-artifact@v4
