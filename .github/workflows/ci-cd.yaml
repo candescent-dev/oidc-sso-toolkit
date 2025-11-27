@@ -96,7 +96,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: frontend-e2e-playwright-report
-          path: sample-web-app/playwright-report/index.html
+          path: sample-web-app/playwright-report/
 
       - name: Build Docker Image
         run: |
