@@ -58,7 +58,7 @@ jobs:
       - name: Build backend
         working-directory: sample-web-app/backend
         run: |
-          echo "Building
+          echo "Building backend..."
           npm run build
           echo "Backend build complete."
 
