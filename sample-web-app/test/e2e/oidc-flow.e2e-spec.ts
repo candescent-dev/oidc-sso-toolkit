@@ -6,8 +6,8 @@ import { spawn, execSync } from 'child_process';
 
 const frontendURL = 'http://localhost:8000';
 const validatorBaseURL = 'http://localhost:7000/api/auth-validator';
-const configFilePath = path.resolve(__dirname, '../../../client-web-app/src/authValidatorConfig/config.json');
-const downloadsDir = path.resolve(__dirname, '../../downloads'); // Custom folder for downloads
+const configFilePath = path.resolve(__dirname, '../auto-dbk-devex-oidc-sso-toolkit/client-web-app/src/authValidatorConfig/config.json');
+const downloadsDir = path.resolve(process.cwd(), 'sample-web-app', 'downloads'); // Custom folder for downloads
 
 // Ensure downloads directory exists
 if (!fs.existsSync(downloadsDir)) {
@@ -17,7 +17,7 @@ if (!fs.existsSync(downloadsDir)) {
 test.describe.serial('OIDC Semi-Automated Flow', () => {
 
   // TC-001: Verify UI Elements
-  test.skip('Verify UI elements on Client Configuration page', async ({ page }) => {
+  test('Verify UI elements on Client Configuration page', async ({ page }) => {
     await page.goto(frontendURL);
     await expect(page.locator('//input[@id="initUrl"]')).toBeVisible();
     await expect(page.locator('//input[@id="callbackHost"]')).toBeVisible();
@@ -27,7 +27,7 @@ test.describe.serial('OIDC Semi-Automated Flow', () => {
 
 
 // TC-002 & TC-003: JWK Button & File Download
-test.skip('Download JWK and validate JSON structure', async ({ page }) => {
+test('Download JWK and validate JSON structure', async ({ page }) => {
   await page.goto(frontendURL);
 
   const [download] = await Promise.all([
