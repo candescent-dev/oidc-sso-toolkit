@@ -30,7 +30,7 @@ export default defineConfig({
   use: {
     baseURL: 'http://localhost:8000',
     acceptDownloads: true,
-    headless: false,
+    headless: true,
     permissions: ["clipboard-read", "clipboard-write"],
     launchOptions: {
     args: ["--disable-features=IsolateOrigins,site-per-process"],
