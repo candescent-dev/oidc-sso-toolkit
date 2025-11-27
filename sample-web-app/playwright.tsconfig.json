@@ -1,3 +1,4 @@
+
 {
   "compilerOptions": {
     "target": "ESNext",
@@ -5,13 +6,11 @@
     "moduleResolution": "Node",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "types": ["playwright"],
+    "types": ["@playwright/test", "node"],
     "skipLibCheck": true,
     "noEmit": true
   },
-
   "include": ["test/e2e/**/*"],
-
   "exclude": [
     "**/backend/**",
     "**/frontend/**",
