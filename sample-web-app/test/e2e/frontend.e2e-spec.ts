@@ -1,5 +1,6 @@
 import { test, expect, request } from '@playwright/test';
 import fs from 'fs';
+import * as path from 'path';
 
 const backend_url = 'http://localhost:9000';
 const frontend_url = 'http://localhost:8000';
@@ -28,16 +29,36 @@ test('downloads metadata JSON and validates content', async ({ page }) => {
     }
     const content = fs.readFileSync(filePath, 'utf8');
     console.log("Downloaded metadata content:", content);
-    const json = JSON.parse(content);
-    console.log("Parsed JSON:", json);
+    const actualJSON = JSON.parse(content);
+    console.log("Parsed JSON:", actualJSON);
 
     await new Promise(resolve => setTimeout(resolve, 10000));
 
     const authorization_endpoint = backend_url + '/api/auth/authorize';
     const token_endpoint = backend_url + '/api/auth/token';
 
-    expect(json).toHaveProperty('authorization_endpoint', authorization_endpoint);
-    expect(json).toHaveProperty('token_endpoint', token_endpoint);
-    expect(json).toHaveProperty('issuer', issuer);
+    expect(actualJSON).toHaveProperty('authorization_endpoint', authorization_endpoint);
+    expect(actualJSON).toHaveProperty('token_endpoint', token_endpoint);
+    expect(actualJSON).toHaveProperty('issuer', issuer);
+
+    //const expectedJSON = JSON.parse(fs.readFileSync('../sample-web-app/test/expected-metadata.json', 'utf8'));
+
+    const expectedFilePath = path.resolve(__dirname, '../expected-metadata.json');
+    const expectedJSON = JSON.parse(fs.readFileSync(expectedFilePath, 'utf8'));
+
+
+    function getAllKeys(obj: any, prefix = ''): string[] {
+    return Object.keys(obj).flatMap(key => {
+        const fullKey = prefix ? `${prefix}.${key}` : key;
+        return typeof obj[key] === 'object' && obj[key] !== null
+        ? getAllKeys(obj[key], fullKey)
+        : fullKey;
+    });
+    }
+
+    const expectedKeys = getAllKeys(expectedJSON);
+    const actualKeys = getAllKeys(actualJSON);
+
+    expect(actualKeys).toEqual(expectedKeys);
 
 });

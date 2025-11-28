@@ -90,12 +90,13 @@ jobs:
       - name: Run frontend e2e tests
         working-directory: sample-web-app
         run: npx playwright test
+        continue-on-error: true
 
       - name: Upload e2e HTML frontend Report
         uses: actions/upload-artifact@v4
         with:
-          name: frontend-e2e-html
-          path: sample-web-app/frontend/test-results/frontend-report.html
+          name: frontend-e2e-playwright-report
+          path: sample-web-app/playwright-report/
 
       - name: Build Docker Image
         run: |

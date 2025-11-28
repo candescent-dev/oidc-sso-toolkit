@@ -11,6 +11,7 @@ export default defineConfig({
     '**/backend/node_modules/**',
     '**/*.spec.ts'            // ignore Jest/Nest unit tests
   ],
+  reporter: [['html', { open: 'never' }]], 
   webServer: [
     {
       command: 'npm run start --prefix ./backend',
@@ -26,6 +27,9 @@ export default defineConfig({
     }
   ],
   use: {
+    screenshot: "on",
+    video: "retain-on-failure",
+    trace: "retain-on-failure",
     baseURL: 'http://localhost:8000',
     acceptDownloads: true,
     headless: true,
