@@ -45,7 +45,7 @@ const homeSlice = createSlice({
       }
     },
     /** Reset the home state to initial values */
-    resetHome: (state) => {
+    resetHomeState: (state) => {
       state.clientId = '';
       state.clientSecret = '';
       state.loading = false;
@@ -59,7 +59,7 @@ const homeSlice = createSlice({
 });
 
 /* ------------------------- Exports ------------------------- */
-export const { setLoading, setError, setCredentials, setHomeConfigData, resetHome } =
+export const { setLoading, setError, setCredentials, setHomeConfigData, resetHomeState } =
   homeSlice.actions;
 
 export default homeSlice.reducer;
