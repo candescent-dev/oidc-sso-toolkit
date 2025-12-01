@@ -7,7 +7,7 @@ import { spawn, execSync } from 'child_process';
 const frontendURL = 'http://localhost:8000';
 const validatorBaseURL = 'http://localhost:7000/api/auth-validator';
 
-const configFilePath = path.resolve(process.cwd(), 'client-web-app', 'src', 'authValidatorConfig', 'config.json');
+const configFilePath = path.resolve(process.cwd(), '..', 'client-web-app', 'src', 'authValidatorConfig', 'config.json');
 const downloadsDir = path.resolve(process.cwd(), 'sample-web-app', 'downloads'); // Custom folder for downloads
 let targetPath:any;
 const clientwebappDir = path.resolve(process.cwd(), 'client-web-app');
