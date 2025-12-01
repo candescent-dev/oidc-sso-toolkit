@@ -9,6 +9,8 @@ const validatorBaseURL = 'http://localhost:7000/api/auth-validator';
 
 const configFilePath = path.resolve(process.cwd(), 'auto-dbk-devex-oidc-sso-toolkit', 'client-web-app', 'src', 'authValidatorConfig', 'config.json');
 const downloadsDir = path.resolve(process.cwd(), 'sample-web-app', 'downloads'); // Custom folder for downloads
+let targetPath:any;
+const clientwebappDir = path.resolve(process.cwd(), 'client-web-app');
 
 // Ensure downloads directory exists
 if (!fs.existsSync(downloadsDir)) {
@@ -37,8 +39,6 @@ test.describe.serial('OIDC Semi-Automated Flow', () => {
         ]);
 
         // Save file to custom folder
-        const suggestedName = download.suggestedFilename();
-        const targetPath = path.join(downloadsDir, suggestedName);
         await download.saveAs(targetPath);
 
         console.log(`JWK file saved at: ${targetPath}`);
@@ -67,14 +67,14 @@ test.describe.serial('OIDC Semi-Automated Flow', () => {
     test('Fully automated OIDC flow: Fetch creds → update config → restart backend → continue UI', async ({ page }) => {
         // ---------------- CONFIG ----------------
         const endpoint = 'http://localhost:9000/api/client';
-        const targetPath = path.resolve(
+        targetPath = path.resolve(
             process.env.HOME || '',
-            'Desktop/Projects/Automation/auto-dbk-devex-oidc-sso-toolkit/client-web-app/src/authValidatorConfig/config.json'
+            configFilePath
         );
 
         const client = {
             name: 'client-web-app',
-            cwd: path.resolve(process.env.HOME || '', 'Desktop/Projects/Automation/auto-dbk-devex-oidc-sso-toolkit/client-web-app'),
+            cwd: path.resolve(process.env.HOME || '', clientwebappDir),
             startCommand: 'npm start',
             port: 7000,
             healthUrl: 'http://localhost:7000/api/health'
