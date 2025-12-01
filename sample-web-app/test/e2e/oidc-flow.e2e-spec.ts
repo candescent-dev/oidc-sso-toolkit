@@ -39,6 +39,8 @@ test.describe.serial('OIDC Semi-Automated Flow', () => {
         ]);
 
         // Save file to custom folder
+        const suggestedName = download.suggestedFilename();
+        targetPath = path.join(downloadsDir, suggestedName);
         await download.saveAs(targetPath);
 
         console.log(`JWK file saved at: ${targetPath}`);
