@@ -83,7 +83,7 @@ test.describe.serial('OIDC Semi-Automated Flow', () => {
         };
 
         const healthTimeoutMs = 60_000;
-        const healthPollIntervalMs = 1500;
+        const healthPollIntervalMs = 15000;
 
         // ---------------- STEP 1: Open Frontend ----------------
         await page.goto(frontendURL);

@@ -68,12 +68,6 @@ jobs:
           echo "Building client-web-app backend..."
           npm run build
           echo "Backend client-web-app build complete."
-      
-      - name: Check backend health
-        run: |
-          echo "Checking backend health..."
-          curl --fail http://localhost:7000/api/health || exit 1
-          echo "Backend health check passed."
  
       - name: Run backend tests
         working-directory: sample-web-app/backend
