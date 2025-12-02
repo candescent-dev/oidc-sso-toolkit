@@ -4,6 +4,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { ClientModule } from './client/client.module';
+import { E2ETestModule } from './e2eTest/e2eTest.module';
 import { AppConfigModule } from './appConfig/appConfig.module';
 import { PublishConfigModule } from './publishConfig/publishConfig.module';
 @Module({
@@ -11,6 +12,7 @@ import { PublishConfigModule } from './publishConfig/publishConfig.module';
     AppConfigModule,
     ClientModule,
     AuthModule,
+    E2ETestModule,
     PublishConfigModule,
     CacheModule.register({
       // default TTL ignored; per-item TTL used instead
