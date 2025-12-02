@@ -5,11 +5,13 @@ import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { ClientModule } from './client/client.module';
 import { AppConfigModule } from './appConfig/appConfig.module';
+import { PublishConfigModule } from './publishConfig/publishConfig.module';
 @Module({
   imports: [
     AppConfigModule,
     ClientModule,
     AuthModule,
+    PublishConfigModule,
     CacheModule.register({
       // default TTL ignored; per-item TTL used instead
       ttl: 0,
