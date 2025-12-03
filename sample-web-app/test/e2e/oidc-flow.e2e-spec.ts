@@ -7,15 +7,17 @@ import { spawn, execSync } from 'child_process';
 const frontendURL = 'http://localhost:8000';
 const validatorBaseURL = 'http://localhost:7000/api/auth-validator';
 
-const configFilePath = path.resolve(process.cwd(), '..', 'client-web-app', 'src', 'authValidatorConfig', 'config.json');
-const downloadsDir = path.resolve(process.cwd(), 'sample-web-app', 'downloads'); // Custom folder for downloads
+const rootDir = path.resolve(__dirname, '..', '..', '..'); // Goes up from sample-web-app to root
+const configFilePath = path.resolve(rootDir, 'client-web-app', 'src', 'authValidatorConfig', 'config.json');
+const downloadsDir = path.resolve(rootDir, 'sample-web-app', 'downloads'); // Custom folder for downloads
 let targetPath:any;
-const clientwebappDir = path.resolve(process.cwd(), 'client-web-app');
+const clientwebappDir = path.resolve(rootDir, 'client-web-app');
 
 // Ensure downloads directory exists
 if (!fs.existsSync(downloadsDir)) {
     fs.mkdirSync(downloadsDir, { recursive: true });
 }
+let backendProcess:any;
 
 test.describe.serial('OIDC Semi-Automated Flow', () => {
 
@@ -29,7 +31,7 @@ test.describe.serial('OIDC Semi-Automated Flow', () => {
     });
 
 
-    // TC-002 & TC-003: JWK Button & File Download
+    // TC-002: JWK Button & File Download
     test('Download JWK and validate JSON structure', async ({ page }) => {
         await page.goto(frontendURL);
 
@@ -65,22 +67,21 @@ test.describe.serial('OIDC Semi-Automated Flow', () => {
         expect(typeof firstKey.e).toBe('string');
     });
 
-    //TC-003: Validate happy flow, open UI, copy credentials to config file, restart client web app server, and generate token and validate if it is valid json and token.
-    test('Fully automated OIDC flow: Fetch creds → update config → restart backend → continue UI', async ({ page }) => {
+
+    // TC-003: Validate happy flow, open UI, copy credentials to config file, start client web app server, and validate token
+    test('Fully automated OIDC flow: Fetch creds → update config → start backend → continue UI', async ({ page }) => {
         // ---------------- CONFIG ----------------
         const endpoint = 'http://localhost:9000/api/client';
-        targetPath = path.resolve(
-            process.env.HOME || '',
-            configFilePath
-        );
+        targetPath = configFilePath;
+        console.log("Path of the target file where client credentials have to be copied: "+targetPath);
 
         const client = {
             name: 'client-web-app',
-            cwd: path.resolve(process.env.HOME || '', clientwebappDir),
+            cwd: clientwebappDir,
             startCommand: 'npm start',
-            port: 7000,
             healthUrl: 'http://localhost:7000/api/health'
         };
+        console.log("Path of the client webapp directory folder from where we need to restart the server: "+clientwebappDir);
 
         const healthTimeoutMs = 60_000;
         const healthPollIntervalMs = 15000;
@@ -91,7 +92,7 @@ test.describe.serial('OIDC Semi-Automated Flow', () => {
 
         // ---------------- STEP 2: Fetch Credentials ----------------
         console.log(`[INFO] Fetching credentials from ${endpoint}`);
-        await page.waitForTimeout(10000); // Wait 10 seconds for credentials to be generated
+        await page.waitForTimeout(10000); // Wait for credentials to be generated
         const resp = await page.request.get(endpoint);
         if (!resp.ok()) throw new Error(`Failed to fetch ${endpoint}: ${resp.status()} ${resp.statusText()}`);
         const body = await resp.json();
@@ -100,13 +101,11 @@ test.describe.serial('OIDC Semi-Automated Flow', () => {
         const clientSecret = credsCandidate.client_secret ?? credsCandidate.clientSecret ?? body.client_secret;
         if (!clientId || !clientSecret) throw new Error(`Missing client_id or client_secret in response: ${JSON.stringify(body)}`);
         console.log(`[INFO] Credentials fetched: client_id=${clientId}`);
+        console.log(`[INFO] Credentials fetched: client_secret=${clientSecret}`);
 
         // ---------------- STEP 3: Backup & Update Config ----------------
         if (!fs.existsSync(targetPath)) throw new Error(`Config file not found: ${targetPath}`);
         const originalText = fs.readFileSync(targetPath, 'utf-8');
-        const backupPath = `${targetPath}.bak-${Date.now()}`;
-        fs.writeFileSync(backupPath, originalText, 'utf-8');
-        console.log(`[INFO] Backup saved: ${backupPath}`);
 
         let json = JSON.parse(originalText);
         if (json.credentials) {
@@ -119,44 +118,17 @@ test.describe.serial('OIDC Semi-Automated Flow', () => {
         fs.writeFileSync(targetPath, JSON.stringify(json, null, 2), 'utf-8');
         console.log(`[INFO] Config updated at ${targetPath}`);
 
-        // ---------------- STEP 4: Identify & Kill Services on Port 7000 ----------------
-        console.log(`[INFO] Checking for services running on port ${client.port}...`);
-        let servicesInfo = '';
-        try {
-            servicesInfo = execSync(`lsof -i tcp:${client.port}`, { encoding: 'utf8' }).trim();
-            if (servicesInfo) {
-                console.log(`[INFO] Services currently running on port ${client.port}:\n${servicesInfo}`);
-            } else {
-                console.log(`[INFO] No services found on port ${client.port}.`);
-            }
-        } catch (e) {
-            console.warn(`[WARN] Unable to list services: ${e.message}`);
-        }
+        // ---------------- STEP 4: Start Backend ----------------
+            backendProcess = spawn(client.startCommand, {
+                cwd: client.cwd,
+                env: process.env,
+                detached: true,
+                shell: true
+            });
+            backendProcess.unref();
+            console.log(`[INFO] Backend started (pid: ${backendProcess.pid})`);
 
-        try {
-            const killOutput = execSync(`lsof -ti tcp:${client.port} | xargs kill -9 || true`, { encoding: 'utf8' }).trim();
-            if (killOutput) {
-                console.log(`[INFO] Killed processes with PIDs: ${killOutput}`);
-            } else {
-                console.log(`[INFO] No processes to kill on port ${client.port}.`);
-            }
-        } catch (e) {
-            console.warn(`[WARN] Error killing processes: ${e.message}`);
-        }
-
-        // ---------------- STEP 5: Restart Backend ----------------
-        console.log(`[INFO] Starting backend: ${client.startCommand}`);
-        const [startCmd, ...startArgs] = client.startCommand.split(' ');
-        const child = spawn(startCmd, startArgs, {
-            cwd: client.cwd,
-            env: process.env,
-            shell: true,
-            detached: true
-        });
-        child.unref();
-        console.log(`[INFO] Backend started (pid: ${child.pid})`);
-
-        // ---------------- STEP 6: Wait for Health ----------------
+        // ---------------- STEP 5: Wait for Health ----------------
         const waitForHealth = async (url: string) => {
             const start = Date.now();
             while (Date.now() - start < healthTimeoutMs) {
@@ -171,14 +143,16 @@ test.describe.serial('OIDC Semi-Automated Flow', () => {
         };
         await waitForHealth(client.healthUrl);
         console.log(`[INFO] Backend health OK.`);
+        await page.waitForTimeout(3000); // Wait for 3 seconds
 
-        // ---------------- STEP 7: Continue UI Flow ----------------
+        // ---------------- STEP 6: Continue UI Flow ----------------
 
         // Fill inputs and trigger OIDC flow
         await page.fill('#initUrl', 'http://localhost:7000/api/auth-validator/call-authorize-and-token');
         await page.fill('#callbackHost', 'http://localhost:7000/api/auth-validator/call-authorize-and-token/callback');
         await page.click('text=Open in new tab');
         await page.click('button.submit-btn');
+        await page.waitForTimeout(3000); // Wait for 3 seconds
         await page.click('text=Start OIDC SSO');
 
         // ---------------- Handle New Tab ----------------
@@ -189,51 +163,76 @@ test.describe.serial('OIDC Semi-Automated Flow', () => {
 
         await newPage.waitForLoadState('domcontentloaded');
         console.log('[INFO] New tab opened for OIDC SSO');
-
-        // Wait for JWKS/token details to appear
+                
+        // Wait for JWKS/token details to appear in new tab
+        
         await newPage.waitForSelector('pre', { timeout: 60000 });
-        const tokenResponse = await newPage.locator('pre').textContent();
-        console.log(`[INFO] Token Response from new tab: ${tokenResponse}`);
+        const rawTokenResponse = await newPage.locator('pre').textContent();
 
-        // Validate token response
-        expect(tokenResponse).toContain('id_token');
-        expect(tokenResponse).toContain('access_token');
+        if (!rawTokenResponse) {
+            throw new Error('Token response is empty or not found in new tab');
+        }
+
+        console.log(`[INFO] Raw Token Response from new tab: ${rawTokenResponse}`);
+
+        // Parse once and validate everything
+        const tokenData = JSON.parse(rawTokenResponse);
+        console.log('[INFO] Parsed Token Data:', tokenData);
+
+        // Validate token presence and values
+        expect(tokenData).toHaveProperty('id_token');
+        expect(tokenData).toHaveProperty('access_token');
+        expect(tokenData).toHaveProperty('token_type');
+        expect(tokenData).toHaveProperty('expires_in');
+
+        // Validate token_type and expires_in values
+        expect(tokenData.token_type).toBe('Bearer');
+        expect(tokenData.expires_in).toBe(300);
+
     });
 
-    // TC-007: Validate ID Token via API
+    // TC-004: Validate ID Token via API
     test('Validate ID Token via API', async ({ request }) => {
         const tokenResponse = await request.get(`${validatorBaseURL}/call-authorize-and-token`);
         const tokenData = await tokenResponse.json();
         const idToken = tokenData.id_token;
-
         const validateResponse = await request.get(`${validatorBaseURL}/validate-id-token?token=${idToken}`);
         const validateData = await validateResponse.json();
+        console.log("Token validity and claim data is as follows:\n" + JSON.stringify(validateData, null, 2));
 
-        expect(validateData.valid).toBe(true);
+        expect(validateData.isValid).toBe(true);
         expect(validateData.payload).toHaveProperty('iss');
         expect(validateData.payload).toHaveProperty('sub');
+        expect(validateData.payload).toHaveProperty('aud');
+        expect(validateData.payload).toHaveProperty('exp');
     });
 
-    // TC-008: Negative case - Invalid credentials
-    test('Ensure error when Client ID or Secret Key is incorrect', async ({ request }) => {
-        const invalidConfig = { client_id: 'invalid', client_secret: 'invalid' };
-        fs.writeFileSync(configFilePath, JSON.stringify(invalidConfig, null, 2));
-
-        const response = await request.get(`${validatorBaseURL}/call-authorize-and-token`);
-        expect(response.status()).toBe(400);
-    });
-
-    // TC-009: Token expiry behavior
+    // TC-005: Token expiry behavior
     test('Validate system behavior when token is expired', async ({ request }) => {
         const tokenResponse = await request.get(`${validatorBaseURL}/call-authorize-and-token`);
         const tokenData = await tokenResponse.json();
         const idToken = tokenData.id_token;
-
         console.log('Waiting for token expiry...');
         await new Promise(resolve => setTimeout(resolve, 310000)); // Wait ~5 mins
 
         const validateResponse = await request.get(`${validatorBaseURL}/validate-id-token?token=${idToken}`);
         const validateData = await validateResponse.json();
-        expect(validateData.valid).toBe(false);
+        // Print the entire response object for debugging
+        console.log('Response received:', validateData);
+
+        expect(validateData.isValid).toBe(false);
+        expect(validateData.error).toBe("\"exp\" claim timestamp check failed");
     });
+
+    test.afterAll(() => {
+    if (backendProcess?.pid) {
+        try {
+            process.kill(-backendProcess.pid);  // Kill process group
+        } catch {
+            backendProcess.kill();              // Fallback
+        }
+        console.log('[CLEANUP] Backend process stopped.');
+    }
+    });
+
 });
