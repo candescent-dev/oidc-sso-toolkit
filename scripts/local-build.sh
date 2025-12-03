@@ -105,10 +105,8 @@ safe_copy_file "$ROOT_DIR/sample-web-app/frontend/package.json"      "$TMP_DIR/s
 safe_copy_dir  "$ROOT_DIR/sample-web-app/backend/dist"                        "$TMP_DIR/sample-web-app/backend/"               "backend build files"
 safe_copy_file "$ROOT_DIR/sample-web-app/backend/package.json"      "$TMP_DIR/sample-web-app/backend/package.json"        "backend package.json"
 
-# Copy scripts
-cp "$ROOT_DIR/scripts/init.sh" "$TMP_DIR/sample-web-app/scripts/" || warn "init.sh not found"
-cp "$ROOT_DIR/scripts/run-web-app.sh" "$TMP_DIR/sample-web-app/scripts/" || warn "run-web-app.sh not found"
-cp "$ROOT_DIR/scripts/selftest.sh" "$TMP_DIR/sample-web-app/scripts/" || warn "selftest.sh not found"
+safe_copy_dir  "$ROOT_DIR/scripts/shell"                        "$TMP_DIR/sample-web-app/scripts/"               "shell scripts"
+safe_copy_dir  "$ROOT_DIR/scripts/ps"                        "$TMP_DIR/sample-web-app/scripts/"               "power shell scripts"
 
 # Copy main README.md
 cp "$ROOT_DIR/sample-web-app/README.md" "$TMP_DIR/sample-web-app/" || warn "Main README.md not found"
@@ -149,4 +147,3 @@ log "Packaged ZIP: $DIST_DIR/$ZIP_NAME"
 # ---- Cleanup ----
 rm -rf "$TMP_DIR"
 log "Temporary files cleaned."
-
