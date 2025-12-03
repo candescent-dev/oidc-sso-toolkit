@@ -6,7 +6,7 @@
     "moduleResolution": "Node",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "types": ["@playwright/test", "node"],
+    "types": ["playwright", "node"],
     "skipLibCheck": true,
     "noEmit": true
   },
