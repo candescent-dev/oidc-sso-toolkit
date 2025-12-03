@@ -1,9 +1,11 @@
 import { configureStore } from '@reduxjs/toolkit';
 import homeReducer from '../features/home/homeSlice';
+import oidcValidatorReducer from '../features/oidcValidator/oidcValidatorSlice';
 
 export const store = configureStore({
   reducer: {
     home: homeReducer,
+    oidcValidator: oidcValidatorReducer,
   },
   devTools: process.env.NODE_ENV !== 'production',
 });

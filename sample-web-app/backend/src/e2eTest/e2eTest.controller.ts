@@ -23,6 +23,7 @@ export class E2ETestController {
       res.set({
         'Content-Type': 'application/zip',
         'Content-Disposition': 'attachment; filename=e2e-reports.zip',
+         'Content-Length': zipBuffer.length,
       });
       res.send(zipBuffer);
     } catch (error: any) {
