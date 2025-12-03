@@ -9,14 +9,16 @@
   "scopes_supported": ["openid", "profile", "email", "phone"],
   "token_endpoint_auth_methods_supported": ["client_secret_basic", "client_secret_post"],
   "claims_supported": [
+    "iat",
+    "exp",
     "iss",
     "sub",
     "aud",
     "email",
+    "birthday",
     "given_name",
     "family_name",
-    "birthday",
-    "preferred_username",
-    "phone_number"
+    "phone_number",
+    "preferred_username"
   ]
 }
