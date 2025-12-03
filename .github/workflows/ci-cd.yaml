@@ -123,9 +123,8 @@ jobs:
 
           # --- Scripts ---
           mkdir -p "$TMP_DIR/sample-web-app/scripts"
-          cp "$ROOT_DIR/scripts/init.sh" "$TMP_DIR/sample-web-app/scripts/" || true
-          cp "$ROOT_DIR/scripts/run-web-app.sh" "$TMP_DIR/sample-web-app/scripts/" || true
-          cp "$ROOT_DIR/scripts/selftest.sh" "$TMP_DIR/sample-web-app/scripts/" || true
+          cp -r "$ROOT_DIR/scripts/ps" "$TMP_DIR/sample-web-app/scripts/" || true
+          cp -r "$ROOT_DIR/scripts/shell" "$TMP_DIR/sample-web-app/scripts/" || true
  
           # --- Documentation ---
           mkdir -p "$TMP_DIR/documentation"
