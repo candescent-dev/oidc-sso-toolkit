@@ -152,7 +152,6 @@ jobs:
           unzip -l "oidc-sso-toolkit-${{ github.run_number }}.zip" | head -30
  
       - name: Deploy - Extract and Run Docker Container
-        if: github.ref == 'refs/heads/main'
         run: |
           echo "Starting CD process..."
           ZIP_FILE="oidc-sso-toolkit-${{ github.run_number }}.zip"
