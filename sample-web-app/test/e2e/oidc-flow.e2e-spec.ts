@@ -212,8 +212,26 @@ test.describe.serial('OIDC Semi-Automated Flow', () => {
         const tokenResponse = await request.get(`${validatorBaseURL}/call-authorize-and-token`);
         const tokenData = await tokenResponse.json();
         const idToken = tokenData.id_token;
+
+
         console.log('Waiting for token expiry...');
-        await new Promise(resolve => setTimeout(resolve, 310000)); // Wait ~5 mins
+
+        const waitTimeMs = 310_000; // 5 min 10 sec
+        let remainingSec = Math.ceil(waitTimeMs / 1000);
+
+        const interval = setInterval(() => {
+        // \r returns cursor to start of the line, so we overwrite the previous text
+        process.stdout.write(`\r⏳ Time left: ${remainingSec}s   `);
+        remainingSec--;
+        if (remainingSec < 0) {
+            clearInterval(interval);
+            process.stdout.write('\r✅ Wait complete. Proceeding with next step...\n');
+        }
+        }, 1000);
+
+        await new Promise(resolve => setTimeout(resolve, waitTimeMs));
+        console.log('✅ Wait complete. Proceeding with next step...');
+
 
         const validateResponse = await request.get(`${validatorBaseURL}/validate-id-token?token=${idToken}`);
         const validateData = await validateResponse.json();
