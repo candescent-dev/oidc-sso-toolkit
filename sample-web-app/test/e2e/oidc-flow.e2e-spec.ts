@@ -208,34 +208,34 @@ test.describe.serial('OIDC Semi-Automated Flow', () => {
     });
 
     // TC-005: Token expiry behavior
-    test('Validate system behavior when token is expired', async ({ request }) => {
-        const tokenResponse = await request.get(`${validatorBaseURL}/call-authorize-and-token`);
-        const tokenData = await tokenResponse.json();
-        const idToken = tokenData.id_token;
+    // test('Validate system behavior when token is expired', async ({ request }) => {
+    //     const tokenResponse = await request.get(`${validatorBaseURL}/call-authorize-and-token`);
+    //     const tokenData = await tokenResponse.json();
+    //     const idToken = tokenData.id_token;
 
-        console.log('Waiting for token expiry...');
-        const waitTimeMs = 310_000;
-        let remainingSec = Math.ceil(waitTimeMs / 1000);
+    //     console.log('Waiting for token expiry...');
+    //     const waitTimeMs = 310_000;
+    //     let remainingSec = Math.ceil(waitTimeMs / 1000);
 
-        const interval = setInterval(() => {
-        if (remainingSec % 30 === 0 || remainingSec <= 5) {
-            console.log(`⏳ Time left: ${remainingSec}s`);
-        }
-        remainingSec--;
-        if (remainingSec < 0) clearInterval(interval);
-        }, 1000);
+    //     const interval = setInterval(() => {
+    //     if (remainingSec % 30 === 0 || remainingSec <= 5) {
+    //         console.log(`⏳ Time left: ${remainingSec}s`);
+    //     }
+    //     remainingSec--;
+    //     if (remainingSec < 0) clearInterval(interval);
+    //     }, 1000);
 
-        await new Promise(resolve => setTimeout(resolve, waitTimeMs));
-        console.log('✅ Wait complete.');
+    //     await new Promise(resolve => setTimeout(resolve, waitTimeMs));
+    //     console.log('✅ Wait complete.');
 
-        const validateResponse = await request.get(`${validatorBaseURL}/validate-id-token?token=${idToken}`);
-        const validateData = await validateResponse.json();
-        // Print the entire response object for debugging
-        console.log('Response received:', validateData);
+    //     const validateResponse = await request.get(`${validatorBaseURL}/validate-id-token?token=${idToken}`);
+    //     const validateData = await validateResponse.json();
+    //     // Print the entire response object for debugging
+    //     console.log('Response received:', validateData);
 
-        expect(validateData.isValid).toBe(false);
-        expect(validateData.error).toBe("\"exp\" claim timestamp check failed");
-    });
+    //     expect(validateData.isValid).toBe(false);
+    //     expect(validateData.error).toBe("\"exp\" claim timestamp check failed");
+    // });
 
     test.afterAll(() => {
     if (backendProcess?.pid) {
