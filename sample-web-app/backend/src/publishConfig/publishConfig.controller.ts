@@ -23,9 +23,8 @@ export class PublishConfigController {
       return res.send(fileBuffer);
     } catch (error: any) {
       const status = error?.status || 500;
-      return res.status(status).json({
-        message: error?.message || 'Unknown error occurred',
-      });
+      const message = error?.message || 'Something went wrong. Please try again later';
+      return res.status(status).json({ message, status });
     }
   }
 }

@@ -17,7 +17,7 @@
   --color-primary-hover: #007bff;
   --color-disabled: #c7c7c7;
   --color-background: #ffffff;
-  --color-background-hover: #f5f6f7;
+  --color-background-hover: #f5f5f7;
   --color-background-toast: #2b2b2b;
   --color-border: #919191;
   --color-border-light: #e1e4e8;
@@ -35,10 +35,10 @@
   --spacing-3xl: 1.5rem;
   --spacing-4xl: 1.875rem;
   --spacing-5xl: 2rem;
-  --spacing-6xl: 20px;
-  --spacing-7xl: 25px;
-  --spacing-button: 15px;
-  --spacing-mobile-button-margin: 16px;
+  --spacing-6xl: 1.25rem;
+  --spacing-7xl: 1.5625rem;
+  --spacing-button: 0.9375rem;
+  --spacing-mobile-button-margin: 1rem;
 
   /* Typography */
   --font-family: 'Inter', Arial, sans-serif;
@@ -48,13 +48,13 @@
   --font-size-md: 0.9rem;
   --font-size-lg: 0.95rem;
   --font-size-xl: 1rem;
-  --font-size-2xl: 14px;
-  --font-size-3xl: 15px;
-  --font-size-4xl: 16px;
+  --font-size-2xl: 0.875rem;
+  --font-size-3xl: 0.9375rem;
+  --font-size-4xl: 1rem;
   --font-size-5xl: 1.35rem;
   --font-size-6xl: 1.45rem;
   --font-size-7xl: 1.75rem;
-  --font-size-8xl: 25px;
+  --font-size-8xl: 1.5625rem;
   --font-size-9xl: 1.4rem;
   --font-weight-normal: 400;
   --font-weight-medium: 500;
@@ -76,32 +76,29 @@
   --transition-toast: 0.3s ease;
 
   /* Layout */
-  --container-max-width: 600px;
-  --input-padding-top: 25px;
+  --container-max-width: 37.5rem;
+  --input-padding-top: 1.5625rem;
   --input-padding-horizontal: 1rem;
   --input-padding-horizontal-large: 1.1rem;
   --input-padding-bottom: 0.65rem;
-  --label-top-offset: -6px;
+  --label-top-offset: -0.375rem;
   --label-top-focused: 0.35rem;
-  --icon-size: 20px;
-  --radio-size: 20px;
-  --checkbox-size: 24px;
-  --button-width-sm: 155px;
+  --icon-size: 1.25rem;
+  --radio-size: 1.25rem;
+  --checkbox-size: 1.5rem;
+  --button-width-sm: 9.6875rem;
   --button-width-md: 11rem;
-  --button-width-lg: 280px;
-  --button-width-xl: 345px;
+  --button-width-lg: 17.5rem;
+  --button-width-xl: 21.5625rem;
   --button-max-width: 14rem;
   --z-index-toast: 1000;
   --z-index-fixed-button: 999;
-  --fixed-button-height: 60px;
+  --fixed-button-height: 3.75rem;
 
   /* Breakpoints (for reference) */
   --breakpoint-sm: 37.5rem;
-  /* 600px */
   --breakpoint-md: 48rem;
-  /* 768px */
   --breakpoint-lg: 75rem;
-  /* 1200px */
 }
 
 /* ============================================
@@ -119,9 +116,9 @@
    Layout Components
    ============================================ */
 .divider {
-  height: 1px;
+  height: 0.0625rem;
   background-color: #e0e0e0;
-  margin: 15px 0;
+  margin: 0.9375rem 0;
   width: 100%;
 }
 
@@ -151,12 +148,14 @@
 }
 
 .run-container {
-  display: grid;
-  place-items: center;
-  height: 250px;
   width: 100%;
+  height: auto;
+  display: grid;
+  padding: 0.625rem;
+  min-height: 9.375rem;
+  place-items: center;
+  box-sizing: border-box;
   background-color: #f5f5f5;
-  border-radius: 15px;
 }
 
 .title-label {
@@ -221,7 +220,7 @@
   height: var(--icon-size);
   object-fit: contain;
   vertical-align: middle;
-  margin-inline-start: 5px;
+  margin-inline-start: 0.3125rem;
 }
 
 .green-btn {
@@ -235,9 +234,7 @@
   cursor: pointer;
   width: var(--button-width-lg);
   max-width: none;
-  transition:
-    background-color var(--transition-slow),
-    transform var(--transition-fast);
+  transition: background-color var(--transition-slow), transform var(--transition-fast);
   box-shadow: none;
   justify-content: center;
   align-self: center;
@@ -254,12 +251,16 @@
   cursor: pointer;
   width: var(--button-width-lg);
   max-width: none;
-  transition:
-    background-color var(--transition-slow),
-    transform var(--transition-fast);
+  transition: background-color var(--transition-slow), transform var(--transition-fast);
   box-shadow: none;
   justify-content: center;
   align-self: center;
+}
+
+.submit-btn:disabled {
+  background-color: var(--color-disabled);
+  color: var(--color-text-disabled);
+  cursor: not-allowed;
 }
 
 /* ============================================
@@ -280,7 +281,7 @@
   gap: var(--spacing-xl);
   min-width: clamp(15rem, 40vw, 28rem);
   max-width: 90vw;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 0.1875rem 0.625rem rgba(0, 0, 0, 0.25);
   z-index: var(--z-index-toast);
   animation: fadeIn var(--transition-toast) ease;
   word-break: break-word;
@@ -305,9 +306,8 @@
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translate(-50%, var(--spacing-xl));
+    transform: translate(-50%, 1rem);
   }
-
   to {
     opacity: 1;
     transform: translate(-50%, 0);
@@ -327,19 +327,15 @@
 }
 
 @keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 /* ============================================
    Responsive Design
    ============================================ */
 
-/* Small Devices (Phones < 600px) */
+/* Small Devices (<600px) */
 @media (max-width: 37.5rem) {
   .heading-message {
     margin: var(--spacing-xs);
@@ -363,7 +359,7 @@
   .button-row {
     display: grid;
     grid-auto-flow: column;
-    gap: 10px;
+    gap: 0.625rem;
   }
 
   .icon-button {
@@ -373,17 +369,7 @@
     padding: var(--spacing-md) 0.9rem;
   }
 
-  .submit-btn {
-    bottom: var(--spacing-mobile-button-margin);
-    left: var(--spacing-mobile-button-margin);
-    right: var(--spacing-mobile-button-margin);
-    width: 100%;
-    max-width: none;
-    font-size: var(--font-size-lg);
-    z-index: var(--z-index-fixed-button);
-    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
-  }
-
+  .submit-btn,
   .green-btn {
     bottom: var(--spacing-mobile-button-margin);
     left: var(--spacing-mobile-button-margin);
@@ -392,11 +378,11 @@
     max-width: none;
     font-size: var(--font-size-lg);
     z-index: var(--z-index-fixed-button);
-    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 -0.125rem 0.625rem rgba(0, 0, 0, 0.1);
   }
 }
 
-/* Medium Devices (Tablets: 600px–767px) */
+/* Medium Devices (600px–767px) */
 @media (min-width: 37.5rem) and (max-width: 47.99rem) {
   .heading-message {
     margin: var(--spacing-2xl) var(--spacing-3xl) 0 var(--spacing-3xl);
@@ -421,18 +407,14 @@
     padding: 0.6rem var(--spacing-xl);
   }
 
-  .submit-btn {
-    width: var(--button-width-md);
-    font-size: var(--font-size-lg);
-  }
-
+  .submit-btn,
   .green-btn {
     width: var(--button-width-md);
     font-size: var(--font-size-lg);
   }
 }
 
-/* Large Devices (Desktops ≥ 768px) */
+/* Large Devices (≥ 768px) */
 @media (min-width: 48rem) {
   .heading-message {
     margin: var(--spacing-xs) auto 0 0;
@@ -458,11 +440,7 @@
     padding: 0.6rem var(--input-padding-horizontal-large);
   }
 
-  .submit-btn {
-    justify-self: start;
-    width: var(--button-width-xl);
-  }
-
+  .submit-btn,
   .green-btn {
     justify-self: start;
     width: var(--button-width-xl);
@@ -480,10 +458,7 @@
     font-size: var(--font-size-xl);
   }
 
-  .submit-btn {
-    font-size: var(--font-size-3xl);
-  }
-
+  .submit-btn,
   .green-btn {
     font-size: var(--font-size-3xl);
   }
