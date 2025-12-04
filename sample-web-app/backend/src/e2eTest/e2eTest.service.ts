@@ -10,9 +10,6 @@ type JestReporter = string | [string, Record<string, any>];
 
 @Injectable()
 export class E2ETestService {
-  /** Path to Jest E2E configuration */
-  private readonly jestConfigPath = path.join(process.cwd(), 'test', 'jest-e2e.json');
-
   /**
    * Executes Jest E2E tests and returns a zip buffer containing HTML & XML reports
    * @return {Promise<Buffer>} Zip file buffer containing generated reports
@@ -33,17 +30,30 @@ export class E2ETestService {
           },
         ],
       ];
-      const jestConfig = { ...require(this.jestConfigPath), reporters };
+      /** Inline Jest configuration (to avoid jest-e2e.json file reading) */
+      const jestConfig = {
+        moduleFileExtensions: ['js', 'json', 'ts'],
+        rootDir: '.',
+        testEnvironment: 'node',
+        testRegex: '.e2e-spec.ts$',
+        transform: {
+          '^.+\\.(t|j)s$': 'ts-jest',
+        },
+        reporters,
+      };
+      /** Execute Jest tests */
       const { results } = await runCLI(
         { _: [], $0: 'jest-e2e', config: JSON.stringify(jestConfig), runInBand: true },
-        [process.cwd()],
+        ["."],
       );
-      if (!results) this.throwServiceError('No results returned from Jest CLI', 500);
+      if (!results) this.throwServiceError('No results returned from Jest', 500);
       if (results.numTotalTests === 0) this.throwServiceError('No E2E tests were executed', 422);
+      /** Ensure reports exist */
       const htmlReportPath = path.join(tempReportDir, 'e2e-report.html');
       const xmlReportPath = path.join(tempReportDir, 'jest-e2e.xml');
       if (!fs.existsSync(htmlReportPath) || !fs.existsSync(xmlReportPath))
         this.throwServiceError('Reports were not generated correctly', 500);
+      /** Create zip file buffer and return */
       return await this.createZipBuffer([htmlReportPath, xmlReportPath]);
     } catch (error: any) {
       // Handle all errors via throwServiceError
