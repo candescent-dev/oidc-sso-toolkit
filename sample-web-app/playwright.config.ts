@@ -1,6 +1,8 @@
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
+  timeout: 360000, // For long-running tests like token expiry
+  fullyParallel: false, // Ensure sequential execution
   testDir: './test/e2e',
   testMatch: ["/**/*.e2e-spec.ts"],
   // Completely ignore backend and frontend source code
