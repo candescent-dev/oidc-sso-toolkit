@@ -5,16 +5,17 @@ import codeIcon from '../../assets/code.svg';
 import { getApi } from '../../services/api';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import {
-  setLoading,
   fetchE2EReports,
-  resetE2EReportsState,
+  setPublishOidcSettingLoading,
+  resetOidcValidatorState,
 } from '../../features/oidcValidator/oidcValidatorSlice';
 
 import './OidcValidatorPage.css';
 
 const OidcValidatorPage: FC = () => {
   const dispatch = useAppDispatch();
-  const { loading, htmlFileUrl, xmlFileUrl } = useAppSelector((state) => state.oidcValidator);
+  const { runValidatorLoading, publishOidcSettingLoading, htmlFileUrl, xmlFileUrl } =
+    useAppSelector((state) => state.oidcValidator);
 
   const [downloadMessage, setDownloadMessage] = useState<string | null>(null);
   const downloadTimerRef = useRef<number | null>(null);
@@ -25,7 +26,7 @@ const OidcValidatorPage: FC = () => {
       if (downloadTimerRef.current) clearTimeout(downloadTimerRef.current);
       if (htmlFileUrl) URL.revokeObjectURL(htmlFileUrl);
       if (xmlFileUrl) URL.revokeObjectURL(xmlFileUrl);
-      dispatch(resetE2EReportsState());
+      dispatch(resetOidcValidatorState());
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -40,7 +41,7 @@ const OidcValidatorPage: FC = () => {
   /** Download config.json file */
   const handlePublishOIDCSetting = async (): Promise<void> => {
     try {
-      dispatch(setLoading(true));
+      dispatch(setPublishOidcSettingLoading(true));
       const api = getApi();
       const response = await api.get<Blob>('publish-config', { responseType: 'blob' });
       const url = window.URL.createObjectURL(response.data);
@@ -54,11 +55,11 @@ const OidcValidatorPage: FC = () => {
       if (downloadTimerRef.current) clearTimeout(downloadTimerRef.current);
       downloadTimerRef.current = window.setTimeout(() => {
         setDownloadMessage('config.json downloaded successfully');
-        dispatch(setLoading(false));
+        dispatch(setPublishOidcSettingLoading(false));
       }, 2000);
     } catch (error: any) {
-      dispatch(setLoading(false));
-      let message = 'Something went wrong while downloading';
+      dispatch(setPublishOidcSettingLoading(false));
+      let message = 'Something went wrong. Please try again later';
       if (error.response && error.response.data instanceof Blob) {
         const text = await error.response.data.text();
         try {
@@ -75,8 +76,13 @@ const OidcValidatorPage: FC = () => {
   };
 
   /** Run E2E validator and fetch reports */
-  const handleRunValidator = (): void => {
-    dispatch(fetchE2EReports());
+  const handleRunValidator = async (): Promise<void> => {
+    const result = await dispatch(fetchE2EReports());
+    if (fetchE2EReports.rejected.match(result)) {
+      setDownloadMessage(
+        result.payload?.error || 'Server Error: Something went wrong. Please try again later'
+      );
+    }
   };
 
   /** Generic file download handler with success message */
@@ -103,9 +109,14 @@ const OidcValidatorPage: FC = () => {
         </div>
         <div className="divider" />
         {/* Run Validator Button */}
-        <button className="submit-btn" onClick={handleRunValidator} disabled={loading}>
-          {loading ? 'Running...' : 'Run Validator'}
-          <img src={playIcon} className="download-icon" alt="Run" />
+        <button className="submit-btn" onClick={handleRunValidator} disabled={runValidatorLoading}>
+          {runValidatorLoading ? (
+            <span className="spinner" />
+          ) : (
+            <>
+              Run Validator <img src={playIcon} className="download-icon" alt="Run" />
+            </>
+          )}
         </button>
         {/* Validation Report Section */}
         <div className="text-with-icon">
@@ -113,7 +124,15 @@ const OidcValidatorPage: FC = () => {
           <span className="title-label">Validation Report</span>
         </div>
         <div className="run-container">
-          <p>Click ‘Run Validator’ to start validation</p>
+          {!htmlFileUrl ? (
+            <p>Click ‘Run Validator’ to start validation</p>
+          ) : (
+            <iframe
+              src={htmlFileUrl}
+              title="E2E HTML Report"
+              style={{ width: '100%', height: '600px', border: 'none' }}
+            />
+          )}
         </div>
         {/* Download Report Buttons (Shown after successful API call) */}
         {htmlFileUrl && xmlFileUrl && (
@@ -153,8 +172,12 @@ const OidcValidatorPage: FC = () => {
         )}
         <div className="divider" />
         {/* Publish OIDC Setting */}
-        <button className="green-btn" onClick={handlePublishOIDCSetting} disabled={loading}>
-          {loading ? <span className="spinner" /> : 'Publish OIDC Setting'}
+        <button
+          className="green-btn"
+          onClick={handlePublishOIDCSetting}
+          disabled={publishOidcSettingLoading}
+        >
+          {publishOidcSettingLoading ? <span className="spinner" /> : 'Publish OIDC Setting'}
         </button>
       </div>
       {/* Download Message Toast */}

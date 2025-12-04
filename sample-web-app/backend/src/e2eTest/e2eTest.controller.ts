@@ -18,18 +18,18 @@ export class E2ETestController {
   async downloadE2EReports(@Res() res: Response) {
     try {
       const zipBuffer = await this.e2eTestService.runE2ETestsAndZip();
-      if (!zipBuffer) throw new Error('Failed to generate ZIP buffer');
+      if (!zipBuffer) throw new Error('Failed to generate ZIP');
       // Using @Res() because we need to set custom headers and stream binary content
       res.set({
         'Content-Type': 'application/zip',
         'Content-Disposition': 'attachment; filename=e2e-reports.zip',
-         'Content-Length': zipBuffer.length,
+        'Content-Length': zipBuffer.length,
       });
-      res.send(zipBuffer);
+      return res.send(zipBuffer);
     } catch (error: any) {
       const status = error?.status || 500;
-      const message = error?.message || 'Unexpected error';
-      res.status(status).json({ message, status });
+      const message = error?.message || 'Something went wrong. Please try again later';
+      return res.status(status).json({ message, status });
     }
   }
 }

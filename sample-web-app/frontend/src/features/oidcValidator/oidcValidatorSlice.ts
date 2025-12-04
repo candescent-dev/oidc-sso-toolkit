@@ -1,21 +1,22 @@
 import JSZip from 'jszip';
 import { AxiosError } from 'axios';
 import { getApi } from '../../services/api';
-import { E2EReportsState } from './types';
+import { OidcValidatorState } from './types';
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-const initialState: E2EReportsState = {
-  loading: false,
+const initialState: OidcValidatorState = {
   error: null,
   htmlFileUrl: '',
   xmlFileUrl: '',
+  runValidatorLoading: false,
+  publishOidcSettingLoading: false,
 };
 
 // -------------------- Async Thunk --------------------
 export const fetchE2EReports = createAsyncThunk<
   { htmlFileUrl: string; xmlFileUrl: string },
   void,
-  { rejectValue: { errorReason: string } }
+  { rejectValue: { error: string } }
 >('e2eReports/fetch', async (_, { rejectWithValue }) => {
   try {
     const api = getApi();
@@ -30,52 +31,73 @@ export const fetchE2EReports = createAsyncThunk<
     const xmlFileUrl = URL.createObjectURL(new Blob([xmlContent], { type: 'text/xml' }));
     return { htmlFileUrl, xmlFileUrl };
   } catch (err: unknown) {
-    let message = 'Failed to download ZIP';
-    if (err instanceof AxiosError) message = err.message;
-    else if (err instanceof Error) message = err.message;
-    return rejectWithValue({ errorReason: message });
+    let message = 'Server Error: Something went wrong. Please try again later';
+    if (err instanceof AxiosError) {
+      const data = err.response?.data;
+      // Case: responseType: 'arraybuffer' → errors come back as ArrayBuffer
+      if (data instanceof ArrayBuffer) {
+        try {
+          const decodedJson = JSON.parse(new TextDecoder().decode(data));
+          if (decodedJson?.message) {
+            message = decodedJson.message;
+          }
+        } catch {
+          // If decoding fails, keep default message
+        }
+      } else if (data?.message) {
+        // Case: Axios parsed JSON normally
+        message = data.message;
+      } else if (err.message) {
+        // Fallback to Axios error message
+        message = err.message;
+      }
+    } else if (err instanceof Error) {
+      message = err.message;
+    }
+    return rejectWithValue({ error: message });
   }
 });
 
 // -------------------- Slice --------------------
-const e2eReportsSlice = createSlice({
+const oidcValidatorSlice = createSlice({
   name: 'e2eReports',
   initialState,
   reducers: {
     /** Set loading state */
-    setLoading: (state, action: PayloadAction<boolean>) => {
-      state.loading = action.payload;
+    setPublishOidcSettingLoading: (state, action: PayloadAction<boolean>) => {
+      state.publishOidcSettingLoading = action.payload;
     },
     /** Reset the oidcValidator state to initial values */
-    resetE2EReportsState(state) {
+    resetOidcValidatorState(state) {
       if (state.htmlFileUrl) URL.revokeObjectURL(state.htmlFileUrl);
       if (state.xmlFileUrl) URL.revokeObjectURL(state.xmlFileUrl);
-      state.loading = false;
       state.error = null;
       state.htmlFileUrl = '';
       state.xmlFileUrl = '';
+      state.runValidatorLoading = false;
+      state.publishOidcSettingLoading = false;
     },
   },
   extraReducers: (builder) => {
     builder.addCase(fetchE2EReports.pending, (state) => {
-      state.loading = true;
       state.error = null;
+      state.runValidatorLoading = true;
       if (state.htmlFileUrl) URL.revokeObjectURL(state.htmlFileUrl);
       if (state.xmlFileUrl) URL.revokeObjectURL(state.xmlFileUrl);
       state.htmlFileUrl = '';
       state.xmlFileUrl = '';
     });
     builder.addCase(fetchE2EReports.fulfilled, (state, action) => {
-      state.loading = false;
+      state.runValidatorLoading = false;
       state.htmlFileUrl = action.payload.htmlFileUrl;
       state.xmlFileUrl = action.payload.xmlFileUrl;
     });
     builder.addCase(fetchE2EReports.rejected, (state, action) => {
-      state.loading = false;
-      state.error = action.payload?.errorReason || 'Something went wrong';
+      state.runValidatorLoading = false;
+      state.error = action.payload?.error || 'Something went wrong. Please try again later';
     });
   },
 });
 
-export const { setLoading, resetE2EReportsState } = e2eReportsSlice.actions;
-export default e2eReportsSlice.reducer;
+export const { setPublishOidcSettingLoading, resetOidcValidatorState } = oidcValidatorSlice.actions;
+export default oidcValidatorSlice.reducer;
