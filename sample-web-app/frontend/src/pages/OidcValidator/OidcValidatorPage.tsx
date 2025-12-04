@@ -111,7 +111,10 @@ const OidcValidatorPage: FC = () => {
         {/* Run Validator Button */}
         <button className="submit-btn" onClick={handleRunValidator} disabled={runValidatorLoading}>
           {runValidatorLoading ? (
-            <span className="spinner" />
+            <>
+              Validating...
+              <span className="spinner" />
+            </>
           ) : (
             <>
               Run Validator <img src={playIcon} className="download-icon" alt="Run" />
@@ -138,7 +141,7 @@ const OidcValidatorPage: FC = () => {
         {htmlFileUrl && xmlFileUrl && (
           <>
             <div className="text-with-icon">
-              <span className="title-label">Download Report</span>
+              <span className="title-label">Download Reports</span>
             </div>
             <div className="button-row">
               <button
@@ -175,10 +178,25 @@ const OidcValidatorPage: FC = () => {
         <button
           className="green-btn"
           onClick={handlePublishOIDCSetting}
-          disabled={publishOidcSettingLoading}
+          disabled={publishOidcSettingLoading || !htmlFileUrl || !xmlFileUrl}
         >
-          {publishOidcSettingLoading ? <span className="spinner" /> : 'Publish OIDC Setting'}
+          {publishOidcSettingLoading ? (
+            <>
+              Publishing...
+              <span className="spinner" />
+            </>
+          ) : (
+            'Publish OIDC Setting'
+          )}
         </button>
+
+        <>
+          {!htmlFileUrl && !xmlFileUrl && (
+            <p className="description-message">
+              Complete validation to enable ‘Publish OIDC Setting’
+            </p>
+          )}
+        </>
       </div>
       {/* Download Message Toast */}
       {downloadMessage && (
