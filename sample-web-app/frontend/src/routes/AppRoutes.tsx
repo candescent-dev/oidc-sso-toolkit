@@ -6,6 +6,7 @@ import Header from '../components/Header/Header';
 const HomePage = lazy(() => import('../pages/Home/HomePage'));
 const OidcSsoInitiatorPage = lazy(() => import('../pages/OidcSsoInitiator/OidcSsoInitiatorPage'));
 const OidcValidatorPage = lazy(() => import('../pages/OidcValidator/OidcValidatorPage'));
+const PageNotFound = lazy(() => import('../pages/PageNotFound/PageNotFoundPage')); //  404 Page Not Found
 
 // Route paths (type-safe)
 const ROUTES = {
@@ -27,6 +28,8 @@ const AppRoutes: FC = () => (
         <Route path={ROUTES.HOME} element={<HomePage />} />
         <Route path={ROUTES.START_OIDC_SSO} element={<OidcSsoInitiatorPage />} />
         <Route path={ROUTES.OIDC_VALIDATOR} element={<OidcValidatorPage />} />
+        {/* 404 route */}
+        <Route path="*" element={<PageNotFound />} />
       </Routes>
     </Suspense>
   </Router>
