@@ -1,5 +1,5 @@
-import * as fs from 'fs';
-import * as path from 'path';
+import { writeFileSync } from 'fs';
+import { resolve } from 'path';
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
@@ -11,25 +11,24 @@ const FRONTEND_BUILD_CONFIG_PATH = '../../../frontend/api.config.json';
 async function bootstrap() {
   // Create a new NestJS application instance
   const app = await NestFactory.create(AppModule);
-  const appConfig = app.get<{ backendPort: number }>(APP_CONFIG);
-  const port = appConfig.backendPort;
+  const appConfig = app.get<{ backendPort: number; frontendPort: number }>(APP_CONFIG);
+  const { backendPort, frontendPort } = appConfig;
 
   // Update frontend config both (local + build)
   const frontendConfig = {
-    apiBaseURL: `http://localhost:${port}/api`,
+    frontendPort,
+    apiBaseURL: `http://localhost:${backendPort}/api`,
   };
-  const pathsToUpdate = [
-    path.resolve(__dirname, FRONTEND_PUBLIC_CONFIG_PATH),
-    path.resolve(__dirname, FRONTEND_BUILD_CONFIG_PATH),
-  ];
-  for (const filePath of pathsToUpdate) {
+
+  [FRONTEND_PUBLIC_CONFIG_PATH, FRONTEND_BUILD_CONFIG_PATH].forEach((relPath) => {
+    const filePath = resolve(__dirname, relPath);
     try {
-      fs.writeFileSync(filePath, JSON.stringify(frontendConfig, null, 2));
-      console.log(`Updated ${filePath} with baseURL: ${frontendConfig.apiBaseURL}`);
+      writeFileSync(filePath, JSON.stringify(frontendConfig, null, 2));
+      console.log(`Updated ${filePath} with config:`, frontendConfig);
     } catch (err: any) {
       console.warn(`Could not update ${filePath}:`, err.message);
     }
-  }
+  });
 
   // Enable custom CORS options
   app.enableCors({
@@ -50,7 +49,7 @@ async function bootstrap() {
   );
 
   // Start the application on dynamic port (default port - 9000)
-  await app.listen(port);
-  console.log(`Server listening on http://localhost:${port}`);
+  await app.listen(backendPort);
+  console.log(`Server listening on http://localhost:${backendPort}`);
 }
 bootstrap();
