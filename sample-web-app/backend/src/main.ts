@@ -5,9 +5,10 @@ import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
 import { APP_CONFIG } from './appConfig/appConfig.provider';
 
-const FRONTEND_PUBLIC_CONFIG_PATH = '../../../frontend/public/api.config.json';
-const FRONTEND_BUILD_CONFIG_PATH = '../../../frontend/api.config.json';
 const FRONTEND_PACKAGE_JSON_PATH = '../../../frontend/package.json';
+const FRONTEND_DOCKER_CONFIG_PATH = '../../../frontend/api.config.json';  // Docker
+const FRONTEND_BUILD_CONFIG_PATH = '../../../frontend/build/api.config.json';  // Native Build (Zip File)
+const FRONTEND_PUBLIC_CONFIG_PATH = '../../../frontend/public/api.config.json'; // Local
 
 async function bootstrap() {
   // Create a new NestJS application instance
@@ -18,15 +19,17 @@ async function bootstrap() {
   const apiBaseURL = `http://localhost:${backendPort}/api`;
 
   // Update frontend config both (local + build)
-  [FRONTEND_PUBLIC_CONFIG_PATH, FRONTEND_BUILD_CONFIG_PATH].forEach((path) => {
-    const filePath = resolve(__dirname, path);
-    try {
-      writeFileSync(filePath, JSON.stringify({ apiBaseURL }, null, 2));
-      console.log(`Updated ${filePath} with apiBaseURL: ${apiBaseURL}`);
-    } catch (err: any) {
-      console.warn(`Could not update ${filePath}:`, err.message);
-    }
-  });
+  [FRONTEND_PUBLIC_CONFIG_PATH, FRONTEND_DOCKER_CONFIG_PATH, FRONTEND_BUILD_CONFIG_PATH].forEach(
+    (path) => {
+      const filePath = resolve(__dirname, path);
+      try {
+        writeFileSync(filePath, JSON.stringify({ apiBaseURL }, null, 2));
+        console.log(`Updated ${filePath} with apiBaseURL: ${apiBaseURL}`);
+      } catch (err: any) {
+        console.warn(`Could not update ${filePath}:`, err.message);
+      }
+    },
+  );
 
   // Update package.json start script
   try {
