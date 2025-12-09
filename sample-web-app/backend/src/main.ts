@@ -1,4 +1,4 @@
-import { writeFileSync } from 'fs';
+import { writeFileSync, readFileSync } from 'fs';
 import { resolve } from 'path';
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
@@ -7,6 +7,7 @@ import { APP_CONFIG } from './appConfig/appConfig.provider';
 
 const FRONTEND_PUBLIC_CONFIG_PATH = '../../../frontend/public/api.config.json';
 const FRONTEND_BUILD_CONFIG_PATH = '../../../frontend/api.config.json';
+const FRONTEND_PACKAGE_JSON_PATH = '../../../frontend/package.json';
 
 async function bootstrap() {
   // Create a new NestJS application instance
@@ -14,21 +15,32 @@ async function bootstrap() {
   const appConfig = app.get<{ backendPort: number; frontendPort: number }>(APP_CONFIG);
   const { backendPort, frontendPort } = appConfig;
 
-  // Update frontend config both (local + build)
-  const frontendConfig = {
-    frontendPort,
-    apiBaseURL: `http://localhost:${backendPort}/api`,
-  };
+  const apiBaseURL = `http://localhost:${backendPort}/api`;
 
-  [FRONTEND_PUBLIC_CONFIG_PATH, FRONTEND_BUILD_CONFIG_PATH].forEach((relPath) => {
-    const filePath = resolve(__dirname, relPath);
+  // Update frontend config both (local + build)
+  [FRONTEND_PUBLIC_CONFIG_PATH, FRONTEND_BUILD_CONFIG_PATH].forEach((path) => {
+    const filePath = resolve(__dirname, path);
     try {
-      writeFileSync(filePath, JSON.stringify(frontendConfig, null, 2));
-      console.log(`Updated ${filePath} with config:`, frontendConfig);
+      writeFileSync(filePath, JSON.stringify({ apiBaseURL }, null, 2));
+      console.log(`Updated ${filePath} with apiBaseURL: ${apiBaseURL}`);
     } catch (err: any) {
       console.warn(`Could not update ${filePath}:`, err.message);
     }
   });
+
+  // Update package.json start script
+  try {
+    const packageJsonPath = resolve(__dirname, FRONTEND_PACKAGE_JSON_PATH);
+    const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
+    packageJson.scripts = {
+      ...packageJson.scripts,
+      start: `PORT=${frontendPort} react-scripts start`,
+    };
+    writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2).trimEnd());
+    console.log(`Updated package.json start script with PORT=${frontendPort}`);
+  } catch (err: any) {
+    console.warn('Could not update package.json:', err.message);
+  }
 
   // Enable custom CORS options
   app.enableCors({

@@ -1,4 +1,3 @@
 {
-  "frontendPort": 8000,
   "apiBaseURL": "http://localhost:9000/api"
 }
