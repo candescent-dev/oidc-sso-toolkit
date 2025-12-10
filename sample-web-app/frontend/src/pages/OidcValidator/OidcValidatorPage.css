@@ -165,6 +165,7 @@
   place-items: center;
   background-color: #f5f5f5;
   border-radius: var(--radius-md);
+  align-self: center;
 }
 
 .title-label {
@@ -381,8 +382,8 @@
   }
 
   .button-row {
-    display: grid;
-    grid-auto-flow: column;
+    display: flex;
+    flex-direction: column;
     gap: 0.625rem;
   }
 
