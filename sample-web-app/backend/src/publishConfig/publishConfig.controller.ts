@@ -12,12 +12,12 @@ export class PublishConfigController {
    * @returns The config.json file as a downloadable attachment or an error JSON
    */
   @Get()
-  downloadConfig(@Res() res: Response): Response {
+  async downloadConfig(@Res() res: Response): Promise<Response> {
     try {
-      const fileBuffer = this.publishConfigService.getConfigFile();
+      const fileBuffer = await this.publishConfigService.getConfigFile();
       res.set({
         'Content-Type': 'application/octet-stream',
-        'Content-Disposition': 'attachment; filename="config.json"',
+        'Content-Disposition': 'attachment; filename="oidcSetting.json"',
         'Content-Length': fileBuffer.length.toString(),
       });
       return res.send(fileBuffer);

@@ -2,7 +2,7 @@ import * as jwt from 'jsonwebtoken';
 import { randomBytes } from 'crypto';
 import type { Cache } from 'cache-manager';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import type { AuthSettingData } from './types/authSetting.types';
+import { AuthSettingData } from './types/authSetting.types';
 import { SSOConfig } from '../ssoConfig/types/ssoConfig.types';
 import { SsoConfigService } from '../ssoConfig/ssoConfig.service';
 import type { ClientCredentials } from '../client/types/client.types';

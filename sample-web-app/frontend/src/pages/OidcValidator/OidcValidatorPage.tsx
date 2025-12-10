@@ -54,7 +54,7 @@ const OidcValidatorPage: FC = () => {
       window.URL.revokeObjectURL(url);
       if (downloadTimerRef.current) clearTimeout(downloadTimerRef.current);
       downloadTimerRef.current = window.setTimeout(() => {
-        setDownloadMessage('config.json downloaded successfully');
+        setDownloadMessage('oidcSetting.json downloaded successfully');
         dispatch(setPublishOidcSettingLoading(false));
       }, 2000);
     } catch (error: any) {

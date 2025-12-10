@@ -16,7 +16,7 @@ import { AuthService } from './auth.service';
 import { AuthorizeDto } from './dto/authorize.dto';
 import { AuthSettingDto } from './dto/authSetting.dto';
 import { ERROR_CODE } from './errors/auth.errors';
-import type { AuthSettingData } from './types/authSetting.types';
+import { AuthSettingData } from './types/authSetting.types';
 
 @Controller('auth')
 export class AuthController {
