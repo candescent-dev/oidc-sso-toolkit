@@ -17,7 +17,7 @@ export const fetchE2EReports = createAsyncThunk<
   { htmlFileUrl: string; xmlFileUrl: string },
   void,
   { rejectValue: { error: string } }
->('e2eReports/fetch', async (_, { rejectWithValue }) => {
+>('oidcValidator/fetchE2EReports', async (_, { rejectWithValue }) => {
   try {
     const api = getApi();
     const response = await api.post('e2e-test', null, {
@@ -60,7 +60,7 @@ export const fetchE2EReports = createAsyncThunk<
 
 // -------------------- Slice --------------------
 const oidcValidatorSlice = createSlice({
-  name: 'e2eReports',
+  name: 'oidcValidator',
   initialState,
   reducers: {
     /** Set loading state */

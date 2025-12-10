@@ -11,10 +11,12 @@ import {
 } from '@nestjs/common';
 import { SsoConfigService } from '../ssoConfig/ssoConfig.service';
 import { SSOConfig } from '../ssoConfig/types/ssoConfig.types';
-import type { Request, Response } from 'express';
+import type { Request } from 'express';
 import { AuthService } from './auth.service';
 import { AuthorizeDto } from './dto/authorize.dto';
+import { AuthSettingDto } from './dto/authSetting.dto';
 import { ERROR_CODE } from './errors/auth.errors';
+import type { AuthSettingData } from './types/authSetting.types';
 
 @Controller('auth')
 export class AuthController {
@@ -39,11 +41,9 @@ export class AuthController {
   @Get('authorize')
   async authorize(@Query() query: AuthorizeDto): Promise<{ redirectUrl: string }> {
     const { client_id, response_type, scope, redirect_uri, state } = query;
-
     if (!client_id || !redirect_uri || !response_type) {
       throw new BadRequestException(ERROR_CODE.MISSING_REQUIRED_PARAMS);
     }
-
     // Validate client from cache
     const isValidClient = await this.authService.validateClientFromCache(client_id);
     if (!isValidClient) {
@@ -56,11 +56,9 @@ export class AuthController {
       response_type,
       scope,
     });
-
     if (!authCode) {
       throw new InternalServerErrorException(ERROR_CODE.AUTH_CODE_GENERATION_FAILED);
     }
-
     // Build redirect URL with auth code
     const redirectUrl = new URL(redirect_uri);
     redirectUrl.searchParams.append('code', authCode);
@@ -138,8 +136,48 @@ export class AuthController {
       id_token,
       token_type: 'Bearer',
       expires_in:
-        this.ssoConfig.access_token_expires_in ?? this.ssoConfig.id_token_expires_in ?? 300,
+        this.ssoConfig.access_token_expires_in ?? this.ssoConfig.id_token_expires_in ?? 900,
       access_token: accessTokenData.access_token,
+    };
+  }
+
+  /**
+   * Stores Init Url & Callback Host in cache
+   * @param body DTO containing initUrl and callbackHost
+   * @returns A success message if settings are stored successfully
+   */
+  @Post('auth-setting')
+  async authSetting(@Body() body: AuthSettingDto) {
+    const { initUrl, callbackHost } = body;
+    try {
+      await this.authService.saveAuthSetting(initUrl, callbackHost);
+      return {
+        message: 'Auth settings stored successfully',
+      };
+    } catch (error: any) {
+      console.error('Error storing auth settings:', error);
+      return {
+        message: error?.message || 'Something went wrong. Please try again later',
+      };
+    }
+  }
+
+  /**
+   * GET /suth/suth-setting — Retrieve cached auth setting
+   * @returns The cached auth setting or a message if none exist or expired
+   */
+  @Get('auth-setting')
+  public async getAuthSetting(): Promise<{
+    message: string;
+    authSetting?: AuthSettingData;
+  }> {
+    const authSetting = await this.authService.getAuthSettingFromCache();
+    if (!authSetting) {
+      return { message: 'No auth setting found or they have expired' };
+    }
+    return {
+      message: 'Auth setting retrieved from cache',
+      authSetting,
     };
   }
 }

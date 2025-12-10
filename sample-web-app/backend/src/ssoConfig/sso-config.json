@@ -4,11 +4,11 @@
   "token_endpoint": "",
   "response_type": ["code"],
   "scopes": ["openid"],
-  "auth_code_expires_in": 300,
+  "auth_code_expires_in": 900,
   "alg": "RS256",
   "idTokenRsaKey": "idTokenRsaKey",
   "private_key": "",
-  "access_token_expires_in": 300,
-  "id_token_expires_in": 300,
+  "access_token_expires_in": 900,
+  "id_token_expires_in": 900,
   "support_refresh_token": false
 }

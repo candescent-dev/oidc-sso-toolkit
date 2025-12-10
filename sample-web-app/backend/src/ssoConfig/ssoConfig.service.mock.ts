@@ -16,12 +16,12 @@ export const mockSsoConfig: SSOConfig = {
   token_endpoint: 'http://localhost:9000/api/auth/token',
   response_type: ['code'],
   scopes: ['openid'],
-  auth_code_expires_in: 300,
+  auth_code_expires_in: 900,
   alg: 'RS256',
   idTokenRsaKey: 'idTokenRsaKey',
   private_key: privateKey,
-  access_token_expires_in: 300,
-  id_token_expires_in: 300,
+  access_token_expires_in: 900,
+  id_token_expires_in: 900,
   support_refresh_token: false,
 };
 

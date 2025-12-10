@@ -14,6 +14,9 @@ import downloadIcon from '../../assets/download.svg';
 import { getApi } from '../../services/api';
 import './HomePage.css';
 
+const AUTO_RELOAD_MESSAGE =
+  'This page will automatically reload after 15 minutes, as the client_id and client_secret expire and are regenerated every 15 minutes.';
+
 const HomePage: FC = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
@@ -290,10 +293,7 @@ const HomePage: FC = () => {
 
   return (
     <>
-      <div className="auto-reload-message">
-        This page will automatically reload after 5 minutes, as the client_id and client_secret
-        expire and are regenerated every 5 minutes.
-      </div>
+      <div className="auto-reload-message">{AUTO_RELOAD_MESSAGE}</div>
       <div className="home-container">
         <div className="header-row">
           <h1>Client Configuration</h1>
@@ -350,7 +350,12 @@ const HomePage: FC = () => {
             )}
           </div>
           <div className="button-row">
-            <button type="button" className="icon-button" data-testid="metadata-button" onClick={downloadMetadata}>
+            <button
+              type="button"
+              className="icon-button"
+              data-testid="metadata-button"
+              onClick={downloadMetadata}
+            >
               <img src={downloadIcon} className="download-icon" alt="Download" loading="lazy" />
               Meta Data
             </button>

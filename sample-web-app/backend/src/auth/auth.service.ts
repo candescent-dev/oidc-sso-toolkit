@@ -1,16 +1,19 @@
-import { Inject, Injectable, OnApplicationShutdown } from '@nestjs/common';
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import type { Cache } from 'cache-manager';
-import { randomBytes } from 'crypto';
 import * as jwt from 'jsonwebtoken';
-import { AuthCodeData, AccessTokenData, UserClaims } from './types/auth.types';
-import { SsoConfigService } from '../ssoConfig/ssoConfig.service';
+import { randomBytes } from 'crypto';
+import type { Cache } from 'cache-manager';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import type { AuthSettingData } from './types/authSetting.types';
 import { SSOConfig } from '../ssoConfig/types/ssoConfig.types';
+import { SsoConfigService } from '../ssoConfig/ssoConfig.service';
 import type { ClientCredentials } from '../client/types/client.types';
+import { Inject, Injectable, OnApplicationShutdown } from '@nestjs/common';
+import { AuthCodeData, AccessTokenData, UserClaims } from './types/auth.types';
 
 @Injectable()
 export class AuthService implements OnApplicationShutdown {
-  private readonly CACHE_KEY = 'client_credentials';
+  private readonly CLIENT_CREDENTIALS_CACHE_KEY = 'client_credentials';
+  private readonly AUTH_SETTING_CACHE_KEY = 'auth_setting';
+  private readonly TTL_MS = 15 * 60 * 1000; // 15 minutes
   // In-memory stores for OAuth2 data
   private readonly authCode: Record<string, AuthCodeData> = {};
   private readonly accessToken: Record<string, AccessTokenData> = {};
@@ -56,7 +59,7 @@ export class AuthService implements OnApplicationShutdown {
     client_secret?: string,
   ): Promise<boolean> {
     const stored: ClientCredentials | undefined = await this.cacheManager.get<ClientCredentials>(
-      this.CACHE_KEY,
+      this.CLIENT_CREDENTIALS_CACHE_KEY,
     );
     if (!stored) return false; // no credentials in cache
     // Always check client_id
@@ -100,9 +103,9 @@ export class AuthService implements OnApplicationShutdown {
    */
   generateAuthCode(payload: Omit<AuthCodeData, 'created_at' | 'expiresAt'>): string {
     const code = this.buildAuthCode();
-    // Expiration from SSO config, default to 5 minutes if not set
+    // Expiration from SSO config, default to 15 minutes if not set
     // Note: auth_code_expires_in is in seconds, convert to milliseconds for timestamps
-    const expiresInSec = this.ssoConfig.auth_code_expires_in ?? 5 * 60;
+    const expiresInSec = this.ssoConfig.auth_code_expires_in ?? 15 * 60;
     const expiresAt = Date.now() + expiresInSec * 1000;
     this.authCode[code] = { ...payload, created_at: Date.now(), expiresAt };
     return code;
@@ -142,9 +145,9 @@ export class AuthService implements OnApplicationShutdown {
    */
   generateAccessToken(payload: { client_id: string }): AccessTokenData {
     const token = this.buildAccessToken();
-    // Expiration from SSO config, default to 5 minutes if not set
+    // Expiration from SSO config, default to 15 minutes if not set
     // Note: access_token_expires_in is in seconds, convert to milliseconds for timestamps
-    const expiresInSec = this.ssoConfig.access_token_expires_in ?? 5 * 60;
+    const expiresInSec = this.ssoConfig.access_token_expires_in ?? 15 * 60;
     const expiresAt = Date.now() + expiresInSec * 1000;
     const tokenData: AccessTokenData = {
       access_token: token,
@@ -163,7 +166,7 @@ export class AuthService implements OnApplicationShutdown {
    */
   generateIdToken(user: UserClaims): string {
     const now = Math.floor(Date.now() / 1000); // JWT uses seconds
-    const expiresInSec = this.ssoConfig.id_token_expires_in ?? 5 * 60; // expiration in seconds
+    const expiresInSec = this.ssoConfig.id_token_expires_in ?? 15 * 60; // expiration in seconds
     const exp = now + expiresInSec; // exp must be in seconds
     const payload = {
       ...user,
@@ -206,8 +209,7 @@ export class AuthService implements OnApplicationShutdown {
   }
 
   /**
-   * This function is not used in controller - not in scope
-   * Validate access token
+   * This function is not used in controller validate access token (not in scope)
    * Can be used multiple times until expiry
    * @param token Access token to validate
    * @returns Associated AccessTokenData if valid; otherwise null
@@ -221,5 +223,26 @@ export class AuthService implements OnApplicationShutdown {
       return null;
     }
     return data;
+  }
+
+  /**
+   * Stores Init Url & Callback Host in cache
+   * @param initUrl URL where the authentication flow begins
+   * @param callbackHost Hostname expected to receive the authentication callback
+   * @returns A message indicating that the authentication settings were stored successfully
+   */
+  async saveAuthSetting(initUrl: string, callbackHost: string): Promise<void> {
+    await this.cacheManager.set(
+      this.AUTH_SETTING_CACHE_KEY,
+      { initUrl, callbackHost },
+      this.TTL_MS,
+    );
+  }
+
+  /**
+   * Retrieve cached auth setting, or undefined if expired.
+   */
+  async getAuthSettingFromCache(): Promise<AuthSettingData | undefined> {
+    return await this.cacheManager.get<AuthSettingData>(this.AUTH_SETTING_CACHE_KEY);
   }
 }
