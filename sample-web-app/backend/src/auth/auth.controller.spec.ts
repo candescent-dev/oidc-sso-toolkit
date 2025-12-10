@@ -26,8 +26,8 @@ describe('AuthController', () => {
           provide: SsoConfigService,
           useValue: {
             getConfig: jest.fn().mockReturnValue({
-              access_token_expires_in: 300,
-              id_token_expires_in: 300,
+              access_token_expires_in: 900,
+              id_token_expires_in: 900,
             }),
           },
         },

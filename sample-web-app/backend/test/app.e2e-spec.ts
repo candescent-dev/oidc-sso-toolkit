@@ -81,7 +81,7 @@ describe('AppController (e2e)', () => {
     });
     console.log('Get client API Response Body:', res.body);
     expect(res.status).toBe(200);
-    expect(res.body).toHaveProperty('message', 'Credentials retrieved from cache.');
+    expect(res.body).toHaveProperty('message', 'Credentials retrieved from cache');
     expect(res.body).toHaveProperty('credentials.client_id');
     expect(res.body.credentials.client_id).toBe(fetchfromPost_client_id);
     expect(res.body).toHaveProperty('credentials.client_secret');

@@ -187,7 +187,7 @@ test.describe.serial('OIDC Semi-Automated Flow', () => {
 
         // Validate token_type and expires_in values
         expect(tokenData.token_type).toBe('Bearer');
-        expect(tokenData.expires_in).toBe(300);
+        expect(tokenData.expires_in).toBe(900);
 
     });
 

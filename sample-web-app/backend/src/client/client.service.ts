@@ -6,8 +6,8 @@ import { randomBytes } from 'crypto';
 
 @Injectable()
 export class ClientService {
-  private readonly CACHE_KEY = 'client_credentials';
-  private readonly TTL_SECONDS = 300_000; // 5 minutes
+  private readonly CLIENT_CREDENTIALS_CACHE_KEY = 'client_credentials';
+  private readonly TTL_MS = 15 * 60 * 1000; // 15 minutes
 
   constructor(@Inject(CACHE_MANAGER) private cacheManager: Cache) {}
 
@@ -15,28 +15,23 @@ export class ClientService {
    * Generate a new client ID and secret with creation timestamp.
    * @returns An object containing client_id, client_secret, and created_at timestamp.
    */
-  public async generateClientCredentials(): Promise<ClientCredentials> {
+  async generateClientCredentials(): Promise<ClientCredentials> {
     const credentials: ClientCredentials = {
       client_id: this.generateClientId(),
       client_secret: this.generateSecret(),
       created_at: new Date().toISOString(),
     };
-    // Store in cache with TTL in seconds
-    await this.cacheManager.set(this.CACHE_KEY, credentials, this.TTL_SECONDS);
+    // Store in cache with TTL in miliseconds
+    await this.cacheManager.set(this.CLIENT_CREDENTIALS_CACHE_KEY, credentials, this.TTL_MS);
     return credentials;
   }
 
   /**
-   * Retrieve cached credentials, or undefined if expired.
+   * Retrieve cached client credentials, or undefined if expired.
    */
-  public async getCredentialsFromCache(): Promise<ClientCredentials | undefined> {
-    return await this.cacheManager.get<ClientCredentials>(this.CACHE_KEY);
+  async getCredentialsFromCache(): Promise<ClientCredentials | undefined> {
+    return await this.cacheManager.get<ClientCredentials>(this.CLIENT_CREDENTIALS_CACHE_KEY);
   }
-
-  // public async getCredentialsFromCache() {
-  //   const obj = await this.cacheManager.get<object>(this.CACHE_KEY);
-  //   return obj;
-  // }
 
   /**
    * Generate a random client ID (public identifier).
