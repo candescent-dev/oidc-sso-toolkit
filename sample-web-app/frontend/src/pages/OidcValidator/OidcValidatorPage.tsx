@@ -47,14 +47,14 @@ const OidcValidatorPage: FC = () => {
       const url = window.URL.createObjectURL(response.data);
       const link = document.createElement('a');
       link.href = url;
-      link.download = 'oidcSetting.json';
+      link.download = 'oidcConfig.json';
       document.body.appendChild(link);
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
       if (downloadTimerRef.current) clearTimeout(downloadTimerRef.current);
       downloadTimerRef.current = window.setTimeout(() => {
-        setDownloadMessage('oidcSetting.json downloaded successfully');
+        setDownloadMessage('oidcConfig.json downloaded successfully');
         dispatch(setPublishOidcSettingLoading(false));
       }, 2000);
     } catch (error: any) {

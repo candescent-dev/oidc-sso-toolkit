@@ -1,9 +1,9 @@
-import * as fs from 'fs';
 import * as os from 'os';
-import * as path from 'path';
 import { runCLI } from 'jest';
 import archiver from 'archiver';
+import { join, basename } from 'path';
 import type { Cache } from 'cache-manager';
+import { existsSync, mkdtempSync, rmSync } from 'fs';
 import { Inject, Injectable } from '@nestjs/common';
 import { ServiceError } from './types/e2eTest.types';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
@@ -30,7 +30,7 @@ export class E2ETestService {
    * @throws {ServiceError} If tests fail or reports are not generated
    */
   async runE2ETestsAndZip(): Promise<Buffer> {
-    const tempReportDir = fs.mkdtempSync(path.join(os.tmpdir(), 'e2e-reports-'));
+    const tempReportDir = mkdtempSync(join(os.tmpdir(), 'e2e-reports-'));
     try {
       const reporters: JestReporter[] = [
         'default',
@@ -38,7 +38,7 @@ export class E2ETestService {
         [
           'jest-html-reporter',
           {
-            outputPath: path.join(tempReportDir, 'e2e-report.html'),
+            outputPath: join(tempReportDir, 'e2e-report.html'),
             includeFailureMsg: true,
             includeSuiteFailure: true,
           },
@@ -63,9 +63,9 @@ export class E2ETestService {
       if (!results) this.throwServiceError('No results returned from Jest', 500);
       if (results.numTotalTests === 0) this.throwServiceError('No E2E tests were executed', 422);
       /** Ensure reports exist */
-      const htmlReportPath = path.join(tempReportDir, 'e2e-report.html');
-      const xmlReportPath = path.join(tempReportDir, 'jest-e2e.xml');
-      if (!fs.existsSync(htmlReportPath) || !fs.existsSync(xmlReportPath))
+      const htmlReportPath = join(tempReportDir, 'e2e-report.html');
+      const xmlReportPath = join(tempReportDir, 'jest-e2e.xml');
+      if (!existsSync(htmlReportPath) || !existsSync(xmlReportPath))
         this.throwServiceError('Reports were not generated correctly', 500);
       /** Create zip file buffer and return */
       return await this.createZipBuffer([htmlReportPath, xmlReportPath]);
@@ -91,7 +91,7 @@ export class E2ETestService {
       archive.on('data', (chunk: Buffer) => chunks.push(chunk));
       archive.on('end', () => resolve(Buffer.concat(chunks)));
       archive.on('error', (err: Error) => reject(err));
-      filePaths.forEach((file) => archive.file(file, { name: path.basename(file) }));
+      filePaths.forEach((file) => archive.file(file, { name: basename(file) }));
       archive.finalize();
     });
   }
@@ -102,7 +102,7 @@ export class E2ETestService {
    */
   private cleanupTempFolder(folderPath: string): void {
     try {
-      if (fs.existsSync(folderPath)) fs.rmSync(folderPath, { recursive: true, force: true });
+      if (existsSync(folderPath)) rmSync(folderPath, { recursive: true, force: true });
     } catch (err) {
       console.warn(`Failed to cleanup temporary folder ${folderPath}:`, err);
     }
