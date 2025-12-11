@@ -3,6 +3,7 @@ import {
   Post,
   Query,
   Req,
+  Res,
   Body,
   Controller,
   BadRequestException,
@@ -11,7 +12,7 @@ import {
 } from '@nestjs/common';
 import { SsoConfigService } from '../ssoConfig/ssoConfig.service';
 import { SSOConfig } from '../ssoConfig/types/ssoConfig.types';
-import type { Request } from 'express';
+import type { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { AuthorizeDto } from './dto/authorize.dto';
 import { AuthSettingDto } from './dto/authSetting.dto';
@@ -147,23 +148,20 @@ export class AuthController {
    * @returns A success message if settings are stored successfully
    */
   @Post('auth-setting')
-  async authSetting(@Body() body: AuthSettingDto) {
+  async authSetting(@Body() body: AuthSettingDto, @Res() res: Response) {
     const { initUrl, callbackHost } = body;
     try {
       await this.authService.saveAuthSetting(initUrl, callbackHost);
-      return {
-        message: 'Auth settings stored successfully',
-      };
+      return res.status(200).json({ message: 'Auth settings stored successfully' });
     } catch (error: any) {
-      console.error('Error storing auth settings:', error);
-      return {
-        message: error?.message || 'Something went wrong. Please try again later',
-      };
+      const status = error?.status || 500;
+      const message = error?.message || 'Something went wrong. Please try again later';
+      return res.status(status).json({ message });
     }
   }
 
   /**
-   * GET /suth/suth-setting — Retrieve cached auth setting
+   * GET /auth/auth-setting — Retrieve auth setting from cache.json file
    * @returns The cached auth setting or a message if none exist or expired
    */
   @Get('auth-setting')

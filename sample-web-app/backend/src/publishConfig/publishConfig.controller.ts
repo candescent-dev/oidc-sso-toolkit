@@ -1,6 +1,6 @@
 import type { Response } from 'express';
-import { Controller, Get, Res } from '@nestjs/common';
 import { PublishConfigService } from './publishConfig.service';
+import { Controller, Get, Res, NotFoundException } from '@nestjs/common';
 
 @Controller('publish-config')
 export class PublishConfigController {
@@ -14,6 +14,13 @@ export class PublishConfigController {
   @Get()
   async downloadConfig(@Res() res: Response): Promise<Response> {
     try {
+      // Retrieve cached auth setting
+      const authSetting = await this.publishConfigService.getAuthSettingFromCache();
+      if (!authSetting) {
+        // Throw NotFoundException if cache is empty
+        throw new NotFoundException('Auth setting not found in cache or has expired');
+      }
+      // Generate config file if cache is not empty
       const fileBuffer = await this.publishConfigService.getConfigFile();
       res.set({
         'Content-Type': 'application/octet-stream',
@@ -24,7 +31,7 @@ export class PublishConfigController {
     } catch (error: any) {
       const status = error?.status || 500;
       const message = error?.message || 'Something went wrong. Please try again later';
-      return res.status(status).json({ message, status });
+      return res.status(status).json({ message });
     }
   }
 }
