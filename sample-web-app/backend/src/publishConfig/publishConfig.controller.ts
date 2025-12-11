@@ -24,7 +24,7 @@ export class PublishConfigController {
       const fileBuffer = await this.publishConfigService.getConfigFile();
       res.set({
         'Content-Type': 'application/octet-stream',
-        'Content-Disposition': 'attachment; filename="oidcSetting.json"',
+        'Content-Disposition': 'attachment; filename="oidcConfig.json"',
         'Content-Length': fileBuffer.length.toString(),
       });
       return res.send(fileBuffer);

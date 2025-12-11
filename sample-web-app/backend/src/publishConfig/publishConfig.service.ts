@@ -1,6 +1,6 @@
 import { resolve } from 'path';
-import { existsSync, readFileSync } from 'fs';
 import type { Cache } from 'cache-manager';
+import { existsSync, readFileSync } from 'fs';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { AppConfig } from './types/publishConfig.types';
 import { AuthSettingData } from '../auth/types/authSetting.types';

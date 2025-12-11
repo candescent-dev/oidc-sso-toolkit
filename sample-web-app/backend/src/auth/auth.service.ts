@@ -2,9 +2,9 @@ import { resolve } from 'path';
 import * as jwt from 'jsonwebtoken';
 import { randomBytes } from 'crypto';
 import type { Cache } from 'cache-manager';
+import { existsSync, writeFileSync } from 'fs';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { AuthSettingData } from './types/authSetting.types';
-import { existsSync, writeFileSync, readFileSync } from 'fs';
 import { SSOConfig } from '../ssoConfig/types/ssoConfig.types';
 import { SsoConfigService } from '../ssoConfig/ssoConfig.service';
 import type { ClientCredentials } from '../client/types/client.types';
@@ -237,9 +237,9 @@ export class AuthService implements OnApplicationShutdown {
   }
 
   /**
-   * Stores authentication settings in both cache and cache.json file
-   * @param initUrl The URL where the authentication flow begins
-   * @param callbackHost The hostname expected to receive the authentication callback
+   * Stores auth settings in both cache and cache.json file
+   * @param initUrl The URL where the auth flow begins
+   * @param callbackHost The hostname expected to receive the auth callback
    * @throws NotFoundException If the cache.json file does not exist
    * @throws InternalServerErrorException If saving to the file or cache fails
    */
