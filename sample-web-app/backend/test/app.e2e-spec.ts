@@ -10,14 +10,15 @@ import { SsoConfigServiceMock } from '../src/ssoConfig/ssoConfig.service.mock';
 import { APP_CONFIG } from '../src/appConfig/appConfig.provider';
 import { CACHE_MANAGER } from '@nestjs/cache-manager/dist';
 import { ERROR_CODE } from '../src/auth/errors/auth.errors';
+import { readCallbackHost} from '../test/cacheutil'
 
   let fetchfromPost_client_id: string;
   let fetchfromPost_client_secret: string;
   let fetchfromPost_created_at: string;
-  let redirect_uri = 'https://yourapp.com/callback';
   let stateVal = 'statetest123';
   let code: string, state: string;
   let authCode: string;
+  const readCallbackHostValue = readCallbackHost();
 
   const authoriseApi = '/auth/authorize';
   const clientApi = '/client';
@@ -56,6 +57,17 @@ describe('AppController (e2e)', () => {
     // await app.close();
   });
 
+  it('check health of backend -> /health (GET)', () => {
+    return request(app.getHttpServer())
+      .get('/health')
+      .expect(200)
+      .expect((res) => {
+        expect(res.body.status).toBe('ok');
+        expect(res.body.message).toBe('Hello');
+        expect(res.body.timestamp).toBeDefined();
+        expect(typeof res.body.timestamp).toBe('string');
+      });
+  });
 
   it('validate POST client api should have client details in response', async () => {
     console.log('validate POST client api should have client details in response');
@@ -96,13 +108,14 @@ describe('AppController (e2e)', () => {
 
   it('validate authorise api generating redirectUrl with code and state', async () => {
     console.log('validate authorise api generating redirectUrl with code and state');
+    console.log('Reading callBackUri from cache.json using readCallbackHost function', readCallbackHostValue);
     const res = await agent
       .get(authoriseApi)
       .query({
         client_id: fetchfromPost_client_id,
         response_type: 'code',
         scope: 'openid',
-        redirect_uri: redirect_uri,
+        redirect_uri: readCallbackHostValue,
         state: stateVal,
       })
       .catch((err: any) => {
@@ -126,7 +139,7 @@ describe('AppController (e2e)', () => {
         client_id: invalidClientId,
         response_type: 'code',
         scope: 'openid',
-        redirect_uri: redirect_uri,
+        redirect_uri: readCallbackHostValue,
         state: stateVal,
       })
       .catch((err: any) => {
@@ -145,7 +158,7 @@ describe('AppController (e2e)', () => {
     const payload = {
       response_type: 'code',
       scope: 'openid',
-      redirect_uri: redirect_uri,
+      redirect_uri: readCallbackHostValue,
       state: stateVal,
     };
     const dto = plainToInstance(AuthorizeDto, payload);
@@ -162,7 +175,7 @@ describe('AppController (e2e)', () => {
     const payload = {
       client_id: fetchfromPost_client_id,
       scope: 'openid',
-      redirect_uri: redirect_uri,
+      redirect_uri: readCallbackHostValue,
       state: stateVal,
     };
     const dto = plainToInstance(AuthorizeDto, payload);
@@ -182,7 +195,7 @@ describe('AppController (e2e)', () => {
     const payload = {
       client_id: fetchfromPost_client_id,
       response_type: 'code',
-      redirect_uri: redirect_uri,
+      redirect_uri: readCallbackHostValue,
       state: stateVal,
     };
     const dto = plainToInstance(AuthorizeDto, payload);
