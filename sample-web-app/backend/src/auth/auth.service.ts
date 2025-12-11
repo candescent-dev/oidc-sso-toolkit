@@ -1,16 +1,27 @@
+import { resolve } from 'path';
 import * as jwt from 'jsonwebtoken';
 import { randomBytes } from 'crypto';
 import type { Cache } from 'cache-manager';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { AuthSettingData } from './types/authSetting.types';
+import { existsSync, writeFileSync, readFileSync } from 'fs';
 import { SSOConfig } from '../ssoConfig/types/ssoConfig.types';
 import { SsoConfigService } from '../ssoConfig/ssoConfig.service';
 import type { ClientCredentials } from '../client/types/client.types';
-import { Inject, Injectable, OnApplicationShutdown } from '@nestjs/common';
 import { AuthCodeData, AccessTokenData, UserClaims } from './types/auth.types';
+import {
+  Inject,
+  Injectable,
+  NotFoundException,
+  OnApplicationShutdown,
+  InternalServerErrorException,
+} from '@nestjs/common';
+
+const CACHE_JSON_PATH = '../../../../cache.json';
 
 @Injectable()
 export class AuthService implements OnApplicationShutdown {
+  private readonly cacheJsonPath = resolve(__dirname, CACHE_JSON_PATH);
   private readonly CLIENT_CREDENTIALS_CACHE_KEY = 'client_credentials';
   private readonly AUTH_SETTING_CACHE_KEY = 'auth_setting';
   private readonly TTL_MS = 15 * 60 * 1000; // 15 minutes
@@ -226,17 +237,37 @@ export class AuthService implements OnApplicationShutdown {
   }
 
   /**
-   * Stores Init Url & Callback Host in cache
-   * @param initUrl URL where the authentication flow begins
-   * @param callbackHost Hostname expected to receive the authentication callback
-   * @returns A message indicating that the authentication settings were stored successfully
+   * Stores authentication settings in both cache and cache.json file
+   * @param initUrl The URL where the authentication flow begins
+   * @param callbackHost The hostname expected to receive the authentication callback
+   * @throws NotFoundException If the cache.json file does not exist
+   * @throws InternalServerErrorException If saving to the file or cache fails
    */
   async saveAuthSetting(initUrl: string, callbackHost: string): Promise<void> {
-    await this.cacheManager.set(
-      this.AUTH_SETTING_CACHE_KEY,
-      { initUrl, callbackHost },
-      this.TTL_MS,
-    );
+    if (!existsSync(this.cacheJsonPath)) {
+      throw new NotFoundException(`cache.json not found at: ${this.cacheJsonPath}`);
+    }
+    const authSettingData: AuthSettingData = {
+      initUrl,
+      callbackHost,
+      updatedAt: new Date().toISOString(),
+    };
+    // Save to file - for jest
+    try {
+      writeFileSync(this.cacheJsonPath, JSON.stringify(authSettingData, null, 2), 'utf8');
+    } catch (error) {
+      throw new InternalServerErrorException('Failed to save auth settings');
+    }
+    // Save to cache
+    try {
+      await this.cacheManager.set(
+        this.AUTH_SETTING_CACHE_KEY,
+        { initUrl, callbackHost },
+        this.TTL_MS,
+      );
+    } catch (error) {
+      throw new InternalServerErrorException('Failed to save auth settings to cache');
+    }
   }
 
   /**

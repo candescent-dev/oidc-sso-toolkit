@@ -47,7 +47,7 @@ const OidcValidatorPage: FC = () => {
       const url = window.URL.createObjectURL(response.data);
       const link = document.createElement('a');
       link.href = url;
-      link.download = 'config.json';
+      link.download = 'oidcSetting.json';
       document.body.appendChild(link);
       link.click();
       link.remove();

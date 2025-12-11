@@ -3,13 +3,27 @@ import * as os from 'os';
 import * as path from 'path';
 import { runCLI } from 'jest';
 import archiver from 'archiver';
-import { Injectable } from '@nestjs/common';
+import type { Cache } from 'cache-manager';
+import { Inject, Injectable } from '@nestjs/common';
 import { ServiceError } from './types/e2eTest.types';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { AuthSettingData } from '../auth/types/authSetting.types';
 
 type JestReporter = string | [string, Record<string, any>];
 
 @Injectable()
 export class E2ETestService {
+  private readonly AUTH_SETTING_CACHE_KEY = 'auth_setting';
+
+  constructor(@Inject(CACHE_MANAGER) private cacheManager: Cache) {}
+
+  /**
+   * Retrieve cached auth setting, or undefined if expired.
+   */
+  async getAuthSettingFromCache(): Promise<AuthSettingData | undefined> {
+    return await this.cacheManager.get<AuthSettingData>(this.AUTH_SETTING_CACHE_KEY);
+  }
+
   /**
    * Executes Jest E2E tests and returns a zip buffer containing HTML & XML reports
    * @return {Promise<Buffer>} Zip file buffer containing generated reports
@@ -44,7 +58,7 @@ export class E2ETestService {
       /** Execute Jest tests */
       const { results } = await runCLI(
         { _: [], $0: 'jest-e2e', config: JSON.stringify(jestConfig), runInBand: true },
-        ["."],
+        ['.'],
       );
       if (!results) this.throwServiceError('No results returned from Jest', 500);
       if (results.numTotalTests === 0) this.throwServiceError('No E2E tests were executed', 422);
