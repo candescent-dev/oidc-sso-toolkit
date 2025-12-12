@@ -52,9 +52,9 @@ export class E2ETestService {
       /** Inline Jest configuration (to avoid jest-e2e.json file reading) */
       const jestConfig = {
         moduleFileExtensions: ['js', 'json', 'ts'],
-        rootDir: './dist',
+        rootDir: '/app/backend/dist',
         testEnvironment: 'node',
-        testRegex: '.e2e-spec.ts$',
+        testRegex: '.e2e-spec.js$',
         transform: {},
         reporters,
       };
