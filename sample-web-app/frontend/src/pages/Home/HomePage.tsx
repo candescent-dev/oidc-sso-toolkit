@@ -7,6 +7,7 @@ import {
   setError,
   setHomeConfigData,
 } from '../../features/home/homeSlice';
+import { ROUTES } from '../../constants/AppRoutes';
 import type { IframeSettings, Permissions } from '../../features/home/types';
 import { validateUrl } from '../../utils/helpers';
 import { OpenMode } from '../../features/home/types';
@@ -285,7 +286,7 @@ const HomePage: FC = () => {
       uniqueId: null,
       openOption: null,
     });
-    navigate('/startOidcSso');
+    navigate(ROUTES.START_OIDC_SSO);
   };
 
   if (loading) return <div className="loader">Fetching Client Credentials......</div>;

@@ -8,22 +8,22 @@
 
   /* Typography */
   --font-family: 'Inter', Arial, sans-serif;
-  --font-size-heading: 22px;
-  --font-size-link: 16px;
+  --font-size-heading: 1.375rem;
+  --font-size-link: 1rem;
   --font-weight-normal: 400;
   --font-weight-bold: 650;
-  --line-height-base: 28px;
-  --letter-spacing-heading: -0.32px;
-  --letter-spacing-link: -0.16px;
+  --line-height-base: 1.75rem;
+  --letter-spacing-heading: -0.02rem;
+  --letter-spacing-link: -0.01rem;
 
   /* Spacing */
-  --spacing-xs: 5px;
   --spacing-zero: 0;
+  --spacing-xs: 0.25rem;
   --spacing-md: 1rem;
 
   /* Layout */
   --height-full: 100vh;
-  --auto-reload-height: 60px;
+  --auto-reload-height: 3.75rem;
 }
 
 /* ============================================
@@ -47,13 +47,15 @@
 .sign-url h3 {
   color: var(--color-text-primary);
   text-align: center;
-  font-feature-settings: 'liga' off, 'clig' off;
+  font-feature-settings:
+    'liga' off,
+    'clig' off;
   font-size: var(--font-size-heading);
   font-style: normal;
   font-weight: var(--font-weight-bold);
   line-height: var(--line-height-base);
   letter-spacing: var(--letter-spacing-heading);
-  margin: 0; /* Remove margin to ensure proper centering */
+  margin: 0;
 }
 
 .sign-url a {
@@ -65,4 +67,51 @@
   text-decoration: underline;
   color: var(--color-link);
   cursor: pointer;
+}
+
+.header-label-row {
+  top: 5rem;
+  right: 0.625rem;
+  position: absolute;
+}
+
+.link-label {
+  color: var(--color-link);
+  font-size: var(--font-size-xl);
+  cursor: pointer;
+}
+
+.link-icon {
+  width: var(--icon-size);
+  height: var(--icon-size);
+  object-fit: contain;
+  vertical-align: middle;
+}
+
+/* ============================================
+   Responsive Design
+   ============================================ */
+
+/* Small Devices (Phones < 600px / 37.5rem) */
+@media (max-width: 37.5rem) {
+  .header-label-row {
+    display: flex;
+    position: unset;
+    flex-direction: row;
+    align-self: center;
+    align-items: center;
+    margin-top: var(--spacing-md);
+  }
+}
+
+/* Medium Devices (Tablets: 600px–767px / 37.5rem–60rem) */
+@media (min-width: 37.5rem) and (max-width: 60rem) {
+  .header-label-row {
+    display: flex;
+    position: unset;
+    flex-direction: row;
+    align-self: center;
+    align-items: center;
+    margin-top: var(--spacing-md);
+  }
 }

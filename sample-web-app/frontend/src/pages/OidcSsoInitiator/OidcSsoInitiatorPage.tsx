@@ -1,5 +1,8 @@
 import React, { FC, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { ROUTES } from '../../constants/AppRoutes';
 import { OpenMode } from '../../features/home/types';
+import arrowTopIcon from '../../assets/arrowTop.svg';
 import { useAppSelector, useAppDispatch } from '../../app/hooks';
 import { saveAuthSetting } from '../../features/OidcSsoInitiator/OidcSsoInitiatorSlice';
 import './OidcSsoInitiatorPage.css';
@@ -17,7 +20,9 @@ const IFRAME_BORDER = '1px solid #ccc';
 const IFRAME_MARGIN_TOP = '20px';
 
 const OidcSsoInitiatorPage: FC = () => {
+  const navigate = useNavigate();
   const dispatch = useAppDispatch();
+
   const { openOption, iframeSettings, initUrl, callbackHost } = useAppSelector(
     (state) => state.home
   );
@@ -46,9 +51,20 @@ const OidcSsoInitiatorPage: FC = () => {
         .join('; ')
     : '';
 
+  const handleOIDCValidatorClick = () => {
+    navigate(ROUTES.OIDC_VALIDATOR);
+  };
+
   return (
     <>
-      <div className="auto-reload-message">{AUTO_RELOAD_MESSAGE}</div>
+      <div className="auto-reload-message">
+        {AUTO_RELOAD_MESSAGE}
+        {/* OIDC Validator Link */}
+        <div onClick={handleOIDCValidatorClick} className="header-label-row">
+          <label className="link-label">OIDC Validator</label>
+          <img src={arrowTopIcon} className="link-icon" alt="OIDC Validator" loading="lazy" />
+        </div>
+      </div>
       <div className="sign-url">
         <h3>Sign in Securely</h3>
         <a href={initUrl} target={targetValue} rel="noopener noreferrer" onClick={handleLinkClick}>
