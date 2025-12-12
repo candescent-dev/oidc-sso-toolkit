@@ -104,17 +104,6 @@
 }
 
 /* ============================================
-   Base Styles
-   ============================================ */
-.auto-reload-message {
-  color: var(--color-text-lighter);
-  margin: var(--spacing-3xl) var(--spacing-xl) 0 var(--spacing-xl);
-  line-height: var(--line-height-base);
-  font-size: clamp(var(--font-size-xs), 1vw + 0.35rem, var(--font-size-md));
-  font-family: var(--font-family);
-}
-
-/* ============================================
    Layout Components
    ============================================ */
 .home-container {
@@ -430,11 +419,6 @@
 
 /* Small Devices (Phones < 600px) */
 @media (max-width: 37.5rem) {
-  .auto-reload-message {
-    margin: var(--spacing-xs);
-    font-size: var(--font-size-md);
-  }
-
   .home-container {
     padding: var(--spacing-md);
   }
@@ -493,11 +477,6 @@
 
 /* Medium Devices (Tablets: 600px–767px) */
 @media (min-width: 37.5rem) and (max-width: 47.99rem) {
-  .auto-reload-message {
-    margin: var(--spacing-2xl) var(--spacing-3xl) 0 var(--spacing-3xl);
-    font-size: var(--font-size-lg);
-  }
-
   .inputs {
     gap: var(--spacing-2xl);
   }
@@ -528,12 +507,6 @@
 
 /* Large Devices (Desktops ≥ 768px) */
 @media (min-width: 48rem) {
-  .auto-reload-message {
-    margin: var(--spacing-xs) auto 0 auto;
-    padding-left: 0;
-    text-align: center;
-  }
-
   .inputs {
     display: grid;
     grid-template-columns: 1fr 1fr;
