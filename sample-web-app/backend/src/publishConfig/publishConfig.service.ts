@@ -68,17 +68,17 @@ export class PublishConfigService {
   }
 
   /**
-   * Retrieves the authentication settings from cache.json
+   * Retrieves the authentication setting from cache.json
    * @returns AuthSettingData The parsed AuthSettingData object
    * @throws NotFoundException If cache.json is missing
    * @throws InternalServerErrorException If cache.json cannot be parsed or required fields are missing
    */
   getAuthSetting(): AuthSettingData {
-    const authSettings = this.readJsonFile<AuthSettingData>(this.cacheJsonPath, 'cache.json');
-    if (!authSettings.initUrl || !authSettings.callbackHost) {
+    const authSetting = this.readJsonFile<AuthSettingData>(this.cacheJsonPath, 'cache.json');
+    if (!authSetting.initUrl || !authSetting.callbackHost) {
       throw new InternalServerErrorException('Missing initUrl or callbackHost');
     }
-    return authSettings;
+    return authSetting;
   }
 
   /**
@@ -89,10 +89,10 @@ export class PublishConfigService {
    */
   async getConfigFile(): Promise<Buffer> {
     const appConfig = this.getAppConfig();
-    const authSettings = this.getAuthSetting();
-    // Merge auth settings into app config
-    appConfig.initUrl = authSettings.initUrl;
-    appConfig.callbackHost = authSettings.callbackHost;
+    const authSetting = this.getAuthSetting();
+    // Merge auth setting into app config
+    appConfig.initUrl = authSetting.initUrl;
+    appConfig.callbackHost = authSetting.callbackHost;
     return Buffer.from(JSON.stringify(appConfig, null, 2));
   }
 }

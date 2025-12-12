@@ -145,14 +145,14 @@ export class AuthController {
   /**
    * Stores Init Url & Callback Host in cache
    * @param body DTO containing initUrl and callbackHost
-   * @returns A success message if settings are stored successfully
+   * @returns A success message if setting are stored successfully
    */
   @Post('auth-setting')
   async authSetting(@Body() body: AuthSettingDto, @Res() res: Response) {
     const { initUrl, callbackHost } = body;
     try {
       await this.authService.saveAuthSetting(initUrl, callbackHost);
-      return res.status(200).json({ message: 'Auth settings stored successfully' });
+      return res.status(200).json({ message: 'Auth setting stored successfully' });
     } catch (error: any) {
       const status = error?.status || 500;
       const message = error?.message || 'Something went wrong. Please try again later';
