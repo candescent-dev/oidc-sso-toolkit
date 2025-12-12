@@ -31,6 +31,7 @@ export class E2ETestService {
    */
   async runE2ETestsAndZip(): Promise<Buffer> {
     const tempReportDir = mkdtempSync(join(os.tmpdir(), 'e2e-reports-'));
+    console.log("-----** testing -------", tempReportDir)
     try {
       const reporters: JestReporter[] = [
         'default',
@@ -51,12 +52,10 @@ export class E2ETestService {
       /** Inline Jest configuration (to avoid jest-e2e.json file reading) */
       const jestConfig = {
         moduleFileExtensions: ['js', 'json', 'ts'],
-        rootDir: '.',
+        rootDir: './dist',
         testEnvironment: 'node',
         testRegex: '.e2e-spec.ts$',
-        transform: {
-          '^.+\\.(t|j)s$': 'ts-jest',
-        },
+        transform: {},
         reporters,
       };
       /** Execute Jest tests */
@@ -101,26 +100,26 @@ export class E2ETestService {
   }
 
   private createZipBufferFromDir(dirPath: string): Promise<Buffer> {
-  return new Promise((resolve, reject) => {
-    try {
-      if (!existsSync(dirPath)) {
-        return reject(new Error(`Report directory not found: ${dirPath}`));
+    return new Promise((resolve, reject) => {
+      try {
+        if (!existsSync(dirPath)) {
+          return reject(new Error(`Report directory not found: ${dirPath}`));
+        }
+        const archive = archiver('zip', { zlib: { level: 9 } });
+        const chunks: Buffer[] = [];
+        // accumulate zip binary data into memory
+        archive.on('data', (chunk: Buffer) => chunks.push(chunk));
+        archive.on('end', () => resolve(Buffer.concat(chunks)));
+        archive.on('error', (err: Error) => reject(err));
+        // add the whole directory contents into the archive root
+        archive.directory(dirPath, false);
+        // finalize the archive (starts writing)
+        archive.finalize();
+      } catch (err) {
+        reject(err);
       }
-      const archive = archiver('zip', { zlib: { level: 9 } });
-      const chunks: Buffer[] = [];
-      // accumulate zip binary data into memory
-      archive.on('data', (chunk: Buffer) => chunks.push(chunk));
-      archive.on('end', () => resolve(Buffer.concat(chunks)));
-      archive.on('error', (err: Error) => reject(err));
-      // add the whole directory contents into the archive root
-      archive.directory(dirPath, false);
-      // finalize the archive (starts writing)
-      archive.finalize();
-    } catch (err) {
-      reject(err);
-    }
-  });
-}
+    });
+  }
 
   /**
    * Deletes a temporary folder safely
