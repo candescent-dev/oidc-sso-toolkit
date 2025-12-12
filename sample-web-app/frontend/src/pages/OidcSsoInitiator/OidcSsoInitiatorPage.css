@@ -77,7 +77,7 @@
 
 .link-label {
   color: var(--color-link);
-  font-size: var(--font-size-xl);
+  font-size: var(--font-size-link);
   cursor: pointer;
 }
 
