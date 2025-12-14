@@ -108,7 +108,7 @@ describe('AppController (e2e)', () => {
 
   it('validate authorise api generating redirectUrl with code and state', async () => {
     console.log('validate authorise api generating redirectUrl with code and state');
-    console.log('Reading callBackUri from cache.json using readCallbackHost function', readCallbackHostValue);
+    console.log('Reading callBackUri from cache.json using readCallbackHost', readCallbackHostValue);
     const res = await agent
       .get(authoriseApi)
       .query({
