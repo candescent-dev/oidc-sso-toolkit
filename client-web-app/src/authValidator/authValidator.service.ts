@@ -1,15 +1,14 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { resolve } from 'path';
+import { randomBytes } from 'crypto';
 import { AxiosResponse } from 'axios';
 import { HttpService } from '@nestjs/axios';
-import { ConfigService } from '@nestjs/config';
+import { existsSync, readFileSync } from 'fs';
 import { AuthorizeDto } from './dto/authorize.dto';
 import { firstValueFrom, catchError, of } from 'rxjs';
-import { TokenResponse } from 'src/types/authValidator.types';
 import { jwtVerify, importJWK, JWTPayload } from 'jose';
-import { JWKKeys } from '../types/authValidator.types';
-import { randomBytes } from 'crypto';
-import * as fs from 'fs';
-import * as path from 'path';
+import { TokenResponse } from 'src/types/authValidator.types';
+import { JWKKeys, AuthValidatorConfig } from '../types/authValidator.types';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 
 export interface ServiceSuccess<T> {
   success: true;
@@ -24,26 +23,39 @@ export type ServiceResult<T> = ServiceSuccess<T> | ServiceError;
 
 @Injectable()
 export class AuthValidatorService {
-  private AUTHORIZE_ENDPOINT_URL: string;
-  private TOKEN_ENDPOINT_URL: string;
   private readonly JWK: JWKKeys;
+  private readonly AUTHORIZE_ENDPOINT_URL: string;
+  private readonly TOKEN_ENDPOINT_URL: string;
+  private readonly config: AuthValidatorConfig;
 
-  constructor(
-    private readonly httpService: HttpService,
-    private readonly configService: ConfigService,
-  ) {
-    const port = this.configService.get<number>('backendPort');
-    if (!port) {
-      throw new InternalServerErrorException('backendPort not found in sample-web-app/config.json');
+  private static readonly CONFIG_PATH = resolve('src/authValidatorConfig/config.json');
+  private static readonly JWK_PATH = resolve('src/authValidatorConfig/JWK.json');
+
+  constructor(private readonly httpService: HttpService) {
+    this.config = this.loadJsonFile<AuthValidatorConfig>(
+      AuthValidatorService.CONFIG_PATH,
+      'AuthValidatorConfig',
+    );
+    this.JWK = this.loadJsonFile<JWKKeys>(AuthValidatorService.JWK_PATH, 'JWK');
+    const { backendPort } = this.config;
+    if (!backendPort) {
+      throw new InternalServerErrorException(
+        'backendPort not found in src/authValidatorConfig/config.json',
+      );
     }
-    this.AUTHORIZE_ENDPOINT_URL = `http://localhost:${port}/api/auth/authorize`;
-    this.TOKEN_ENDPOINT_URL = `http://localhost:${port}/api/auth/token`;
-    const JWKPath = path.resolve('src/authValidatorConfig/JWK.json');
-    if (!fs.existsSync(JWKPath)) {
-      throw new InternalServerErrorException('JWK file not found');
+    this.AUTHORIZE_ENDPOINT_URL = `http://localhost:${backendPort}/api/auth/authorize`;
+    this.TOKEN_ENDPOINT_URL = `http://localhost:${backendPort}/api/auth/token`;
+  }
+
+  private loadJsonFile<T>(filePath: string, name: string): T {
+    if (!existsSync(filePath)) {
+      throw new InternalServerErrorException(`${name} file not found: ${filePath}`);
     }
-    const JWKFile = fs.readFileSync(JWKPath, 'utf8');
-    this.JWK = JSON.parse(JWKFile) as JWKKeys;
+    try {
+      return JSON.parse(readFileSync(filePath, 'utf8')) as T;
+    } catch (error) {
+      throw new InternalServerErrorException(`Failed to parse ${name} file: ${filePath}`);
+    }
   }
 
   /**
