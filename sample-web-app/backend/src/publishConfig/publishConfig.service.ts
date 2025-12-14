@@ -68,7 +68,7 @@ export class PublishConfigService {
   }
 
   /**
-   * Retrieves the authentication setting from cache.json
+   * Retrieves the auth setting from cache.json
    * @returns AuthSettingData The parsed AuthSettingData object
    * @throws NotFoundException If cache.json is missing
    * @throws InternalServerErrorException If cache.json cannot be parsed or required fields are missing
