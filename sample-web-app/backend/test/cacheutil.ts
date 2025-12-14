@@ -1,38 +1,51 @@
-import * as fs from 'fs';
-import * as path from 'path';
+import { existsSync, readFileSync } from 'fs';
+import { resolve } from 'path';
 
-const APP_CONFIG_PATH = '../../cache.json';
+const LOCAL_CACHE_JSON_RELATIVE_PATH = '../../cache.json';
+const ZIP_CACHE_JSON_RELATIVE_PATH = '../../../cache.json';
 
 export interface AppConfig {
-  initUrl?: string;
-  callbackHost?: string;
+  initUrl: string;
+  callbackHost: string;
+  updatedAt: string;
 }
 
 /**
- * Safely read JSON config and return callbackHost.
- * Throws a clear error if file/path/JSON/key is missing.
+ * Reads callbackHost from a given cache.json file
+ * and validates its structure.
  */
-export function readCallbackHost(): string {
-  // Resolve relative to this file, not the working directory
-  const resolvedPath = path.resolve(__dirname, APP_CONFIG_PATH);
-
-  if (!fs.existsSync(resolvedPath)) {
-    throw new Error(`Config file not found at: ${resolvedPath}`);
-  }
-
-  const raw = fs.readFileSync(resolvedPath, 'utf-8');
-  let json: AppConfig;
+function loadCallbackHost(configFilePath: string): string {
+  let config: AppConfig;
   try {
-    json = JSON.parse(raw);
-  } catch (e) {
-    throw new Error(`Invalid JSON in ${resolvedPath}: ${(e as Error).message}`);
-  }
-
-  if (!json.callbackHost || typeof json.callbackHost !== 'string') {
+    const rawContent = readFileSync(configFilePath, 'utf-8');
+    config = JSON.parse(rawContent);
+  } catch (error) {
     throw new Error(
-      `Missing or invalid "callbackHost" in config: ${resolvedPath}`
+      `Failed to read or parse config file at ${configFilePath}: ${(error as Error).message}`,
     );
   }
+  if (typeof config.callbackHost !== 'string') {
+    throw new Error(`"callbackHost" is missing or invalid in ${configFilePath}`);
+  }
+  return config.callbackHost;
+}
 
-  return json.callbackHost;
+/**
+ * Resolves acsUrl across different runtime layouts - local / build layout
+ * - packaged ZIP (final deliverable) layout
+ */
+export function readCallbackHost(): string {
+  const localCacheJsonPath = resolve(__dirname, LOCAL_CACHE_JSON_RELATIVE_PATH);
+  const zipCacheJsonPath = resolve(__dirname, ZIP_CACHE_JSON_RELATIVE_PATH);
+  if (existsSync(localCacheJsonPath)) {
+    return loadCallbackHost(localCacheJsonPath);
+  }
+  if (existsSync(zipCacheJsonPath)) {
+    return loadCallbackHost(zipCacheJsonPath);
+  }
+  throw new Error(
+    `cache.json not found in expected locations:\n` +
+      `- ${localCacheJsonPath}\n` +
+      `- ${zipCacheJsonPath}`,
+  );
 }
