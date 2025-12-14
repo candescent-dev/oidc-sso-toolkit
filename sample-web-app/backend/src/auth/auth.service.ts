@@ -237,7 +237,7 @@ export class AuthService implements OnApplicationShutdown {
   }
 
   /**
-   * Stores auth settings in both cache and cache.json file
+   * Stores auth setting in both cache and cache.json file
    * @param initUrl The URL where the auth flow begins
    * @param callbackHost The hostname expected to receive the auth callback
    * @throws NotFoundException If the cache.json file does not exist
@@ -256,7 +256,7 @@ export class AuthService implements OnApplicationShutdown {
     try {
       writeFileSync(this.cacheJsonPath, JSON.stringify(authSettingData, null, 2), 'utf8');
     } catch (error) {
-      throw new InternalServerErrorException('Failed to save auth settings');
+      throw new InternalServerErrorException('Failed to save auth setting');
     }
     // Save to cache
     try {
@@ -266,7 +266,7 @@ export class AuthService implements OnApplicationShutdown {
         this.TTL_MS,
       );
     } catch (error) {
-      throw new InternalServerErrorException('Failed to save auth settings to cache');
+      throw new InternalServerErrorException('Failed to save auth setting to cache');
     }
   }
 
