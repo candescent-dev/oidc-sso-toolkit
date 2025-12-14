@@ -17,7 +17,7 @@ import {
   InternalServerErrorException,
 } from '@nestjs/common';
 
-const CACHE_JSON_PATH = '../../../../cache.json';
+const CACHE_JSON_PATH = '../../../cache.json';
 
 @Injectable()
 export class AuthService implements OnApplicationShutdown {
