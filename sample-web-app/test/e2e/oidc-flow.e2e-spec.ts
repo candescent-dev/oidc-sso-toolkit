@@ -5,7 +5,7 @@ import path from 'path';
 import { spawn, execSync } from 'child_process';
 
 const frontendURL = 'http://localhost:8000';
-const validatorBaseURL = 'http://localhost:7000/api/auth-validator';
+const validatorBaseURL = 'http://localhost:7080/api/auth-validator';
 
 const rootDir = path.resolve(__dirname, '..', '..', '..'); // Goes up from sample-web-app to root
 const configFilePath = path.resolve(rootDir, 'client-web-app', 'src', 'authValidatorConfig', 'config.json');
@@ -79,7 +79,7 @@ test.describe.serial('OIDC Semi-Automated Flow', () => {
             name: 'client-web-app',
             cwd: clientwebappDir,
             startCommand: 'npm start',
-            healthUrl: 'http://localhost:7000/api/health'
+            healthUrl: 'http://localhost:7080/api/health'
         };
         console.log("Path of the client webapp directory folder from where we need to restart the server: "+clientwebappDir);
 
@@ -148,8 +148,8 @@ test.describe.serial('OIDC Semi-Automated Flow', () => {
         // ---------------- STEP 6: Continue UI Flow ----------------
 
         // Fill inputs and trigger OIDC flow
-        await page.fill('#initUrl', 'http://localhost:7000/api/auth-validator/call-authorize-and-token');
-        await page.fill('#callbackHost', 'http://localhost:7000/api/auth-validator/call-authorize-and-token/callback');
+        await page.fill('#initUrl', 'http://localhost:7080/api/auth-validator/call-authorize-and-token');
+        await page.fill('#callbackHost', 'http://localhost:7080/api/auth-validator/call-authorize-and-token/callback');
         await page.click('text=Open in new tab');
         await page.click('button.submit-btn');
         await page.waitForTimeout(3000); // Wait for 3 seconds
