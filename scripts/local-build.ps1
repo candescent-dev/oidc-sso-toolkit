@@ -77,7 +77,6 @@ $TMP_SCRIPTS_DIR  = Join-Path $TMP_DIR "sample-web-app/scripts"
 New-Item -ItemType Directory -Force -Path $TMP_FRONTEND_DIR | Out-Null
 New-Item -ItemType Directory -Force -Path $TMP_BACKEND_DIR  | Out-Null
 New-Item -ItemType Directory -Force -Path $TMP_SCRIPTS_DIR  | Out-Null
-New-Item -ItemType Directory -Force -Path $TMP_DOC_DIR      | Out-Null
 
 # Copy frontend files
 SafeCopyDir (Join-Path $ROOT_DIR "sample-web-app/frontend/build") $TMP_FRONTEND_DIR "frontend build files"
