@@ -11,6 +11,9 @@ import {
 } from '../../features/oidcValidator/oidcValidatorSlice';
 import './OidcValidatorPage.css';
 
+const AUTO_RELOAD_MESSAGE =
+  'The client_id and client_secret expire and are regenerated every 15 minutes. You will be redirected to the HomePage.';
+
 const OidcValidatorPage: FC = () => {
   const dispatch = useAppDispatch();
   const { runValidatorLoading, publishOidcSettingLoading, htmlFileUrl, xmlFileUrl } =
@@ -100,6 +103,7 @@ const OidcValidatorPage: FC = () => {
 
   return (
     <>
+      <div className="auto-reload-message">{AUTO_RELOAD_MESSAGE}</div>
       <div className="validator-container">
         {/* Header */}
         <div className="validator-header-row">
@@ -146,10 +150,10 @@ const OidcValidatorPage: FC = () => {
             <div className="text-with-icon">
               <span className="title-label">Download Reports</span>
             </div>
-            <div className="button-row">
+            <div className="validator-button-row">
               <button
                 type="button"
-                className="icon-button"
+                className="validator-icon-button"
                 onClick={() => handleDownloadFile(htmlFileUrl, 'e2e-report.html')}
               >
                 <img
@@ -162,7 +166,7 @@ const OidcValidatorPage: FC = () => {
               </button>
               <button
                 type="button"
-                className="icon-button"
+                className="validator-icon-button"
                 onClick={() => handleDownloadFile(xmlFileUrl, 'jest-e2e.xml')}
               >
                 <img

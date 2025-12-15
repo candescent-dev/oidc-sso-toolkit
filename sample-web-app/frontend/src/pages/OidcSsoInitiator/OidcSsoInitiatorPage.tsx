@@ -13,7 +13,7 @@ export const TargetOptions = {
 } as const;
 
 const AUTO_RELOAD_MESSAGE =
-  'This page will automatically reload after 15 minutes, as the client_id and client_secret expire and are regenerated every 15 minutes.';
+  'The client_id and client_secret expire and are regenerated every 15 minutes. You will be redirected to the HomePage.';
 
 const IFRAME_HEIGHT = '500px';
 const IFRAME_BORDER = '1px solid #ccc';

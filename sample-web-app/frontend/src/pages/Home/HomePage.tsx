@@ -51,6 +51,7 @@ const HomePage: FC = () => {
 
   useEffect(() => {
     return () => {
+      // Clear download toast timer
       if (downloadTimerRef.current) {
         clearTimeout(downloadTimerRef.current);
       }
@@ -68,6 +69,7 @@ const HomePage: FC = () => {
           setCredentials({
             clientId: response.data.client_id,
             clientSecret: response.data.client_secret,
+            credentialsIssuedAt: Date.now(),
           })
         );
       } catch (err: any) {
