@@ -34,7 +34,7 @@ const RoutesWithExpiry: FC = () => {
       navigate(ROUTES.HOME, { replace: true });
     }, remainingTime);
     return () => clearTimeout(timer);
-  }, [navigate]);
+  }, [navigate, credentialsIssuedAt]);
 
   return (
     <Suspense fallback={<PageLoader />}>
