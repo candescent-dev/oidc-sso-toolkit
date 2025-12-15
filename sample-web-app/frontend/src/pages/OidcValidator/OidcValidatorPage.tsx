@@ -1,15 +1,14 @@
 import React, { FC, useState, useEffect, useRef } from 'react';
+import { getApi } from '../../services/api';
+import codeIcon from '../../assets/code.svg';
 import downloadIcon from '../../assets/download.svg';
 import playIcon from '../../assets/playCircle.svg';
-import codeIcon from '../../assets/code.svg';
-import { getApi } from '../../services/api';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import {
   fetchE2EReports,
   setPublishOidcSettingLoading,
   resetOidcValidatorState,
 } from '../../features/oidcValidator/oidcValidatorSlice';
-
 import './OidcValidatorPage.css';
 
 const OidcValidatorPage: FC = () => {
@@ -101,9 +100,9 @@ const OidcValidatorPage: FC = () => {
 
   return (
     <>
-      <div className="home-container">
+      <div className="validator-container">
         {/* Header */}
-        <div className="header-row">
+        <div className="validator-header-row">
           <h1>OIDC Validator</h1>
           <p className="heading-message">Validate and publish your OIDC configuration setting</p>
         </div>
@@ -189,14 +188,11 @@ const OidcValidatorPage: FC = () => {
             'Publish OIDC Setting'
           )}
         </button>
-
-        <>
-          {!htmlFileUrl && !xmlFileUrl && (
-            <p className="description-message">
-              Complete validation to enable ‘Publish OIDC Setting’
-            </p>
-          )}
-        </>
+        {!htmlFileUrl && !xmlFileUrl && (
+          <p className="description-message">
+            Complete validation to enable ‘Publish OIDC Setting’
+          </p>
+        )}
       </div>
       {/* Download Message Toast */}
       {downloadMessage && (
