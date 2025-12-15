@@ -148,7 +148,7 @@ jobs:
  
       - name: Create flattened ZIP
         run: |
-          ZIP_NAME="oidc-sso-toolkit-${{ github.run_number }}.zip"
+          ZIP_NAME="oidc-sso-toolkit.zip"
           FINAL_ZIP_PATH="${{ github.workspace }}/$ZIP_NAME"
           echo "Creating flattened ZIP at $FINAL_ZIP_PATH..."
           (cd "$TMP_DIR" && zip -r "$FINAL_ZIP_PATH" ./* > /dev/null)
@@ -160,12 +160,12 @@ jobs:
           echo "Verifying flattened ZIP:"
           ls -lh *.zip
           echo "Inspecting structure:"
-          unzip -l "oidc-sso-toolkit-${{ github.run_number }}.zip" | head -30
+          unzip -l "oidc-sso-toolkit.zip" | head -30
  
       - name: Deploy - Extract and Run Docker Container
         run: |
           echo "Starting CD process..."
-          ZIP_FILE="oidc-sso-toolkit-${{ github.run_number }}.zip"
+          ZIP_FILE="oidc-sso-toolkit.zip"
           DEPLOY_DIR="${{ github.workspace }}/deploy"
          
           echo "Extracting ZIP package..."
@@ -210,7 +210,20 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: oidc-sso-toolkit
-          path: oidc-sso-toolkit-${{ github.run_number }}.zip
+          path: oidc-sso-toolkit.zip
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Set up JFrog CLI
+        uses: jfrog/setup-jfrog-cli@v3
+        
+      - name: Deploy RPM to Artifactory
+        run : |
+          jfrog rt  u "oidc-sso-toolkit.zip" digitalbanking-rpm-group --url https://candescent.jfrog.io/artifactory --user ${{secrets.ARTIFACTORY_USERNAME}} --password ${{secrets.ARTIFACTORY_TOKEN}}
 
       - name: Cleanup temporary files
         if: always()
