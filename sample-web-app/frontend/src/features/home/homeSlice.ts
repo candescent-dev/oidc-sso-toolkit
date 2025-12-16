@@ -66,6 +66,8 @@ const homeSlice = createSlice({
       state.openOption = '';
       state.iframeSettings = undefined;
       state.credentialsIssuedAt = null;
+      // clear session storage
+      sessionStorage.removeItem('credentialsIssuedAt');
     },
   },
 });

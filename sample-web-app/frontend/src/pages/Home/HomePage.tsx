@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useState, useRef } from 'react';
+import React, { FC, useEffect, useState, useRef, useCallback } from 'react';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -47,6 +47,39 @@ const HomePage: FC = () => {
     openOption: null,
   });
 
+  const fetchClientCredentials = useCallback(async (): Promise<void> => {
+    dispatch(setLoading(true));
+    dispatch(setError(null));
+    try {
+      const api = getApi();
+      const response = await api.post('/client');
+      dispatch(
+        setCredentials({
+          clientId: response.data.client_id,
+          clientSecret: response.data.client_secret,
+          credentialsIssuedAt: Date.now(),
+        })
+      );
+    } catch (err: any) {
+      // Check if the error has a response from backend
+      if (err.response && err.response.data) {
+        // Use the message from backend
+        dispatch(setError(err.response.data.message || 'An unknown error occurred'));
+      } else {
+        // Fallback if it's a network error or something else
+        dispatch(setError('Error fetching credentials from the server'));
+      }
+    } finally {
+      dispatch(setLoading(false));
+    }
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (!clientId || !clientSecret) {
+      fetchClientCredentials();
+    }
+  }, [clientId, clientSecret, fetchClientCredentials]);
+
   const downloadTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -57,36 +90,6 @@ const HomePage: FC = () => {
       }
     };
   }, []);
-
-  useEffect(() => {
-    const fetchClientCredentials = async (): Promise<void> => {
-      dispatch(setLoading(true));
-      dispatch(setError(null));
-      try {
-        const api = getApi();
-        const response = await api.post('/client');
-        dispatch(
-          setCredentials({
-            clientId: response.data.client_id,
-            clientSecret: response.data.client_secret,
-            credentialsIssuedAt: Date.now(),
-          })
-        );
-      } catch (err: any) {
-        // Check if the error has a response from backend
-        if (err.response && err.response.data) {
-          // Use the message from backend
-          dispatch(setError(err.response.data.message || 'An unknown error occurred'));
-        } else {
-          // Fallback if it's a network error or something else
-          dispatch(setError('Error fetching credentials from the server'));
-        }
-      } finally {
-        dispatch(setLoading(false));
-      }
-    };
-    fetchClientCredentials();
-  }, [dispatch]);
 
   useEffect(() => {
     if (downloadMessage) {

@@ -11,9 +11,6 @@ import {
 } from '../../features/oidcValidator/oidcValidatorSlice';
 import './OidcValidatorPage.css';
 
-const AUTO_RELOAD_MESSAGE =
-  'The client_id and client_secret expire and are regenerated every 15 minutes. You will be redirected to the HomePage.';
-
 const OidcValidatorPage: FC = () => {
   const dispatch = useAppDispatch();
   const { runValidatorLoading, publishOidcSettingLoading, htmlFileUrl, xmlFileUrl } =
@@ -103,7 +100,6 @@ const OidcValidatorPage: FC = () => {
 
   return (
     <>
-      <div className="auto-reload-message">{AUTO_RELOAD_MESSAGE}</div>
       <div className="validator-container">
         {/* Header */}
         <div className="validator-header-row">

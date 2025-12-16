@@ -7,6 +7,7 @@ import { randomBytes } from 'crypto';
 @Injectable()
 export class ClientService {
   private readonly CLIENT_CREDENTIALS_CACHE_KEY = 'client_credentials';
+  private readonly AUTH_SETTING_CACHE_KEY = 'auth_setting';
   private readonly TTL_MS = 15 * 60 * 1000; // 15 minutes
 
   constructor(@Inject(CACHE_MANAGER) private cacheManager: Cache) {}
@@ -16,6 +17,10 @@ export class ClientService {
    * @returns An object containing client_id, client_secret, and created_at timestamp.
    */
   async generateClientCredentials(): Promise<ClientCredentials> {
+    // Clear old credentials from cache
+    await this.cacheManager.del(this.CLIENT_CREDENTIALS_CACHE_KEY);
+    // Clear auth setting from cache
+    await this.cacheManager.del(this.AUTH_SETTING_CACHE_KEY);
     const credentials: ClientCredentials = {
       client_id: this.generateClientId(),
       client_secret: this.generateSecret(),
