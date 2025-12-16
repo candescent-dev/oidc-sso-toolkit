@@ -90,7 +90,7 @@
   display: flex;
   flex-direction: column;
   padding: var(--spacing-xl);
-  margin: var(--spacing-xl) auto;
+  margin: var(--spacing-3xl) auto;
   max-width: var(--container-max-width);
   font-family: var(--font-family);
   align-items: center;
@@ -146,7 +146,7 @@
 /* ============================================
    Button Components
    ============================================ */
-.button-row {
+.validator-button-row {
   display: flex;
   gap: var(--spacing-lg);
   flex-wrap: wrap;
@@ -154,11 +154,11 @@
   margin-top: var(--spacing-lg);
 }
 
-.button-row a {
+.validator-button-row a {
   text-decoration: none;
 }
 
-.icon-button {
+.validator-icon-button {
   flex: 1;
   display: flex;
   align-items: center;
@@ -177,7 +177,7 @@
   font-weight: var(--font-weight-medium);
 }
 
-.icon-button:hover {
+.validator-icon-button:hover {
   background-color: var(--color-background-hover);
   border-color: var(--color-border-hover);
 }
@@ -329,13 +329,13 @@
     font-size: var(--font-size-5xl);
   }
 
-  .button-row {
+  .validator-button-row {
     display: grid;
     grid-auto-flow: column;
     gap: 0.625rem;
   }
 
-  .icon-button {
+  .validator-icon-button {
     width: -webkit-fill-available;
     max-width: none;
     font-size: var(--font-size-base);
@@ -365,13 +365,13 @@
     font-size: var(--font-size-6xl);
   }
 
-  .button-row {
+  .validator-button-row {
     flex-wrap: wrap;
     flex-direction: row;
     gap: var(--spacing-lg);
   }
 
-  .icon-button {
+  .validator-icon-button {
     width: var(--button-width-md);
     max-width: none;
     font-size: var(--font-size-base);
@@ -392,17 +392,17 @@
     text-align: center;
   }
 
-  .button-row,
+  .validator-button-row,
   .green-btn,
   .run-validator-btn {
     grid-column: span 2;
   }
 
-  .button-row {
+  .validator-button-row {
     flex-wrap: wrap;
   }
 
-  .icon-button {
+  .validator-icon-button {
     max-width: none;
     width: var(--button-width-md);
     font-size: var(--font-size-md);
@@ -422,7 +422,7 @@
     font-size: var(--font-size-7xl);
   }
 
-  .icon-button {
+  .validator-icon-button {
     width: var(--button-width-md);
     font-size: var(--font-size-xl);
   }

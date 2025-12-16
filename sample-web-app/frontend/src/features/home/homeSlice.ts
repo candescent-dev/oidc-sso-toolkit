@@ -11,6 +11,7 @@ const initialState: HomeState = {
   callbackHost: '',
   openOption: '',
   iframeSettings: undefined,
+  credentialsIssuedAt: Number(sessionStorage.getItem('credentialsIssuedAt')) || null,
 };
 
 /* ------------------------- Slice ------------------------- */
@@ -27,9 +28,19 @@ const homeSlice = createSlice({
       state.error = action.payload;
     },
     /** Set client credentials */
-    setCredentials: (state, action: PayloadAction<{ clientId: string; clientSecret: string }>) => {
+    setCredentials: (
+      state,
+      action: PayloadAction<{
+        clientId: string;
+        clientSecret: string;
+        credentialsIssuedAt: number | null;
+      }>
+    ) => {
       state.clientId = action.payload.clientId;
       state.clientSecret = action.payload.clientSecret;
+      state.credentialsIssuedAt = action.payload.credentialsIssuedAt;
+      // persist to sessionStorage
+      sessionStorage.setItem('credentialsIssuedAt', String(action.payload.credentialsIssuedAt));
     },
     /** Set home configuration (including iframe settings if applicable) */
     setHomeConfigData: (state, action: PayloadAction<HomeConfigPayload>) => {
@@ -54,6 +65,9 @@ const homeSlice = createSlice({
       state.callbackHost = '';
       state.openOption = '';
       state.iframeSettings = undefined;
+      state.credentialsIssuedAt = null;
+      // clear session storage
+      sessionStorage.removeItem('credentialsIssuedAt');
     },
   },
 });

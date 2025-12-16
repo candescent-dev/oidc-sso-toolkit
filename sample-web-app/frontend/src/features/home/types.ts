@@ -27,6 +27,7 @@ export interface HomeState {
   callbackHost: string;
   openOption: '' | OpenMode;
   iframeSettings?: IframeSettings;
+  credentialsIssuedAt: number | null;
 }
 
 /** Payload structure for setting home data */

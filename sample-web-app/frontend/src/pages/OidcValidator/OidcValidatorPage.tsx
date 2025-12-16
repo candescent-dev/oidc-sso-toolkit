@@ -146,10 +146,10 @@ const OidcValidatorPage: FC = () => {
             <div className="text-with-icon">
               <span className="title-label">Download Reports</span>
             </div>
-            <div className="button-row">
+            <div className="validator-button-row">
               <button
                 type="button"
-                className="icon-button"
+                className="validator-icon-button"
                 onClick={() => handleDownloadFile(htmlFileUrl, 'e2e-report.html')}
               >
                 <img
@@ -162,7 +162,7 @@ const OidcValidatorPage: FC = () => {
               </button>
               <button
                 type="button"
-                className="icon-button"
+                className="validator-icon-button"
                 onClick={() => handleDownloadFile(xmlFileUrl, 'jest-e2e.xml')}
               >
                 <img
