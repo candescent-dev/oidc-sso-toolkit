@@ -3,14 +3,13 @@
 
 Sample-web-app is a lightweight web application consisting of two  modules:
 1. frontend
-    •	Displays generated client credentials (client_id, client_secret, created_at).
+    •	Displays generated client credentials (client_id, client_secret).
     •	Allows downloading metadata (metadata.json) and JWKS files.
-    •	Validates and decodes ID Tokens to securely display user information.
     
 2. backend
-    •	Generates client credentials with a short-lived expiry.
+    •	Generates client credentials with a short-lived(15 minutes) expiry.
     •	Manages key pairs (RSA public/private keys).
-    •	Signs ID Tokens using RSA.
+    •	Signs ID Tokens using Cadescent private key.
     •	Exposes JWKS for token verification.
     
 ## dbk-oidc-sso-features-toolkit Directories

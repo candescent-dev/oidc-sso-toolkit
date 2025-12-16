@@ -1,8 +1,7 @@
 # Getting Started with Create React App
 
-Shows generated client credentials (client_id, client_secret, created_at).
+Shows generated client credentials (client_id, client_secret).
 Enables download of metadata.json and JWKS files.
-Decodes and validates ID Tokens to display user info securely.
 
 ## Compile and run the project
 

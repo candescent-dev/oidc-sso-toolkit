@@ -1,35 +1,31 @@
 ## dbk-oidc-sso-features-toolkit Overview
  
-The OIDC Toolkit provides a complete local environment for testing and validating OpenID Connect (OIDC) Single Sign-On (SSO) flows. It simulates key components of Candescent OIDC flow and allows users to securely integrate, test, and validate authentication workflows.
+The OIDC Toolkit provides a complete local environment for testing and validating OpenID Connect (OIDC) Single Sign-On (SSO) flows. It simulates the Candescent production system OIDC flow and allows users to securely integrate, test, and validate authentication workflows.
 Components:
 Frontend:
-•   Displays generated client credentials (client_id, client_secret, created_at).
+•   Displays generated client credentials (client_id, client_secret).
 •   Allows downloading metadata (metadata.json) and JWKS files.
-•   Validates and decodes ID Tokens to securely display user information.
 Backend:
-•   Generates client credentials with a short-lived expiry.
+•   Generates client credentials with a short-lived (15 minutes) expiry.
 •   Manages key pairs (RSA public/private keys).
-•   Signs ID Tokens using RSA.
+•   Signs ID Tokens using Candescent private key.
 •   Exposes JWKS for token verification.
 
 ## client-web-app Overview
 
-The `client-web-app` is a separate NestJS-based service that acts as the client-facing entry point for OIDC SSO feature validation.  
-It orchestrates calls to the OIDC toolkit, validates tokens and metadata, and exposes simple APIs that downstream applications can use to test and integrate OIDC SSO flows.
+The `client-web-app`serves as a mock representation of the vendor environment. It is used solely for simulation purposes during development and will not be included in the final deliverable toolkit. It orchestrates calls to the OIDC toolkit, validates tokens and metadata, and exposes simple APIs that downstream applications can use to test and integrate OIDC SSO flows.
 
 ## Technologies Used
 
 ### Frontend (`sample-web-app/frontend`)
 - **Framework**: React (Create React App)
-- **Language**: TypeScript
 - **State Management**: Redux Toolkit (`@reduxjs/toolkit`, `react-redux`)
 - **Routing**: React Router (`react-router-dom`)
 - **Styling**: CSS modules and standard CSS
-- **Testing**: Jest, React Testing Library (`@testing-library/react`, `@testing-library/jest-dom`)
+- **Testing**: Playwright
 
 ### Backend (`sample-web-app/backend`)
 - **Framework**: NestJS (Node.js)
-- **Language**: TypeScript
 - **Build & Runtime**: Node.js + npm
 - **Validation & Transformation**: `class-validator`, `class-transformer`
 - **Security / Tokens**: `jsonwebtoken`, RSA key handling for signing ID Tokens
@@ -37,12 +33,9 @@ It orchestrates calls to the OIDC toolkit, validates tokens and metadata, and ex
 
 ### client-web-app (`client-web-app`)
 - **Framework**: NestJS (Node.js)
-- **Language**: TypeScript
-- **Configuration**: `@nestjs/config` for environment and configuration management
 - **HTTP / Integration**: `@nestjs/axios` and `rxjs` for calling external OIDC toolkit endpoints
 - **Validation & Transformation**: `class-validator`, `class-transformer`
 - **Security / Token Handling**: `jose` for working with JWTs and JWK/JWKS
-- **Testing**: Jest and Supertest
 
 ## Clone the Project
 
@@ -97,7 +90,7 @@ Once both servers are running:
 ####    Generate Client Credentials
 •   On loading the Home Page, the frontend automatically calls the backend API.
 •   The backend generates client credentials and returns them to the frontend.
-•   Credentials are displayed on the home page. The page refreshes automatically after 5 minutes to fetch new credentials.
+•   Credentials are displayed on the home page. The page refreshes automatically after 15 minutes to fetch new credentials.
 #### Download Metadata
 •   Click the Metadata button to download metadata.json.
 •   The file contains redirect URIs, endpoints, scopes, and other OIDC configuration details.
@@ -144,7 +137,7 @@ dbk-oidc-sso-features-toolkit/
 ├── sample-web-app
     ├── frontend/
     ├── backend/
-    ├── README.md
+    ├── config.json
     ├── Dockerfile
     ├──  scripts/
         ├── ps/
@@ -155,8 +148,6 @@ dbk-oidc-sso-features-toolkit/
             ├──init.sh
             ├──run-web-app.sh
             └──selftest.sh
-├── documentation/
-└── README.md
 ```
  
 ### documentation/

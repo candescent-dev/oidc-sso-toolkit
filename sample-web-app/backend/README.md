@@ -1,6 +1,6 @@
 # Overview
 
-The system generates client credentials with a short-lived expiry, manages RSA key pairs (public and private keys), signs ID Tokens using RSA, and exposes JWKS endpoints for secure token verification.
+The system generates client credentials with a short-lived(15 minutes) expiry, manages RSA key pairs (public and private keys), signs ID Tokens using Candescent private key, and exposes JWKS endpoints for secure token verification.
 
 ## Compile and run the project
 
