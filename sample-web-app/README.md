@@ -1,39 +1,59 @@
 
-# Simple-web-app
-Simple-web-app is a lightweight web application consisting of two  modules:
+# Sample-web-app Overview
+
+Sample-web-app is a lightweight web application consisting of two  modules:
 1. frontend
+    •	Displays generated client credentials (client_id, client_secret, created_at).
+    •	Allows downloading metadata (metadata.json) and JWKS files.
+    •	Validates and decodes ID Tokens to securely display user information.
+    
 2. backend
+    •	Generates client credentials with a short-lived expiry.
+    •	Manages key pairs (RSA public/private keys).
+    •	Signs ID Tokens using RSA.
+    •	Exposes JWKS for token verification.
+    
+## dbk-oidc-sso-features-toolkit Directories
 
-### Getting Started 
+```
+sample-web-app/
+├── backend/
+├── frontend/
+├── test/
+```
 
-#### To Create Zip in local
-./script/local-build.sh
+### sso-validator/
+A module responsible for validating Single Sign-On (SSO) flows and ensuring secure authentication across integrated services.
 
-#### Prerequisites
-Make sure to install the following applications:
-1. Node.js
-2. npm
-3. Docker
 
-To run the application, follow below steps:
-1. #### Create Docker Image
-    Navigate to the script directory and execute:
-    **`./init.sh`**
+## Running the Sample Web App (Backend + Frontend)
 
-    *This script builds the Docker image for the application.*
-2. #### Run the Application
-    Once the image is successfully created, start the container by running:
-    **`./run-web-app.sh`**
+The sample application contains both the backend (NestJS) and frontend (React).
 
-    *This will launch the web application (frontend and backend) using the previously built Docker image.*
+### Start the Backend Server
 
-    ```
-    Default Ports:
-    - frontend: 8000
-    - backend : 9000
-    ```
+Open a terminal and run:
 
-3. #### Health Check
-    To verify that the application is running correctly, use:
-    **`./selftest.sh`**
-    *This script performs a basic health check on the application.*
+```bash
+cd sample-web-app/backend
+npm install
+npm run start:dev
+```
+
+This starts the NestJS backend server in watch mode. The default port is defined inside the backend application (commonly `http://localhost:9000` unless configured otherwise).
+
+### Start the Frontend Server
+
+Open a new terminal window and run:
+
+```bash
+cd sample-web-app/frontend
+npm install
+npm start
+```
+
+The frontend React app will start on `http://localhost:8000` (as configured in the `start` script).
+
+Once both servers are running:
+- Access the **frontend** in your browser at `http://localhost:8000`.
+- The frontend will communicate with the **backend** to generate client credentials, download metadata, and perform OIDC-related operations.
