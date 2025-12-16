@@ -204,7 +204,7 @@ jobs:
       - name: Set up JFrog CLI
         uses: jfrog/setup-jfrog-cli@v3
         
-      - name: Deploy RPM to Artifactory
+      - name: Upload ZIP to Artifactory
         run : |
           jfrog rt  u "oidc-sso-toolkit.zip" digitalbanking-rpm-group/oidc/${VERSION}/ --url https://candescent.jfrog.io/artifactory --user ${{secrets.ARTIFACTORY_USERNAME}} --password ${{secrets.ARTIFACTORY_TOKEN}}
       
