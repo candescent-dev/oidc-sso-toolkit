@@ -208,19 +208,6 @@ jobs:
           name: oidc-sso-toolkit
           path: oidc-sso-toolkit.zip
 
-      - name: Set up Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '17'
-
-      - name: Set up JFrog CLI
-        uses: jfrog/setup-jfrog-cli@v3
-        
-      - name: Deploy RPM to Artifactory
-        run : |
-          jfrog rt  u "oidc-sso-toolkit.zip" digitalbanking-rpm-group --url https://candescent.jfrog.io/artifactory --user ${{secrets.ARTIFACTORY_USERNAME}} --password ${{secrets.ARTIFACTORY_TOKEN}}
-
       - name: Cleanup temporary files
         if: always()
         run: |
