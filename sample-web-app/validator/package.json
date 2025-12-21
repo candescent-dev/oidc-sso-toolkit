@@ -1,7 +1,7 @@
 {
-  "name": "client-web-app",
+  "name": "oidc-validator",
   "version": "0.0.1",
-  "description": "",
+  "description": "Internal E2E test harness for OIDC flow validation",
   "author": "",
   "private": true,
   "license": "UNLICENSED",
