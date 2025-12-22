@@ -1,5 +1,10 @@
 name: Sync to Public GitHub
 
+# Required Secrets (add in repository settings):
+#   SYNC_APP_ID: GitHub App ID (numeric)
+#   SYNC_APP_PRIVATE_KEY: Complete private key (including BEGIN/END lines)
+#   SYNC_INSTALLATION_ID: Installation ID (from https://github.com/organizations/candescent-dev/settings/installations)
+
 # Triggers: push to main, or manual dispatch
 on:
   push:
@@ -36,28 +41,127 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Generate GitHub App token
-        id: app-token
-        uses: actions/create-github-app-token@v1
+      - name: Setup Node.js for token generation
+        uses: actions/setup-node@v4
         with:
-          # GitHub App credentials - add these as secrets in EMU repo
-          app-id: ${{ secrets.SYNC_APP_ID }}
-          private-key: ${{ secrets.SYNC_APP_PRIVATE_KEY }}
-          owner: candescent-dev
-          repositories: oidc-sso-toolkit
-        continue-on-error: false
-        
+          node-version: '20'
+          
+      - name: Generate GitHub App installation token
+        id: app-token
+        env:
+          APP_ID: ${{ secrets.SYNC_APP_ID }}
+          PRIVATE_KEY: ${{ secrets.SYNC_APP_PRIVATE_KEY }}
+          INSTALLATION_ID: ${{ secrets.SYNC_INSTALLATION_ID }}
+        run: |
+          # Save private key to file (preserving newlines)
+          echo "$PRIVATE_KEY" > private-key.pem
+          chmod 600 private-key.pem
+          
+          # Create a script to generate the installation token
+          cat > generate-token.js << 'EOF'
+          const crypto = require('crypto');
+          const https = require('https');
+          
+          const fs = require('fs');
+          const appId = process.env.APP_ID;
+          const privateKey = fs.readFileSync('private-key.pem', 'utf8');
+          const installationId = process.env.INSTALLATION_ID;
+          
+          if (!appId || !privateKey || !installationId) {
+            console.error('❌ Missing required environment variables:');
+            console.error('  APP_ID:', appId ? '✓' : '✗');
+            console.error('  PRIVATE_KEY:', privateKey ? '✓' : '✗');
+            console.error('  INSTALLATION_ID:', installationId ? '✓' : '✗');
+            process.exit(1);
+          }
+          
+          // Generate JWT
+          const now = Math.floor(Date.now() / 1000);
+          const payload = {
+            iat: now - 60, // Issued at (1 minute ago to account for clock skew)
+            exp: now + (10 * 60), // Expires in 10 minutes
+            iss: appId
+          };
+          
+          const header = {
+            alg: 'RS256',
+            typ: 'JWT'
+          };
+          
+          const encodedHeader = Buffer.from(JSON.stringify(header)).toString('base64url');
+          const encodedPayload = Buffer.from(JSON.stringify(payload)).toString('base64url');
+          const signatureInput = \`\${encodedHeader}.\${encodedPayload}\`;
+          
+          const sign = crypto.createSign('RSA-SHA256');
+          sign.update(signatureInput);
+          const signature = sign.sign(privateKey, 'base64url');
+          const jwt = \`\${signatureInput}.\${signature}\`;
+          
+          // Exchange JWT for installation token
+          const options = {
+            hostname: 'api.github.com',
+            path: \`/app/installations/\${installationId}/access_tokens\`,
+            method: 'POST',
+            headers: {
+              'Authorization': \`Bearer \${jwt}\`,
+              'Accept': 'application/vnd.github.v3+json',
+              'User-Agent': 'GitHub-Actions-Sync'
+            }
+          };
+          
+          const req = https.request(options, (res) => {
+            let data = '';
+            res.on('data', (chunk) => { data += chunk; });
+            res.on('end', () => {
+              if (res.statusCode === 201) {
+                const response = JSON.parse(data);
+                console.log(response.token);
+              } else {
+                console.error('❌ Failed to get installation token');
+                console.error('Status:', res.statusCode);
+                console.error('Response:', data);
+                process.exit(1);
+              }
+            });
+          });
+          
+          req.on('error', (error) => {
+            console.error('❌ Request error:', error);
+            process.exit(1);
+          });
+          
+          req.write(JSON.stringify({
+            repositories: ['oidc-sso-toolkit']
+          }));
+          req.end();
+          EOF
+          
+          # Run the script
+          INSTALLATION_TOKEN=$(node generate-token.js)
+          
+          if [ -z "$INSTALLATION_TOKEN" ] || [ ${#INSTALLATION_TOKEN} -lt 100 ]; then
+            echo "❌ Token generation failed or token is too short"
+            echo "Token length: ${#INSTALLATION_TOKEN}"
+            echo "Expected: 200+ characters"
+            exit 1
+          fi
+          
+          echo "✅ Installation token generated"
+          echo "Token length: ${#INSTALLATION_TOKEN} characters"
+          echo "::add-mask::$INSTALLATION_TOKEN"
+          echo "token=$INSTALLATION_TOKEN" >> $GITHUB_OUTPUT
+          
       - name: Debug token generation
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
-          echo "Token output from action:"
-          echo "Length: ${#GH_TOKEN}"
-          echo "First 50 chars: ${GH_TOKEN:0:50}"
-          echo "Last 50 chars: ${GH_TOKEN: -50}"
-          echo ""
-          echo "All outputs from app-token step:"
-          echo "${{ toJSON(steps.app-token.outputs) }}"
+          echo "Token verification:"
+          echo "Length: ${#GH_TOKEN} characters"
+          if [ ${#GH_TOKEN} -lt 100 ]; then
+            echo "❌ ERROR: Token is too short! Expected 200+ characters for GitHub App tokens."
+            exit 1
+          fi
+          echo "✅ Token length looks correct"
 
       - name: Verify GitHub App token
         env:
