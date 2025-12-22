@@ -53,40 +53,40 @@ jobs:
           PRIVATE_KEY: ${{ secrets.SYNC_APP_PRIVATE_KEY }}
           INSTALLATION_ID: ${{ secrets.SYNC_INSTALLATION_ID }}
         run: |
-          # Save private key to file (preserving newlines)
+          # Validate environment variables
+          if [ -z "$APP_ID" ] || [ -z "$PRIVATE_KEY" ] || [ -z "$INSTALLATION_ID" ]; then
+            echo "❌ Error: Missing required environment variables"
+            exit 1
+          fi
+          
+          # Save private key to file
           echo "$PRIVATE_KEY" > private-key.pem
           chmod 600 private-key.pem
           
-          # Create a script to generate the installation token
+          if [ ! -f private-key.pem ] || [ $(wc -c < private-key.pem) -lt 100 ]; then
+            echo "❌ Error: Private key file is invalid"
+            exit 1
+          fi
+          
+          # Generate token script
           cat > generate-token.js << 'EOF'
           const crypto = require('crypto');
           const https = require('https');
-          
           const fs = require('fs');
+          
           const appId = process.env.APP_ID;
           const privateKey = fs.readFileSync('private-key.pem', 'utf8');
           const installationId = process.env.INSTALLATION_ID;
           
           if (!appId || !privateKey || !installationId) {
-            console.error('❌ Missing required environment variables:');
-            console.error('  APP_ID:', appId ? '✓' : '✗');
-            console.error('  PRIVATE_KEY:', privateKey ? '✓' : '✗');
-            console.error('  INSTALLATION_ID:', installationId ? '✓' : '✗');
+            console.error('❌ Missing required environment variables');
             process.exit(1);
           }
           
           // Generate JWT
           const now = Math.floor(Date.now() / 1000);
-          const payload = {
-            iat: now - 60, // Issued at (1 minute ago to account for clock skew)
-            exp: now + (10 * 60), // Expires in 10 minutes
-            iss: appId
-          };
-          
-          const header = {
-            alg: 'RS256',
-            typ: 'JWT'
-          };
+          const payload = { iat: now - 60, exp: now + (10 * 60), iss: appId };
+          const header = { alg: 'RS256', typ: 'JWT' };
           
           const encodedHeader = Buffer.from(JSON.stringify(header)).toString('base64url');
           const encodedPayload = Buffer.from(JSON.stringify(payload)).toString('base64url');
@@ -98,7 +98,7 @@ jobs:
           const jwt = `${signatureInput}.${signature}`;
           
           // Exchange JWT for installation token
-          const options = {
+          const req = https.request({
             hostname: 'api.github.com',
             path: `/app/installations/${installationId}/access_tokens`,
             method: 'POST',
@@ -107,75 +107,27 @@ jobs:
               'Accept': 'application/vnd.github.v3+json',
               'User-Agent': 'GitHub-Actions-Sync'
             }
-          };
-          
-          const req = https.request(options, (res) => {
+          }, (res) => {
             let data = '';
             res.on('data', (chunk) => { data += chunk; });
             res.on('end', () => {
               if (res.statusCode === 201) {
                 try {
                   const response = JSON.parse(data);
-                  
-                  // Debug: Log full response structure
-                  console.error('Response received:');
-                  console.error('  Status: 201 (Success)');
-                  console.error('  Token present:', !!response.token);
-                  console.error('  Token length:', response.token ? response.token.length : 0);
-                  if (response.token) {
-                    console.error('  Token starts with:', response.token.substring(0, 10));
-                    console.error('  Token ends with:', response.token.substring(response.token.length - 10));
-                  }
-                  console.error('  Expires at:', response.expires_at);
-                  console.error('  Repository selection:', response.repository_selection);
-                  if (response.repositories) {
-                    console.error('  Repositories count:', response.repositories.length);
-                    console.error('  Repository names:', response.repositories.map(r => r.full_name || r.name).join(', '));
-                  }
-                  
-                  if (response.token) {
-                    // GitHub App installation tokens typically start with 'ghs_'
-                    // Older tokens were 200+ chars, newer ones might be shorter
-                    // Accept tokens that are at least 40 characters and start with 'ghs_'
-                    const token = response.token;
-                    const isValidFormat = token.startsWith('ghs_') && token.length >= 40;
-                    
-                    if (isValidFormat) {
-                      // Output ONLY the token to stdout (for capture)
-                      process.stdout.write(token);
-                      process.stdout.write('\n');
-                      process.exit(0);
-                    } else {
-                      console.error('❌ Token format is invalid');
-                      console.error('Token length:', token.length);
-                      console.error('Token starts with:', token.substring(0, 10));
-                      console.error('Expected: Token starting with "ghs_" and at least 40 characters');
-                      if (token.length < 40) {
-                        console.error('');
-                        console.error('Token is too short. Possible causes:');
-                        console.error('1. Repository not properly added to installation');
-                        console.error('2. Permissions issue with the GitHub App');
-                        console.error('3. Wrong installation ID');
-                      }
-                      process.exit(1);
-                    }
+                  if (response.token && response.token.startsWith('ghs_') && response.token.length >= 40) {
+                    process.stdout.write(response.token + '\n');
+                    process.exit(0);
                   } else {
-                    console.error('❌ No token in response');
-                    console.error('Response keys:', Object.keys(response));
-                    console.error('Full response (without token):', JSON.stringify({...response, token: '[REDACTED]'}, null, 2));
+                    console.error('❌ Invalid token format');
                     process.exit(1);
                   }
-                } catch (parseError) {
+                } catch (e) {
                   console.error('❌ Failed to parse response');
-                  console.error('Parse error:', parseError.message);
-                  console.error('Response data (first 500 chars):', data.substring(0, 500));
                   process.exit(1);
                 }
               } else {
-                console.error('❌ Failed to get installation token');
-                console.error('Status:', res.statusCode);
-                console.error('Status message:', res.statusMessage);
-                console.error('Response:', data);
+                console.error(`❌ Failed to get token (HTTP ${res.statusCode})`);
+                console.error(data);
                 process.exit(1);
               }
             });
@@ -183,199 +135,38 @@ jobs:
           
           req.on('error', (error) => {
             console.error('❌ Request error:', error.message);
-            console.error('Error code:', error.code);
             process.exit(1);
           });
           
-          const requestBody = JSON.stringify({
-            repositories: ['oidc-sso-toolkit']
-          });
-          
-          req.write(requestBody);
+          req.write(JSON.stringify({ repositories: ['oidc-sso-toolkit'] }));
           req.end();
           EOF
           
-          # Run the script and capture output
-          echo "Running token generation script..."
-          echo "Checking environment variables..."
-          echo "  APP_ID: ${APP_ID:+set (${#APP_ID} chars)} ${APP_ID:-not set}"
-          echo "  INSTALLATION_ID: ${INSTALLATION_ID:+set (${#INSTALLATION_ID} chars)} ${INSTALLATION_ID:-not set}"
-          echo "  PRIVATE_KEY: ${PRIVATE_KEY:+set (${#PRIVATE_KEY} chars)} ${PRIVATE_KEY:-not set}"
-          echo ""
-          
-          # Check if private key file was created correctly
-          if [ ! -f private-key.pem ]; then
-            echo "❌ Error: private-key.pem file not created"
-            exit 1
-          fi
-          
-          PRIVATE_KEY_SIZE=$(wc -c < private-key.pem)
-          echo "Private key file size: $PRIVATE_KEY_SIZE bytes"
-          
-          if [ $PRIVATE_KEY_SIZE -lt 100 ]; then
-            echo "❌ Error: Private key file is too small ($PRIVATE_KEY_SIZE bytes)"
-            echo "This suggests the PRIVATE_KEY secret is not set correctly"
-            exit 1
-          fi
-          
-          # Run script - capture both stdout and stderr
-          echo "Executing token generation..."
-          echo "Running: node generate-token.js"
-          
-          # Test if Node.js can read the script
-          if [ ! -f generate-token.js ]; then
-            echo "❌ Error: generate-token.js file not found"
-            exit 1
-          fi
-          
-          echo "Script file exists, size: $(wc -c < generate-token.js) bytes"
-          
-          # Test Node.js first
-          echo "Testing Node.js..."
-          if ! command -v node &> /dev/null; then
-            echo "❌ Error: Node.js not found"
-            exit 1
-          fi
-          echo "Node.js version: $(node --version)"
-          echo ""
-          
-          # Validate script syntax first
-          echo "Validating script syntax..."
-          if ! node -c generate-token.js 2>syntax-errors.log; then
-            echo "❌ Script syntax error!"
-            if [ -s syntax-errors.log ]; then
-              echo "Syntax errors:"
-              cat syntax-errors.log
-            fi
-            rm -f syntax-errors.log
-            exit 1
-          fi
-          rm -f syntax-errors.log
-          echo "✅ Script syntax is valid"
-          echo ""
-          
-          # Run script and capture everything
-          # Use a temp file to capture stdout since we need to see stderr too
-          echo "Executing script..."
-          set +e  # Don't exit on error so we can capture output
-          node generate-token.js >token-output.log 2>token-errors.log
+          # Generate token
+          INSTALLATION_TOKEN=$(node generate-token.js 2>token-errors.log)
           SCRIPT_EXIT_CODE=$?
-          set -e  # Re-enable exit on error
           
-          # ALWAYS show what we captured, regardless of exit code
-          echo ""
-          echo "=== SCRIPT EXECUTION RESULT ==="
-          echo "Exit code: $SCRIPT_EXIT_CODE"
-          echo ""
-          
-          if [ -f token-errors.log ]; then
-            ERROR_LOG_SIZE=$(wc -c < token-errors.log)
-            echo "=== STDERR OUTPUT (${ERROR_LOG_SIZE} bytes) ==="
-            if [ $ERROR_LOG_SIZE -gt 0 ]; then
-              cat token-errors.log
-            else
-              echo "(empty)"
-            fi
-            echo ""
-          fi
-          
-          if [ -f token-output.log ]; then
-            OUTPUT_LOG_SIZE=$(wc -c < token-output.log)
-            echo "=== STDOUT OUTPUT (${OUTPUT_LOG_SIZE} bytes) ==="
-            if [ $OUTPUT_LOG_SIZE -gt 0 ]; then
-              cat token-output.log
-              INSTALLATION_TOKEN=$(cat token-output.log | tr -d '\n\r ' | head -1)
-            else
-              echo "(empty)"
-              INSTALLATION_TOKEN=""
-            fi
-            echo ""
-          else
-            INSTALLATION_TOKEN=""
-          fi
-          
-          # Check for errors
           if [ $SCRIPT_EXIT_CODE -ne 0 ]; then
-            echo "❌ Script failed with exit code: $SCRIPT_EXIT_CODE"
-            echo ""
-            echo "=== DEBUGGING INFORMATION ==="
-            echo "Script exit code: $SCRIPT_EXIT_CODE"
-            echo "Token variable length: ${#INSTALLATION_TOKEN}"
-            echo "stdout log size: ${OUTPUT_LOG_SIZE:-0} bytes"
-            echo "stderr log size: ${ERROR_LOG_SIZE:-0} bytes"
-            echo ""
-            echo "File checks:"
-            echo "  generate-token.js: $([ -f generate-token.js ] && echo "exists ($(wc -c < generate-token.js) bytes)" || echo 'missing')"
-            echo "  private-key.pem: $([ -f private-key.pem ] && echo "exists ($(wc -c < private-key.pem) bytes)" || echo 'missing')"
-            if [ -f private-key.pem ]; then
-              echo "  First line: $(head -1 private-key.pem)"
-              echo "  Last line: $(tail -1 private-key.pem)"
+            echo "❌ Token generation failed"
+            if [ -s token-errors.log ]; then
+              cat token-errors.log
             fi
-            echo ""
-            echo "Environment check:"
-            echo "  APP_ID: ${APP_ID:+set} ${APP_ID:-not set}"
-            echo "  INSTALLATION_ID: ${INSTALLATION_ID:+set} ${INSTALLATION_ID:-not set}"
-            echo "  PRIVATE_KEY env var: ${PRIVATE_KEY:+set (${#PRIVATE_KEY} chars)} ${PRIVATE_KEY:-not set}"
-            rm -f token-output.log token-errors.log
+            rm -f token-errors.log
             exit 1
           fi
           
-          # Clean up temp files
-          rm -f token-output.log token-errors.log
-          
-          # Check if we got a token
-          if [ -z "$INSTALLATION_TOKEN" ]; then
-            echo "❌ No token received from script"
-            echo "stdout was empty"
-            echo "Script exit code was: $SCRIPT_EXIT_CODE"
-            exit 1
-          fi
-          
-          # Clean up token (remove any trailing whitespace/newlines)
+          # Validate token format
           INSTALLATION_TOKEN=$(echo "$INSTALLATION_TOKEN" | tr -d '\n\r ' | head -1)
+          rm -f token-errors.log
           
-          echo "Token received:"
-          echo "  Length: ${#INSTALLATION_TOKEN} characters"
-          
-          # Check if token is valid format (starts with ghs_ and is at least 40 chars)
-          if [ ${#INSTALLATION_TOKEN} -lt 40 ] || [ "${INSTALLATION_TOKEN:0:4}" != "ghs_" ]; then
-            echo "❌ Token format is invalid"
-            echo "Token length: ${#INSTALLATION_TOKEN}"
-            echo "Token starts with: ${INSTALLATION_TOKEN:0:10}"
-            echo "Expected: Token starting with 'ghs_' and at least 40 characters"
-            if [ ${#INSTALLATION_TOKEN} -lt 40 ]; then
-              echo ""
-              echo "This usually means:"
-              echo "1. The script output something other than the token"
-              echo "2. The token generation failed silently"
-              echo "3. The secrets are incorrect"
-            fi
+          if [ -z "$INSTALLATION_TOKEN" ] || [ ${#INSTALLATION_TOKEN} -lt 40 ] || [ "${INSTALLATION_TOKEN:0:4}" != "ghs_" ]; then
+            echo "❌ Invalid token format"
             exit 1
-          fi
-          
-          # Warn if token is shorter than expected (but still accept it)
-          if [ ${#INSTALLATION_TOKEN} -lt 100 ]; then
-            echo "⚠️  Warning: Token is shorter than expected (${#INSTALLATION_TOKEN} chars)"
-            echo "   GitHub App tokens are typically 200+ chars, but newer formats may be shorter"
-            echo "   Will attempt to use this token..."
           fi
           
           echo "✅ Installation token generated"
-          echo "Token length: ${#INSTALLATION_TOKEN} characters"
           echo "::add-mask::$INSTALLATION_TOKEN"
           echo "token=$INSTALLATION_TOKEN" >> $GITHUB_OUTPUT
-          
-      - name: Debug token generation
-        env:
-          GH_TOKEN: ${{ steps.app-token.outputs.token }}
-        run: |
-          echo "Token verification:"
-          echo "Length: ${#GH_TOKEN} characters"
-          if [ ${#GH_TOKEN} -lt 100 ]; then
-            echo "❌ ERROR: Token is too short! Expected 200+ characters for GitHub App tokens."
-            exit 1
-          fi
-          echo "✅ Token length looks correct"
 
       - name: Verify GitHub App token
         env:
@@ -383,44 +174,21 @@ jobs:
         run: |
           if [ -z "$GH_TOKEN" ]; then
             echo "❌ Error: GitHub App token is empty"
-            echo "Check that SYNC_APP_ID and SYNC_APP_PRIVATE_KEY secrets are set correctly"
             exit 1
           fi
-          echo "✅ GitHub App token generated successfully"
-          echo "Token length: ${#GH_TOKEN} characters"
           
-          # Check token format (GitHub App tokens are typically 200+ chars)
-          if [ ${#GH_TOKEN} -lt 100 ]; then
-            echo "⚠️  Warning: Token is unusually short (${#GH_TOKEN} chars). Expected 200+ for GitHub App tokens."
-            echo "This might indicate the token generation didn't work correctly."
-          fi
-          
-          # Test token by checking if we can access the repo via API
-          echo "Testing repository access to ${{ env.PUBLIC_REPO }} via API..."
-          RESPONSE=$(curl -s -w "\n%{http_code}" -H "Authorization: token $GH_TOKEN" \
-               -H "Accept: application/vnd.github.v3+json" \
-               https://api.github.com/repos/${{ env.PUBLIC_REPO }})
-          
-          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
-          BODY=$(echo "$RESPONSE" | sed '$d')
+          # Verify repository access
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "Authorization: token $GH_TOKEN" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/repos/${{ env.PUBLIC_REPO }})
           
           if [ "$HTTP_CODE" != "200" ]; then
-            echo "❌ Error: Cannot access repository ${{ env.PUBLIC_REPO }} via API"
-            echo "HTTP Status: $HTTP_CODE"
-            echo "Response: $BODY"
-            echo ""
-            echo "Troubleshooting steps:"
-            echo "1. Verify the repository exists: https://github.com/${{ env.PUBLIC_REPO }}"
-            echo "2. Ensure the GitHub App is installed on the repository"
-            echo "3. Check that the App has 'Contents: Write' permission"
-            echo "4. Verify the repository name matches exactly: oidc-sso-toolkit"
+            echo "❌ Error: Cannot access repository (HTTP $HTTP_CODE)"
             exit 1
           fi
-          echo "✅ Repository API access verified (HTTP $HTTP_CODE)"
           
-          # Get repository details to verify access
-          echo "Repository details:"
-          echo "$BODY" | grep -E '"name"|"full_name"|"private"|"default_branch"' || true
+          echo "✅ Token verified - repository access confirmed"
 
       - name: Push to public repo
         env:
@@ -435,38 +203,12 @@ jobs:
           # Remove existing remote if it exists
           git remote remove public 2>/dev/null || true
           
-          # Add remote with token embedded in URL
-          # Try the standard format for GitHub App tokens
+          # Add remote with token
           git remote add public https://x-access-token:${GH_TOKEN}@github.com/${{ env.PUBLIC_REPO }}.git
           
-          # Debug: Show what we're trying to connect to (mask token)
-          echo "Remote URL format: https://x-access-token:***@github.com/${{ env.PUBLIC_REPO }}.git"
-          echo "Token length: ${#GH_TOKEN} characters"
-          echo "Dry run mode: $DRY_RUN"
-          echo "Target branch: $TARGET_BRANCH"
-          
           # Test connection
-          echo "Testing git connection..."
-          if git ls-remote public --heads $TARGET_BRANCH > /dev/null 2>&1; then
-            echo "✅ Git connection successful"
-            echo "Existing branches in target repo:"
-            git ls-remote --heads public | head -5 || true
-          else
-            ERROR_OUTPUT=$(git ls-remote public --heads $TARGET_BRANCH 2>&1 || true)
-            echo "Git ls-remote output: $ERROR_OUTPUT"
-            
-            # If token is suspiciously short, warn about it
-            if [ ${#GH_TOKEN} -lt 100 ]; then
-              echo ""
-              echo "⚠️  WARNING: Token is only ${#GH_TOKEN} characters long."
-              echo "GitHub App installation tokens are typically 200+ characters."
-              echo "This suggests the token might not be generated correctly."
-              echo ""
-              echo "Please verify:"
-              echo "1. SYNC_APP_ID secret is the numeric App ID"
-              echo "2. SYNC_APP_PRIVATE_KEY is the complete private key (including BEGIN/END lines)"
-              echo "3. The private key is the one associated with the GitHub App"
-            fi
+          if ! git ls-remote public --heads $TARGET_BRANCH > /dev/null 2>&1; then
+            echo "⚠️  Warning: Cannot list branches (repository may be empty)"
           fi
           
           # Check if this is a dry run
@@ -483,82 +225,17 @@ jobs:
             exit 0
           fi
           
-          # Check if repository is empty (no branches)
-          echo "Checking if repository has any branches..."
-          EXISTING_BRANCHES=$(git ls-remote --heads public 2>&1)
-          if echo "$EXISTING_BRANCHES" | grep -q "Repository not found\|fatal"; then
-            echo "⚠️  Repository appears empty or inaccessible"
-            echo "Output: $EXISTING_BRANCHES"
-          else
-            echo "Existing branches:"
-            echo "$EXISTING_BRANCHES" || echo "No branches found (empty repository)"
-          fi
-          
-          # Force push to public (mirror sync)
-          echo ""
-          echo "Pushing to ${{ env.PUBLIC_REPO }}:$TARGET_BRANCH..."
-          echo "Source branch: main ($(git rev-parse --short HEAD))"
-          
           # Check if target branch exists
           BRANCH_EXISTS=$(git ls-remote --heads public $TARGET_BRANCH 2>&1 | grep -c "refs/heads/$TARGET_BRANCH" || echo "0")
           
+          # Push to public repository
           if [ "$BRANCH_EXISTS" = "0" ]; then
-            echo "Target branch doesn't exist - will create it"
-            PUSH_CMD="git push public main:$TARGET_BRANCH --set-upstream"
+            git push public main:$TARGET_BRANCH --set-upstream
           else
-            echo "Target branch exists - will force push"
-            PUSH_CMD="git push public main:$TARGET_BRANCH --force"
+            git push public main:$TARGET_BRANCH --force
           fi
           
-          # Try push with verbose output
-          echo "Executing: $PUSH_CMD"
-          PUSH_OUTPUT=$($PUSH_CMD --verbose 2>&1)
-          PUSH_EXIT_CODE=$?
-          
-          if [ $PUSH_EXIT_CODE -eq 0 ]; then
-            echo "✅ Synced to public repository"
-            echo "$PUSH_OUTPUT"
-          else
-            echo "❌ Push failed (exit code: $PUSH_EXIT_CODE)"
-            echo ""
-            echo "Git push output:"
-            echo "$PUSH_OUTPUT"
-            echo ""
-            
-            # Try to diagnose the issue
-            echo "Diagnosing issue..."
-            
-            # Check if it's a permission issue
-            if echo "$PUSH_OUTPUT" | grep -qi "permission\|denied\|forbidden\|403"; then
-              echo "❌ Permission denied - The GitHub App may not have write access"
-            fi
-            
-            # Check if it's a repository not found issue
-            if echo "$PUSH_OUTPUT" | grep -qi "not found\|404"; then
-              echo "❌ Repository not found - Check repository name and App installation"
-            fi
-            
-            # Check if it's a branch protection issue
-            if echo "$PUSH_OUTPUT" | grep -qi "protected\|force.*not allowed"; then
-              echo "❌ Branch protection - The target branch may be protected"
-              echo "   Solution: Disable branch protection or use a different branch"
-            fi
-            
-            # Check if it's an empty repository issue
-            if echo "$PUSH_OUTPUT" | grep -qi "no upstream\|no such ref"; then
-              echo "⚠️  Repository may be empty - this should have been handled automatically"
-            fi
-            
-            echo ""
-            echo "Troubleshooting steps:"
-            echo "1. Verify GitHub App is installed: https://github.com/organizations/candescent-dev/settings/installations"
-            echo "2. Check App permissions: https://github.com/organizations/candescent-dev/settings/apps/candescent-oidc-sync-bot"
-            echo "3. Verify repository exists: https://github.com/${{ env.PUBLIC_REPO }}"
-            echo "4. Check branch protection: https://github.com/${{ env.PUBLIC_REPO }}/settings/branches"
-            echo "5. Verify App has 'Contents: Write' permission"
-            
-            exit $PUSH_EXIT_CODE
-          fi
+          echo "✅ Synced to public repository"
 
       - name: Summary
         env:
