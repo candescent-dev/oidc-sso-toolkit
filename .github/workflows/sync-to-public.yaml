@@ -40,6 +40,8 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          # Don't persist credentials - we'll use our own token
+          persist-credentials: false
 
       - name: Setup Node.js for token generation
         uses: actions/setup-node@v4
@@ -166,16 +168,22 @@ jobs:
           
           echo "✅ Installation token generated"
           echo "::add-mask::$INSTALLATION_TOKEN"
-          echo "token=$INSTALLATION_TOKEN" >> $GITHUB_OUTPUT
+          # Write token to output (ensure no trailing whitespace/newlines)
+          echo "token=$(echo -n "$INSTALLATION_TOKEN" | tr -d '\n\r ')" >> $GITHUB_OUTPUT
 
       - name: Verify GitHub App token
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
+          # Trim any whitespace that might have been introduced
+          GH_TOKEN=$(echo -n "$GH_TOKEN" | tr -d '\n\r ')
+          
           if [ -z "$GH_TOKEN" ]; then
             echo "❌ Error: GitHub App token is empty"
             exit 1
           fi
+          
+          echo "Token received: ${#GH_TOKEN} characters, starts with ${GH_TOKEN:0:10}..."
           
           # Verify repository access
           HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
@@ -196,40 +204,94 @@ jobs:
           DRY_RUN: ${{ env.DRY_RUN }}
           TARGET_BRANCH: ${{ env.TEST_BRANCH }}
         run: |
-          # Configure git with GitHub App bot identity
-          git config user.name "candescent-oidc-sync-bot[bot]"
-          git config user.email "${{ secrets.SYNC_APP_ID }}+candescent-oidc-sync-bot[bot]@users.noreply.github.com"
+          # Trim any whitespace from token (GitHub Actions might add it)
+          GH_TOKEN=$(echo -n "$GH_TOKEN" | tr -d '\n\r ')
           
-          # Disable credential helpers to use token from URL
+          # Override any git config set by checkout action
+          # Use --local to avoid conflicts with global config
+          git config --local user.name "candescent-oidc-sync-bot[bot]"
+          git config --local user.email "${{ secrets.SYNC_APP_ID }}+candescent-oidc-sync-bot[bot]@users.noreply.github.com"
+          
+          # Disable ALL credential helpers (checkout action might set some)
+          git config --local --unset-all credential.helper 2>/dev/null || true
           git config --local credential.helper ""
+          git config --global --unset-all credential.helper 2>/dev/null || true
+          
+          # Ensure we're not using the default GITHUB_TOKEN
+          unset GITHUB_TOKEN || true
           
           # Remove existing remote if it exists
           git remote remove public 2>/dev/null || true
           
+          # Verify token is set and valid format
+          if [ -z "$GH_TOKEN" ]; then
+            echo "❌ Error: GH_TOKEN is empty"
+            exit 1
+          fi
+          
+          if [ ${#GH_TOKEN} -lt 40 ] || [ "${GH_TOKEN:0:4}" != "ghs_" ]; then
+            echo "❌ Error: Invalid token format"
+            echo "Token length: ${#GH_TOKEN}"
+            echo "Token starts with: ${GH_TOKEN:0:10}"
+            exit 1
+          fi
+          
+          echo "Token verified: ${#GH_TOKEN} characters, starts with ${GH_TOKEN:0:10}..."
+          
           # Add remote with token
-          git remote add public https://x-access-token:${GH_TOKEN}@github.com/${{ env.PUBLIC_REPO }}.git
+          # Note: GitHub App tokens are base64url encoded and safe for URLs
+          git remote add public "https://x-access-token:${GH_TOKEN}@github.com/${{ env.PUBLIC_REPO }}.git"
+          
+          # Verify remote is configured
+          REMOTE_URL=$(git remote get-url public)
+          echo "Remote configured: ${REMOTE_URL:0:60}..."
           
           # Test connection and diagnose issues
           echo "Testing git connection to ${{ env.PUBLIC_REPO }}..."
-          GIT_LS_OUTPUT=$(git ls-remote public --heads $TARGET_BRANCH 2>&1)
+          echo "Target branch: $TARGET_BRANCH"
+          
+          # Test connection - try listing all refs first (works even for empty repos)
+          set +e  # Don't exit on error so we can capture output
+          GIT_LS_OUTPUT=$(git ls-remote public 2>&1)
           GIT_LS_EXIT_CODE=$?
+          set -e
           
           if [ $GIT_LS_EXIT_CODE -ne 0 ]; then
-            echo "❌ Error: Cannot access repository"
-            echo "Git output: $GIT_LS_OUTPUT"
+            echo "❌ Error: Cannot access repository (exit code: $GIT_LS_EXIT_CODE)"
+            echo "Git output:"
+            echo "$GIT_LS_OUTPUT"
             echo ""
-            echo "Diagnostics:"
-            echo "1. Verify repository exists: https://github.com/${{ env.PUBLIC_REPO }}"
-            echo "2. Check if repository is private (GitHub App must be installed on private repos)"
-            echo "3. Verify GitHub App is installed: https://github.com/organizations/candescent-dev/settings/installations"
-            echo "4. Ensure App has 'Contents: Write' permission"
-            echo "5. Verify repository name matches exactly: oidc-sso-toolkit"
+            
+            # Check for specific error patterns
+            if echo "$GIT_LS_OUTPUT" | grep -qi "Repository not found\|404"; then
+              echo "Diagnosis: Repository not found"
+              echo "1. Verify repository exists: https://github.com/${{ env.PUBLIC_REPO }}"
+              echo "2. Check if repository name is correct: oidc-sso-toolkit"
+            elif echo "$GIT_LS_OUTPUT" | grep -qi "permission\|denied\|forbidden\|403"; then
+              echo "Diagnosis: Permission denied"
+              echo "1. Verify GitHub App is installed: https://github.com/organizations/candescent-dev/settings/installations"
+              echo "2. Ensure App has 'Contents: Write' and 'Workflows: Write' permissions"
+            elif echo "$GIT_LS_OUTPUT" | grep -qi "authentication\|unauthorized\|401"; then
+              echo "Diagnosis: Authentication failed"
+              echo "1. Token may be invalid or expired"
+              echo "2. Check token format (should start with 'ghs_')"
+            fi
+            
             echo ""
-            echo "If repository is private, ensure:"
-            echo "- GitHub App is installed on the repository"
-            echo "- App has 'Contents: Write' permission"
-            echo "- Installation ID matches: ${{ secrets.SYNC_INSTALLATION_ID }}"
+            echo "General diagnostics:"
+            echo "1. Repository: https://github.com/${{ env.PUBLIC_REPO }}"
+            echo "2. GitHub App installation: https://github.com/organizations/candescent-dev/settings/installations"
+            echo "3. Token length: ${#GH_TOKEN} characters"
+            echo "4. Token prefix: ${GH_TOKEN:0:10}..."
             exit 1
+          fi
+          
+          echo "✅ Git connection successful"
+          if [ -n "$GIT_LS_OUTPUT" ]; then
+            echo "Repository refs:"
+            echo "$GIT_LS_OUTPUT" | head -5
+          else
+            echo "Repository appears to be empty (no refs found)"
           fi
           
           # Check if this is a dry run
