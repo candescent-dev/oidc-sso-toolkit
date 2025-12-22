@@ -1,33 +1,90 @@
-# Overview
+# Backend
 
-The system generates client credentials with a short-lived(15 minutes) expiry, manages RSA key pairs (public and private keys), signs ID Tokens using Candescent private key, and exposes JWKS endpoints for secure token verification.
+NestJS application that implements a mock OIDC Identity Provider.
 
-## Compile and run the project
+## Features
 
-```bash
-# install dependencies
-$ npm install
+- OAuth2 authorization code flow
+- JWT ID token generation (RS256)
+- Dynamic client credential generation
+- In-memory token storage with automatic cleanup
+- E2E test execution endpoint
 
-# Start server
-$ npm run start:dev
+## Quick Start
 
-# production mode
-$ npm run start:prod
-
-#Default port: 9000
-
-#Verify server health
-Open backend in browser: http://localhost:9000/api/health
-
-## Run tests
+### 1. Install Dependencies
 
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+npm install
 ```
+
+### 2. Generate Private Key (Required)
+
+The backend needs an RSA private key to sign JWT tokens:
+
+```bash
+mkdir -p certs
+openssl genrsa -out certs/private.pem 2048
+```
+
+### 3. Build and Run
+
+```bash
+npm run build
+npm start
+```
+
+Runs at `http://localhost:9000`
+
+### Development Mode (with hot-reload)
+
+```bash
+npm run start:dev
+```
+
+## API Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/health` | GET | Health check |
+| `/api/client` | POST | Generate new credentials |
+| `/api/client` | GET | Retrieve cached credentials |
+| `/api/auth/authorize` | GET | Authorization endpoint |
+| `/api/auth/token` | POST | Token endpoint |
+| `/api/auth/auth-setting` | POST | Store auth settings |
+| `/api/e2e-test/run` | GET | Run E2E tests |
+| `/api/publish-config` | GET | Export configuration |
+
+## Testing
+
+```bash
+# Unit tests
+npm test
+
+# E2E tests
+npm run test:e2e
+
+# Coverage
+npm run test:cov
+```
+
+## Configuration
+
+Token expiration is configured in `src/ssoConfig/sso-config.json`:
+
+```json
+{
+  "auth_code_expires_in": 900,
+  "access_token_expires_in": 900,
+  "id_token_expires_in": 900
+}
+```
+
+Values are in seconds.
+
+## Troubleshooting
+
+| Error | Solution |
+|-------|----------|
+| `Private key file not found` | Run: `mkdir -p certs && openssl genrsa -out certs/private.pem 2048` |
+| `Cannot find module dist/src/main.js` | Run: `npm run build` first |

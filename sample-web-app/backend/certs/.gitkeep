@@ -1,0 +1,26 @@
+# Default Development Certificates
+
+This directory contains **default RSA key pairs** for local development and testing.
+
+## ⚠️ Important Security Notice
+
+**These keys are for DEVELOPMENT USE ONLY.**
+
+- Safe for local testing and development
+- Included for convenience (no setup required)
+- **DO NOT use in production**
+- **DO NOT use in QA/staging environments**
+
+## For Production Use
+
+Generate your own keys:
+
+```bash
+openssl genrsa -out private.pem 2048
+openssl rsa -in private.pem -pubout -out public.pem
+```
+
+## Files
+
+- `private.pem` - RSA private key (2048-bit) for signing JWT tokens
+- `public.pem` - RSA public key (derived from private key) for token verification

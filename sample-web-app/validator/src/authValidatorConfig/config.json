@@ -1,0 +1,7 @@
+{
+  "backendPort": 9000,
+  "client_id": "",
+  "client_secret": "",
+  "redirect_uri": "http://localhost:7080/api/auth-validator/call-authorize-and-token",
+  "redirectUrl": ""
+}

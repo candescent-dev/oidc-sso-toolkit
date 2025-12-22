@@ -7,11 +7,12 @@ import { spawn, execSync } from 'child_process';
 const frontendURL = 'http://localhost:8000';
 const validatorBaseURL = 'http://localhost:7080/api/auth-validator';
 
-const rootDir = path.resolve(__dirname, '..', '..', '..'); // Goes up from sample-web-app to root
-const configFilePath = path.resolve(rootDir, 'client-web-app', 'src', 'authValidatorConfig', 'config.json');
-const downloadsDir = path.resolve(rootDir, 'sample-web-app', 'downloads'); // Custom folder for downloads
+// Path resolution: __dirname = sample-web-app/test/e2e/
+const sampleWebAppDir = path.resolve(__dirname, '..', '..'); // sample-web-app
+const validatorDir = path.resolve(sampleWebAppDir, 'validator');
+const configFilePath = path.resolve(validatorDir, 'src', 'authValidatorConfig', 'config.json');
+const downloadsDir = path.resolve(sampleWebAppDir, 'downloads'); // Custom folder for downloads
 let targetPath:any;
-const clientwebappDir = path.resolve(rootDir, 'client-web-app');
 
 // Ensure downloads directory exists
 if (!fs.existsSync(downloadsDir)) {
@@ -76,12 +77,12 @@ test.describe.serial('OIDC Semi-Automated Flow', () => {
         console.log("Path of the target file where client credentials have to be copied: "+targetPath);
 
         const client = {
-            name: 'client-web-app',
-            cwd: clientwebappDir,
+            name: 'validator',
+            cwd: validatorDir,
             startCommand: 'npm start',
             healthUrl: 'http://localhost:7080/api/health'
         };
-        console.log("Path of the client webapp directory folder from where we need to restart the server: "+clientwebappDir);
+        console.log("Path of the validator directory folder from where we need to restart the server: "+validatorDir);
 
         const healthTimeoutMs = 60_000;
         const healthPollIntervalMs = 15000;

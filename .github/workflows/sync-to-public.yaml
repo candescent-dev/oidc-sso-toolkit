@@ -1,0 +1,55 @@
+name: Sync to Public GitHub
+
+# Triggers: push to main, or manual dispatch
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  PUBLIC_REPO: "candescent-dev/oidc-sso-toolkit"
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout internal repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          # GitHub App credentials - add these as secrets in EMU repo
+          app-id: ${{ secrets.SYNC_APP_ID }}
+          private-key: ${{ secrets.SYNC_APP_PRIVATE_KEY }}
+          owner: candescent-dev
+          repositories: oidc-sso-toolkit
+
+      - name: Push to public repo
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          # Configure git with GitHub App bot identity
+          git config user.name "candescent-oidc-sync-bot[bot]"
+          git config user.email "${{ secrets.SYNC_APP_ID }}+candescent-oidc-sync-bot[bot]@users.noreply.github.com"
+          
+          # Add public remote using the app token
+          git remote add public https://x-access-token:${GH_TOKEN}@github.com/${{ env.PUBLIC_REPO }}.git
+          
+          # Force push to public (mirror sync)
+          git push public main:main --force
+          
+          echo "✅ Synced to public repository"
+
+      - name: Summary
+        run: |
+          echo "## Sync Complete 🔄" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Source:** ${{ github.repository }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Target:** ${{ env.PUBLIC_REPO }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+

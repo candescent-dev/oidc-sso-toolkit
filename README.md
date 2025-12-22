@@ -1,75 +1,49 @@
-## dbk-oidc-sso-features-toolkit Overview
- 
-The OIDC Toolkit provides a complete local environment for testing and validating OpenID Connect (OIDC) Single Sign-On (SSO) flows. It simulates the Candescent production system OIDC flow and allows users to securely integrate, test, and validate authentication workflows.
-Components:
-Frontend:
-•   Displays generated client credentials (client_id, client_secret).
-•   Allows downloading metadata (metadata.json) and JWKS files.
-Backend:
-•   Generates client credentials with a short-lived (15 minutes) expiry.
-•   Manages key pairs (RSA public/private keys).
-•   Signs ID Tokens using Candescent private key.
-•   Exposes JWKS for token verification.
+# OIDC SSO Toolkit
 
-## client-web-app Overview
+A local development toolkit for partners and financial institutions (FIs) to build and test OpenID Connect (OIDC) Single Sign-On integrations. This toolkit simulates an OIDC Identity Provider, allowing you to develop and validate your OIDC client implementation before connecting to production environments.
 
-The `client-web-app`serves as a mock representation of the vendor environment. It is used solely for simulation purposes during development and will not be included in the final deliverable toolkit. It orchestrates calls to the OIDC toolkit, validates tokens and metadata, and exposes simple APIs that downstream applications can use to test and integrate OIDC SSO flows.
+## Features
 
-## Technologies Used
+- **Mock OIDC Identity Provider** - Full OAuth2 authorization code flow
+- **Dynamic Client Credentials** - Auto-generated `client_id` and `client_secret`
+- **JWT ID Tokens** - RS256-signed tokens with configurable claims
+- **E2E Validation** - Automated tests to verify your integration
+- **Downloadable Artifacts** - Metadata and JWK files for your client app
 
-### Frontend (`sample-web-app/frontend`)
-- **Framework**: React (Create React App)
-- **State Management**: Redux Toolkit (`@reduxjs/toolkit`, `react-redux`)
-- **Routing**: React Router (`react-router-dom`)
-- **Styling**: CSS modules and standard CSS
-- **Testing**: Playwright
-
-### Backend (`sample-web-app/backend`)
-- **Framework**: NestJS (Node.js)
-- **Build & Runtime**: Node.js + npm
-- **Validation & Transformation**: `class-validator`, `class-transformer`
-- **Security / Tokens**: `jsonwebtoken`, RSA key handling for signing ID Tokens
-- **Testing**: Jest, Supertest
-
-### client-web-app (`client-web-app`)
-- **Framework**: NestJS (Node.js)
-- **HTTP / Integration**: `@nestjs/axios` and `rxjs` for calling external OIDC toolkit endpoints
-- **Validation & Transformation**: `class-validator`, `class-transformer`
-- **Security / Token Handling**: `jose` for working with JWTs and JWK/JWKS
-
-## Clone the Project
-
-Use the following steps to clone the repository locally:
-
-```bash
-git clone https://github.com/dfh-digital-insight/dbk-devex-oidc-sso-toolkit.git
-cd dbk-devex-oidc-sso-toolkit-main
-```
-
-## Running the Sample Web App (Backend + Frontend)
-
-The sample application contains both the backend (NestJS) and frontend (React).
+## Quick Start
 
 ### Prerequisites
 
-- **Node.js**: Install a recent LTS version of Node.js.
-- **npm**: Comes bundled with Node.js.
+- **Node.js** v20+ (LTS recommended)
+- **npm** (included with Node.js)
 
-###  Start the Backend Server
+### 1. Clone the Repository
 
-Open a terminal and run:
+```bash
+git clone https://github.com/candescent-dev/oidc-sso-toolkit.git
+cd oidc-sso-toolkit
+```
+
+### 2. Setup the Backend
 
 ```bash
 cd sample-web-app/backend
 npm install
-npm run start:dev
+
+# Build and start
+npm run build
+npm start
 ```
 
-This starts the NestJS backend server in watch mode. The default port is defined inside the backend application (commonly `http://localhost:9000` unless configured otherwise).
+The backend runs at `http://localhost:9000`
 
-###  Start the Frontend Server
+> **Note:** Default development certificates are included in `certs/` for convenience. For production use, generate your own keys (see [Security Notice](#security-notice) below).
 
-Open a new terminal window and run:
+> **For development with hot-reload:** Use `npm run start:dev` instead of `npm run build && npm start`
+
+### 3. Start the Frontend
+
+Open a new terminal:
 
 ```bash
 cd sample-web-app/frontend
@@ -77,108 +51,251 @@ npm install
 npm start
 ```
 
-The frontend React app will start on `http://localhost:8000` (as configured in the `start` script).
+The frontend runs at `http://localhost:8000`
 
-Once both servers are running:
-- Access the **frontend** in your browser at `http://localhost:8000`.
-- The frontend will communicate with the **backend** to generate client credentials, download metadata, and perform OIDC-related operations.
+### 4. Open the Toolkit
 
-## Initialization and Usage Flow
- 
-### Initialization:
- 
-####    Generate Client Credentials
-•   On loading the Home Page, the frontend automatically calls the backend API.
-•   The backend generates client credentials and returns them to the frontend.
-•   Credentials are displayed on the home page. The page refreshes automatically after 15 minutes to fetch new credentials.
-#### Download Metadata
-•   Click the Metadata button to download metadata.json.
-•   The file contains redirect URIs, endpoints, scopes, and other OIDC configuration details.
-####    Download JWKS
-•   Clicking the JWKS button downloads the JSON Web Key Set, containing RSA public key parameters (n and e) for token verification.
-•   A success message confirms the download.
- 
-### Token Validation and User Info:
-• After authentication, the frontend shows the ID Token payload.
- 
-• Decode the ID Token on jwt.io  
- 
-• Validate the following fields in the ID Token to ensure integrity and correctness: issued at (iat), expiry (exp), issuer, subject (sub), audience (aud), email, birthday, given name, family name, phone number, preferred username.
- 
+Navigate to `http://localhost:8000` in your browser.
 
- 
-## dbk-oidc-sso-features-toolkit Directories
- 
+---
+
+## How It Works
+
+### Configuration Page
+
+When the toolkit loads, it automatically generates:
+
+| Field | Description |
+|-------|-------------|
+| **Client ID** | Public identifier for your OIDC client |
+| **Client Secret** | Secret key for token exchange |
+
+> ⚠️ Credentials expire after **15 minutes** and auto-regenerate.
+
+### Downloadable Files
+
+| File | Purpose |
+|------|---------|
+| **Metadata** | OIDC discovery document with endpoints and supported scopes |
+| **JWK** | RSA public key for validating ID token signatures |
+
+### OIDC Flow Options
+
+- **Open in iframe** - Embed the auth flow in your page
+- **Open in new tab** - Standard redirect-based flow
+
+---
+
+## OIDC Endpoints
+
+The toolkit exposes standard OIDC endpoints:
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/auth/authorize` | GET | Authorization endpoint - returns redirect URL with auth code |
+| `/api/auth/token` | POST | Token endpoint - exchanges code for tokens |
+| `/api/client` | POST | Generate new client credentials |
+| `/api/client` | GET | Retrieve current credentials |
+| `/api/health` | GET | Health check |
+
+### Token Response
+
+```json
+{
+  "id_token": "eyJhbGciOiJSUzI1NiIs...",
+  "access_token": "abc123...",
+  "token_type": "Bearer",
+  "expires_in": 900
+}
 ```
-dbk-oidc-sso-features-toolkit/
-├── .github/
-├── client-web-app/
-├── dist/
-├── documentation/
+
+### ID Token Claims
+
+| Claim | Description |
+|-------|-------------|
+| `iss` | Issuer (https://www.digitalinsight.com) |
+| `sub` | Subject identifier |
+| `aud` | Audience (your client_id) |
+| `iat` | Issued at timestamp |
+| `exp` | Expiration timestamp |
+| `email` | User email |
+| `given_name` | First name |
+| `family_name` | Last name |
+| `phone_number` | Phone number |
+| `birthday` | Date of birth |
+| `preferred_username` | Username |
+
+---
+
+## Validation
+
+### Running the Validator
+
+1. Configure your **Init URL** and **Callback Host** on the home page
+2. Click **Submit** to start the OIDC flow
+3. Navigate to the **OIDC Validator** page
+4. Click **Run Validator** to execute E2E tests
+
+The validator tests:
+- Client credential generation
+- Authorization code flow
+- Token exchange
+- ID token validation
+
+### Validation Reports
+
+After running the validator, download:
+- **e2e-report.html** - Human-readable test report
+- **jest-e2e.xml** - JUnit XML for CI integration
+
+---
+
+## Configuration
+
+### Port Configuration
+
+Edit `sample-web-app/config.json`:
+
+```json
+{
+  "frontendPort": 8000,
+  "backendPort": 9000
+}
+```
+
+### Token Expiration
+
+Edit `sample-web-app/backend/src/ssoConfig/sso-config.json`:
+
+```json
+{
+  "auth_code_expires_in": 900,
+  "access_token_expires_in": 900,
+  "id_token_expires_in": 900
+}
+```
+
+Values are in seconds (900 = 15 minutes).
+
+---
+
+## Alternative Setup: Docker
+
+For quick testing without installing Node.js, use the pre-built Docker image:
+
+```bash
+# Pull the image
+docker pull ghcr.io/candescent-dev/oidc-sso-toolkit:latest
+
+# Run the container
+docker run -p 8000:8000 -p 9000:9000 ghcr.io/candescent-dev/oidc-sso-toolkit:latest
+```
+
+Then open `http://localhost:8000` in your browser.
+
+### Build Locally (Optional)
+
+If you prefer to build the Docker image yourself:
+
+```bash
+git clone https://github.com/candescent-dev/oidc-sso-toolkit.git
+cd oidc-sso-toolkit
+docker build -t oidc-sso-toolkit .
+docker run -p 8000:8000 -p 9000:9000 oidc-sso-toolkit
+```
+
+---
+
+## Project Structure
+
+```
+oidc-sso-toolkit/
 ├── sample-web-app/
-├── scripts/
+│   ├── frontend/          # React UI for configuration
+│   ├── backend/           # NestJS mock OIDC Identity Provider
+│   ├── validator/         # Internal E2E test harness (see below)
+│   ├── test/              # Playwright E2E tests
+│   └── config.json        # Port configuration
+└── Dockerfile             # Multi-stage build for Docker users
 ```
- 
+
+### Component Overview
+
+| Component | Technology | Purpose |
+|-----------|------------|---------|
+| **Frontend** | React, Redux Toolkit, Vite | Configuration UI and flow initiator |
+| **Backend** | NestJS | Mock OIDC Identity Provider |
+| **Validator** | NestJS | Internal test harness for E2E validation |
+
+### About the Validator
+
+The `validator/` directory contains an internal test harness used by the E2E tests and the "Run Validator" UI feature. It programmatically executes the OIDC authorization code flow to verify the toolkit is working correctly.
+
+**Note for partners/FIs:** You typically don't need to run the validator directly. Instead:
+- Use the **sample-web-app** as a mock IdP to test your own application
+- Run the E2E tests via Playwright if you want automated verification
+- The validator can serve as reference code for implementing OIDC client logic
+
 ---
- 
-## Directory Descriptions
- 
-### .github/
-Contains CI/CD pipeline configurations and GitHub Actions workflows. This automates testing, building, and deployment processes.
- 
-### client-web-app/
-The client-facing web application. It serves as the entry point for user requests and interactions with the system.
- 
-### dist/
-Holds the final output of the entire project. This includes a ZIP archive(`oidc-sso-feature-toolkit.zip`) that is delivered to clients for local deployment and execution.
-- #### oidc-sso-feature-toolkit.zip
-```
-dbk-oidc-sso-features-toolkit/
-├── sample-web-app
-    ├── frontend/
-    ├── backend/
-    ├── config.json
-    ├── Dockerfile
-    ├──  scripts/
-        ├── ps/
-            ├──init.ps1
-            ├──run-web-app.ps1
-            └──selftest.ps1
-        ├── shell/
-            ├──init.sh
-            ├──run-web-app.sh
-            └──selftest.sh
-```
- 
-### documentation/
-Contains all project-related documentation, excluding the main `README.md`. This may include architecture diagrams, API references, setup guides, and other technical documents.
- 
-### sample-web-app/
-A complete web application that includes both frontend and backend modules. This serves as a reference implementation for the overall system.
- 
-### scripts/
-Utility scripts to:
-- Local Build in order to generate zip
-- Create Docker images
-- Containerize the application
-- Run health checks on the deployed system
- 
-These scripts streamline local development and deployment workflows.
- 
+
+## Troubleshooting
+
+| Issue | Cause | Solution |
+|-------|-------|----------|
+| Credentials expired message | 15-minute TTL | Page auto-refreshes; wait or manually refresh |
+| Port already in use | Another service running | Edit `config.json` to change ports |
+| Token validation fails | JWK mismatch | Re-download JWK from the toolkit |
+| Backend won't start | Missing private key | Default keys should be in `certs/`. If missing, run: `openssl genrsa -out certs/private.pem 2048` |
+
 ---
- 
-#### Pipeline Overview
- 
-```mermaid
-graph TD
-    A[Setup] --> B[Install Dependencies]
-    B --> C[Build]
-    C --> D[Test]
-    D --> E[Docker Operations]
-    E --> F[Package Preparation]
-    F --> G[Create ZIP Archive]
-    G --> H["Deployment - main branch only"]
-    H --> I[Artifact Upload]
-    I --> J[Cleanup]
+
+## Security Notice
+
+**Default Development Certificates**
+
+This toolkit includes pre-generated RSA keys in `sample-web-app/backend/certs/` for convenience:
+
+- **Safe for local development and testing**
+- **NOT secure for production use**
+- **NOT secure for QA/staging environments**
+
+### For Production Use
+
+If deploying to production or QA, generate your own keys:
+
+```bash
+cd sample-web-app/backend/certs
+openssl genrsa -out private.pem 2048
+openssl rsa -in private.pem -pubout -out public.pem
 ```
- 
+
+---
+
+## Development
+
+### Running Tests
+
+```bash
+# Backend unit tests
+cd sample-web-app/backend
+npm test
+
+# Backend E2E tests
+npm run test:e2e
+
+# Frontend E2E tests (requires Playwright)
+cd sample-web-app
+npx playwright test
+```
+
+### Tech Stack
+
+- **Frontend**: React 19, Redux Toolkit, React Router
+- **Backend**: NestJS 11, jsonwebtoken, class-validator
+- **Testing**: Jest, Supertest, Playwright
+
+---
+
+## License
+
+MIT License - see [LICENSE](LICENSE) for details.

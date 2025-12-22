@@ -16,13 +16,13 @@ export default defineConfig({
   reporter: [['html', { open: 'never' }]], 
   webServer: [
     {
-      command: 'npm run start --prefix ./backend',
+      command: 'npm run start:dev --prefix ./backend',
       port: 9000,
       timeout: 200000,
       reuseExistingServer: true
     },
     {
-      command: 'npm run start --prefix ./frontend',
+      command: 'npm run dev --prefix ./frontend',
       port: 8000,
       timeout: 180000,
       reuseExistingServer: true
