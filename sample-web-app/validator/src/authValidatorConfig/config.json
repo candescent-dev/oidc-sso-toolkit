@@ -1,7 +1,7 @@
 {
   "backendPort": 9000,
-  "client_id": "",
-  "client_secret": "",
+  "client_id": "bKOLeu6GwzjnCbL3UITp4Q",
+  "client_secret": "gILPRI1ccFfjHjVFgafWP6Su_1zeZ_PeEfekJ-ZdhZo",
   "redirect_uri": "http://localhost:7080/api/auth-validator/call-authorize-and-token",
-  "redirectUrl": ""
+  "redirectUrl": "http://localhost:7080/api/auth-validator/call-authorize-and-token?code=7b9xz37Vo&state=ZWMh6y"
 }
