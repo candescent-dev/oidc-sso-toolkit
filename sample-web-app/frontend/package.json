@@ -30,10 +30,10 @@
     "vitest": "^3.0.5"
   },
   "scripts": {
-    "dev": "vite --port 8000",
-    "start": "vite --port 8000",
+    "dev": "vite",
+    "start": "PORT=8000 react-scripts start",
     "build": "tsc -b && vite build",
-    "preview": "vite preview --port 8000",
+    "preview": "vite preview",
     "test": "vitest",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage"

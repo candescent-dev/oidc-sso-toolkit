@@ -61,9 +61,13 @@ COPY sample-web-app/backend/src/ssoConfig ./backend/src/ssoConfig
 COPY sample-web-app/backend/certs/private.pem ./backend/certs/private.pem
 COPY sample-web-app/backend/certs/public.pem ./backend/certs/public.pem
 
+# Copy startup script
+COPY start.sh ./start.sh
+RUN chmod +x ./start.sh
+
 # Expose ports
 EXPOSE 8000 9000
 
 # Start both services
-CMD ["sh", "-c", "cd /app/backend && node dist/src/main.js & serve -s -l 8000 /app/frontend/build"]
+CMD ["./start.sh"]
 

@@ -17,8 +17,9 @@ async function bootstrap() {
     }),
   );
 
-  // Start the application on port - 7080
-  await app.listen(7080);
-  console.log(`Server listening on http://localhost:7080`);
+  // Start the application on port - default 7080, can be overridden via PORT env variable
+  const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 7080;
+  await app.listen(port);
+  console.log(`Server listening on http://localhost:${port}`);
 }
 bootstrap();
