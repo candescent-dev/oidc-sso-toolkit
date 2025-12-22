@@ -23,6 +23,8 @@ A local development toolkit for partners and financial institutions (FIs) to bui
 git clone https://github.com/candescent-dev/oidc-sso-toolkit.git
 cd oidc-sso-toolkit
 ```
+> **Configure Backend Port (Optional):** 
+*By default the frontend application binds to port 8000, and the backend application binds to port 9000. However, if required, these ports can be changed to any other desired values. Update the port numbers in /sample-web-app/config.json to new values for both frontend and backend, and restart the server to apply the updated ports.* 
 
 ### 2. Setup the Backend
 
@@ -30,12 +32,14 @@ cd oidc-sso-toolkit
 cd sample-web-app/backend
 npm install
 
+> Note- If the above command triggers a security error. Please Bypass the security using the command here: Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass.
+
 # Build and start
 npm run build
 npm start
 ```
-
-The backend runs at `http://localhost:9000`
+> **Validation of server health (Optional)**: *Validate the server health here - 'http://localhost:9000/api/health'. If the backend port is modified, then open  
+http://localhost:{port}/api/health* 
 
 > **Note:** Default development certificates are included in `certs/` for convenience. For production use, generate your own keys (see [Security Notice](#security-notice) below).
 
@@ -50,12 +54,14 @@ cd sample-web-app/frontend
 npm install
 npm start
 ```
+> Note- If the above command triggers a security error. Please Bypass the security using the command here: Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass.
 
-The frontend runs at `http://localhost:8000`
+> **Validation of server health (Optional)**: *Validate the server health here - 'http://localhost:8000/api/health'. If the backend port is modified, then open  
+http://localhost:{port}/api/health* 
 
 ### 4. Open the Toolkit
 
-Navigate to `http://localhost:8000` in your browser.
+Navigate to `http://localhost:8000`(If not 8000 then http://localhost:{port}')  in your browser.
 
 ---
 
@@ -132,7 +138,7 @@ The toolkit exposes standard OIDC endpoints:
 ### Running the Validator
 
 1. Configure your **Init URL** and **Callback Host** on the home page
-2. Click **Submit** to start the OIDC flow
+2. Click **Submit** and then click **Start OIDC SSO** to start the OIDC flow.
 3. Navigate to the **OIDC Validator** page
 4. Click **Run Validator** to execute E2E tests
 
@@ -255,9 +261,9 @@ The `validator/` directory contains an internal test harness used by the E2E tes
 
 This toolkit includes pre-generated RSA keys in `sample-web-app/backend/certs/` for convenience:
 
-- **Safe for local development and testing**
-- **NOT secure for production use**
-- **NOT secure for QA/staging environments**
+- ✅ **Safe for local development and testing**
+- ❌ **NOT secure for production use**
+- ❌ **NOT secure for QA/staging environments**
 
 ### For Production Use
 
@@ -265,8 +271,8 @@ If deploying to production or QA, generate your own keys:
 
 ```bash
 cd sample-web-app/backend/certs
-openssl genrsa -out private.pem 2048
-openssl rsa -in private.pem -pubout -out public.pem
+cd dbk-devex-oidc-sso-toolkit\sample-web-app\backend; node generate-keys.js
+
 ```
 
 ---
@@ -295,6 +301,10 @@ npx playwright test
 - **Testing**: Jest, Supertest, Playwright
 
 ---
+
+## Contributing
+
+This repository is a **read-only mirror**. We do not accept pull requests. Please see [CONTRIBUTING.md](CONTRIBUTING.md) for how to provide feedback.
 
 ## License
 
