@@ -116,16 +116,53 @@ jobs:
               if (res.statusCode === 201) {
                 try {
                   const response = JSON.parse(data);
-                  if (response.token && response.token.length > 100) {
-                    // Output ONLY the token to stdout (for capture)
-                    // All other output goes to stderr
-                    process.stdout.write(response.token);
-                    process.stdout.write('\n');
-                    process.exit(0);
+                  
+                  // Debug: Log full response structure
+                  console.error('Response received:');
+                  console.error('  Status: 201 (Success)');
+                  console.error('  Token present:', !!response.token);
+                  console.error('  Token length:', response.token ? response.token.length : 0);
+                  if (response.token) {
+                    console.error('  Token starts with:', response.token.substring(0, 10));
+                    console.error('  Token ends with:', response.token.substring(response.token.length - 10));
+                  }
+                  console.error('  Expires at:', response.expires_at);
+                  console.error('  Repository selection:', response.repository_selection);
+                  if (response.repositories) {
+                    console.error('  Repositories count:', response.repositories.length);
+                    console.error('  Repository names:', response.repositories.map(r => r.full_name || r.name).join(', '));
+                  }
+                  
+                  if (response.token) {
+                    // GitHub App installation tokens typically start with 'ghs_'
+                    // Older tokens were 200+ chars, newer ones might be shorter
+                    // Accept tokens that are at least 40 characters and start with 'ghs_'
+                    const token = response.token;
+                    const isValidFormat = token.startsWith('ghs_') && token.length >= 40;
+                    
+                    if (isValidFormat) {
+                      // Output ONLY the token to stdout (for capture)
+                      process.stdout.write(token);
+                      process.stdout.write('\n');
+                      process.exit(0);
+                    } else {
+                      console.error('❌ Token format is invalid');
+                      console.error('Token length:', token.length);
+                      console.error('Token starts with:', token.substring(0, 10));
+                      console.error('Expected: Token starting with "ghs_" and at least 40 characters');
+                      if (token.length < 40) {
+                        console.error('');
+                        console.error('Token is too short. Possible causes:');
+                        console.error('1. Repository not properly added to installation');
+                        console.error('2. Permissions issue with the GitHub App');
+                        console.error('3. Wrong installation ID');
+                      }
+                      process.exit(1);
+                    }
                   } else {
-                    console.error('❌ No token in response or token too short');
-                    console.error('Token length:', response.token ? response.token.length : 0);
+                    console.error('❌ No token in response');
                     console.error('Response keys:', Object.keys(response));
+                    console.error('Full response (without token):', JSON.stringify({...response, token: '[REDACTED]'}, null, 2));
                     process.exit(1);
                   }
                 } catch (parseError) {
@@ -193,27 +230,66 @@ jobs:
           
           echo "Script file exists, size: $(wc -c < generate-token.js) bytes"
           
+          # Test Node.js first
+          echo "Testing Node.js..."
+          if ! command -v node &> /dev/null; then
+            echo "❌ Error: Node.js not found"
+            exit 1
+          fi
+          echo "Node.js version: $(node --version)"
+          echo ""
+          
+          # Validate script syntax first
+          echo "Validating script syntax..."
+          if ! node -c generate-token.js 2>syntax-errors.log; then
+            echo "❌ Script syntax error!"
+            if [ -s syntax-errors.log ]; then
+              echo "Syntax errors:"
+              cat syntax-errors.log
+            fi
+            rm -f syntax-errors.log
+            exit 1
+          fi
+          rm -f syntax-errors.log
+          echo "✅ Script syntax is valid"
+          echo ""
+          
           # Run script and capture everything
           # Use a temp file to capture stdout since we need to see stderr too
+          echo "Executing script..."
+          set +e  # Don't exit on error so we can capture output
           node generate-token.js >token-output.log 2>token-errors.log
           SCRIPT_EXIT_CODE=$?
+          set -e  # Re-enable exit on error
           
-          # Show what we captured
+          # ALWAYS show what we captured, regardless of exit code
           echo ""
-          echo "Script execution completed with exit code: $SCRIPT_EXIT_CODE"
+          echo "=== SCRIPT EXECUTION RESULT ==="
+          echo "Exit code: $SCRIPT_EXIT_CODE"
           echo ""
           
-          if [ -s token-errors.log ]; then
-            echo "=== STDERR OUTPUT ==="
-            cat token-errors.log
+          if [ -f token-errors.log ]; then
+            ERROR_LOG_SIZE=$(wc -c < token-errors.log)
+            echo "=== STDERR OUTPUT (${ERROR_LOG_SIZE} bytes) ==="
+            if [ $ERROR_LOG_SIZE -gt 0 ]; then
+              cat token-errors.log
+            else
+              echo "(empty)"
+            fi
             echo ""
           fi
           
-          if [ -s token-output.log ]; then
-            echo "=== STDOUT OUTPUT ==="
-            cat token-output.log
+          if [ -f token-output.log ]; then
+            OUTPUT_LOG_SIZE=$(wc -c < token-output.log)
+            echo "=== STDOUT OUTPUT (${OUTPUT_LOG_SIZE} bytes) ==="
+            if [ $OUTPUT_LOG_SIZE -gt 0 ]; then
+              cat token-output.log
+              INSTALLATION_TOKEN=$(cat token-output.log | tr -d '\n\r ' | head -1)
+            else
+              echo "(empty)"
+              INSTALLATION_TOKEN=""
+            fi
             echo ""
-            INSTALLATION_TOKEN=$(cat token-output.log | tr -d '\n\r ' | head -1)
           else
             INSTALLATION_TOKEN=""
           fi
@@ -222,19 +298,24 @@ jobs:
           if [ $SCRIPT_EXIT_CODE -ne 0 ]; then
             echo "❌ Script failed with exit code: $SCRIPT_EXIT_CODE"
             echo ""
-            echo "Debugging information:"
-            echo "  Script exit code: $SCRIPT_EXIT_CODE"
-            echo "  Token variable length: ${#INSTALLATION_TOKEN}"
-            echo "  stdout log size: $([ -f token-output.log ] && wc -c < token-output.log || echo 0) bytes"
-            echo "  stderr log size: $([ -f token-errors.log ] && wc -c < token-errors.log || echo 0) bytes"
+            echo "=== DEBUGGING INFORMATION ==="
+            echo "Script exit code: $SCRIPT_EXIT_CODE"
+            echo "Token variable length: ${#INSTALLATION_TOKEN}"
+            echo "stdout log size: ${OUTPUT_LOG_SIZE:-0} bytes"
+            echo "stderr log size: ${ERROR_LOG_SIZE:-0} bytes"
             echo ""
-            echo "Checking files:"
-            echo "  generate-token.js: $([ -f generate-token.js ] && echo 'exists' || echo 'missing')"
-            echo "  private-key.pem: $([ -f private-key.pem ] && echo 'exists ($(wc -c < private-key.pem) bytes)' || echo 'missing')"
+            echo "File checks:"
+            echo "  generate-token.js: $([ -f generate-token.js ] && echo "exists ($(wc -c < generate-token.js) bytes)" || echo 'missing')"
+            echo "  private-key.pem: $([ -f private-key.pem ] && echo "exists ($(wc -c < private-key.pem) bytes)" || echo 'missing')"
             if [ -f private-key.pem ]; then
-              echo "  First line of key: $(head -1 private-key.pem | cut -c1-50)..."
-              echo "  Last line of key: $(tail -1 private-key.pem | cut -c1-50)..."
+              echo "  First line: $(head -1 private-key.pem)"
+              echo "  Last line: $(tail -1 private-key.pem)"
             fi
+            echo ""
+            echo "Environment check:"
+            echo "  APP_ID: ${APP_ID:+set} ${APP_ID:-not set}"
+            echo "  INSTALLATION_ID: ${INSTALLATION_ID:+set} ${INSTALLATION_ID:-not set}"
+            echo "  PRIVATE_KEY env var: ${PRIVATE_KEY:+set (${#PRIVATE_KEY} chars)} ${PRIVATE_KEY:-not set}"
             rm -f token-output.log token-errors.log
             exit 1
           fi
@@ -256,17 +337,27 @@ jobs:
           echo "Token received:"
           echo "  Length: ${#INSTALLATION_TOKEN} characters"
           
-          if [ ${#INSTALLATION_TOKEN} -lt 100 ]; then
-            echo "❌ Token is too short"
+          # Check if token is valid format (starts with ghs_ and is at least 40 chars)
+          if [ ${#INSTALLATION_TOKEN} -lt 40 ] || [ "${INSTALLATION_TOKEN:0:4}" != "ghs_" ]; then
+            echo "❌ Token format is invalid"
             echo "Token length: ${#INSTALLATION_TOKEN}"
-            echo "Expected: 200+ characters"
-            echo "Token preview: ${INSTALLATION_TOKEN:0:50}..."
-            echo ""
-            echo "This usually means:"
-            echo "1. The script output something other than the token"
-            echo "2. The token generation failed silently"
-            echo "3. The secrets are incorrect"
+            echo "Token starts with: ${INSTALLATION_TOKEN:0:10}"
+            echo "Expected: Token starting with 'ghs_' and at least 40 characters"
+            if [ ${#INSTALLATION_TOKEN} -lt 40 ]; then
+              echo ""
+              echo "This usually means:"
+              echo "1. The script output something other than the token"
+              echo "2. The token generation failed silently"
+              echo "3. The secrets are incorrect"
+            fi
             exit 1
+          fi
+          
+          # Warn if token is shorter than expected (but still accept it)
+          if [ ${#INSTALLATION_TOKEN} -lt 100 ]; then
+            echo "⚠️  Warning: Token is shorter than expected (${#INSTALLATION_TOKEN} chars)"
+            echo "   GitHub App tokens are typically 200+ chars, but newer formats may be shorter"
+            echo "   Will attempt to use this token..."
           fi
           
           echo "✅ Installation token generated"
