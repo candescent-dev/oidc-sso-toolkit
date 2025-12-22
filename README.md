@@ -207,7 +207,7 @@ If you prefer to build the Docker image yourself:
 git clone https://github.com/candescent-dev/oidc-sso-toolkit.git
 cd oidc-sso-toolkit
 docker build -t oidc-sso-toolkit .
-docker run -p 8000:8000 -p 9000:9000 oidc-sso-toolkit
+docker run -p 9000:9000 -p 8000:8000 dbk-devex-oidc-sso-toolkit
 ```
 
 ---
