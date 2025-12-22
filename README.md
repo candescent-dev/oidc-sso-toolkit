@@ -1,6 +1,6 @@
 # OIDC SSO Toolkit
 
-A local development toolkit for partners and financial institutions (FIs) to build and test OpenID Connect (OIDC) Single Sign-On integrations. This toolkit simulates an OIDC Identity Provider, allowing you to develop and validate your OIDC client implementation before connecting to production environments.
+A local development toolkit for partners and financial institutions (FIs) to build and test OpenID Connect (OIDC) Single Sign-On integrations. This toolkit simulates an OIDC Identity Provider, allowing you to develop and validate your OIDC client implementation before connecting to integration testing environments.
 
 ## Features
 
