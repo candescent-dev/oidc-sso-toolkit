@@ -327,10 +327,8 @@ jobs:
             rm -rf "$TEMP_CLONE"
           fi
           
-          # Exclude sync-to-public.yaml from being synced (internal workflow only)
-          # Create a filtered commit that excludes the file but preserves all others
-          echo "Excluding internal workflow file from sync..."
-          
+          # Now sync internal repo to public, excluding sync-to-public.yaml
+          # Create a filtered commit that preserves git history
           CURRENT_COMMIT=$(git rev-parse HEAD)
           
           # Check if sync-to-public.yaml exists in the current commit
@@ -362,7 +360,7 @@ jobs:
             
             # Verify sync-to-public.yaml is NOT in the filtered commit
             if git ls-tree -r --name-only "$SYNC_COMMIT" | grep -q "^\.github/workflows/sync-to-public\.yaml$"; then
-              echo "⚠️  Warning: sync-to-public.yaml still in filtered commit, but continuing"
+              echo "⚠️  Warning: sync-to-public.yaml still in filtered commit"
             else
               echo "✅ Verified: sync-to-public.yaml excluded from filtered commit"
             fi
@@ -382,20 +380,8 @@ jobs:
             echo "Filtered commit: $(git rev-parse --short $SYNC_COMMIT) (excludes sync-to-public.yaml)"
           fi
           
-          # Export current tree excluding sync-to-public.yaml
-          git archive --format=tar "$CURRENT_COMMIT" | tar -xC "$TEMP_DIR" 2>/dev/null
-          rm -f "$TEMP_DIR/.github/workflows/sync-to-public.yaml" 2>/dev/null || true
-          
-          # Create a temporary git repo with the filtered content
-          cd "$TEMP_DIR"
-          git init -q
-          git config user.name "candescent-oidc-sync-bot[bot]"
-          git config user.email "${{ secrets.SYNC_APP_ID }}+candescent-oidc-sync-bot[bot]@users.noreply.github.com"
-          git add -A
-          git commit -m "Sync from internal repo" --allow-empty -q || true
-          
-          # Add public remote and push
-          git remote add public "https://x-access-token:${GH_TOKEN}@github.com/${{ env.PUBLIC_REPO }}.git"
+          # Check if target branch exists
+          BRANCH_EXISTS=$(git ls-remote --heads public $TARGET_BRANCH 2>&1 | grep -c "refs/heads/$TARGET_BRANCH" || echo "0")
           
           # Push filtered commit to public repo
           if [ "$BRANCH_EXISTS" = "0" ]; then
@@ -406,17 +392,15 @@ jobs:
             PUSH_CMD="git push public $SYNC_COMMIT:refs/heads/$TARGET_BRANCH --force"
           fi
           
-          # Cleanup
-          cd - > /dev/null
-          rm -rf "$TEMP_DIR"
-          
-          # Reset internal repo to original commit (restore sync-to-public.yaml)
-          if [ "$SYNC_COMMIT" != "$CURRENT_COMMIT" ]; then
-            git reset --hard "$CURRENT_COMMIT" 2>/dev/null || true
-          fi
+          # Try push with verbose output and capture errors
+          echo "Executing: $PUSH_CMD"
+          set +e  # Don't exit on error so we can capture output
+          PUSH_OUTPUT=$($PUSH_CMD --verbose 2>&1)
+          PUSH_EXIT_CODE=$?
+          set -e
           
           if [ $PUSH_EXIT_CODE -eq 0 ]; then
-            echo "✅ Synced to public repository"
+            echo "✅ Synced to public repository (sync-to-public.yaml excluded)"
             echo "$PUSH_OUTPUT"
           else
             echo "❌ Push failed (exit code: $PUSH_EXIT_CODE)"
@@ -425,39 +409,21 @@ jobs:
             echo "$PUSH_OUTPUT"
             echo ""
             
-            # Try to diagnose the issue
-            echo "Diagnosing issue..."
-            
-            # Check if it's a permission issue
+            # Diagnose the issue
             if echo "$PUSH_OUTPUT" | grep -qi "permission\|denied\|forbidden\|403"; then
-              echo "❌ Permission denied - The GitHub App may not have write access"
+              echo "Diagnosis: Permission denied"
+            elif echo "$PUSH_OUTPUT" | grep -qi "not found\|404"; then
+              echo "Diagnosis: Repository not found"
+            elif echo "$PUSH_OUTPUT" | grep -qi "protected\|force.*not allowed"; then
+              echo "Diagnosis: Branch protection"
             fi
-            
-            # Check if it's a repository not found issue
-            if echo "$PUSH_OUTPUT" | grep -qi "not found\|404"; then
-              echo "❌ Repository not found - Check repository name and App installation"
-            fi
-            
-            # Check if it's a branch protection issue
-            if echo "$PUSH_OUTPUT" | grep -qi "protected\|force.*not allowed"; then
-              echo "❌ Branch protection - The target branch may be protected"
-              echo "   Solution: Disable branch protection or use a different branch"
-            fi
-            
-            # Check if it's an empty repository issue
-            if echo "$PUSH_OUTPUT" | grep -qi "no upstream\|no such ref"; then
-              echo "⚠️  Repository may be empty - this should have been handled automatically"
-            fi
-            
-            echo ""
-            echo "Troubleshooting steps:"
-            echo "1. Verify GitHub App is installed: https://github.com/organizations/candescent-dev/settings/installations"
-            echo "2. Check App permissions: https://github.com/organizations/candescent-dev/settings/apps/candescent-oidc-sync-bot"
-            echo "3. Verify repository exists: https://github.com/${{ env.PUBLIC_REPO }}"
-            echo "4. Check branch protection: https://github.com/${{ env.PUBLIC_REPO }}/settings/branches"
-            echo "5. Verify App has 'Contents: Write' permission"
             
             exit $PUSH_EXIT_CODE
+          fi
+          
+          # Reset internal repo to original commit (restore sync-to-public.yaml)
+          if [ "$SYNC_COMMIT" != "$CURRENT_COMMIT" ]; then
+            git reset --hard "$CURRENT_COMMIT" 2>/dev/null || true
           fi
 
       - name: Summary
