@@ -165,25 +165,81 @@ jobs:
             exit 0
           fi
           
-          # Force push to public (mirror sync)
-          echo "Pushing to ${{ env.PUBLIC_REPO }}:$TARGET_BRANCH..."
-          if git push public main:$TARGET_BRANCH --force; then
-            echo "✅ Synced to public repository"
+          # Check if repository is empty (no branches)
+          echo "Checking if repository has any branches..."
+          EXISTING_BRANCHES=$(git ls-remote --heads public 2>&1)
+          if echo "$EXISTING_BRANCHES" | grep -q "Repository not found\|fatal"; then
+            echo "⚠️  Repository appears empty or inaccessible"
+            echo "Output: $EXISTING_BRANCHES"
           else
-            PUSH_ERROR=$?
-            echo "❌ Push failed (exit code: $PUSH_ERROR)"
+            echo "Existing branches:"
+            echo "$EXISTING_BRANCHES" || echo "No branches found (empty repository)"
+          fi
+          
+          # Force push to public (mirror sync)
+          echo ""
+          echo "Pushing to ${{ env.PUBLIC_REPO }}:$TARGET_BRANCH..."
+          echo "Source branch: main ($(git rev-parse --short HEAD))"
+          
+          # Check if target branch exists
+          BRANCH_EXISTS=$(git ls-remote --heads public $TARGET_BRANCH 2>&1 | grep -c "refs/heads/$TARGET_BRANCH" || echo "0")
+          
+          if [ "$BRANCH_EXISTS" = "0" ]; then
+            echo "Target branch doesn't exist - will create it"
+            PUSH_CMD="git push public main:$TARGET_BRANCH --set-upstream"
+          else
+            echo "Target branch exists - will force push"
+            PUSH_CMD="git push public main:$TARGET_BRANCH --force"
+          fi
+          
+          # Try push with verbose output
+          echo "Executing: $PUSH_CMD"
+          PUSH_OUTPUT=$($PUSH_CMD --verbose 2>&1)
+          PUSH_EXIT_CODE=$?
+          
+          if [ $PUSH_EXIT_CODE -eq 0 ]; then
+            echo "✅ Synced to public repository"
+            echo "$PUSH_OUTPUT"
+          else
+            echo "❌ Push failed (exit code: $PUSH_EXIT_CODE)"
             echo ""
-            echo "The token works for API calls but not for git operations."
-            echo "This usually means:"
-            echo "1. The token format is incorrect for git"
-            echo "2. The GitHub App doesn't have git-level permissions"
-            echo "3. The repository access is restricted"
+            echo "Git push output:"
+            echo "$PUSH_OUTPUT"
             echo ""
-            echo "Please check:"
-            echo "- GitHub App settings: https://github.com/organizations/candescent-dev/settings/apps/candescent-oidc-sync-bot"
-            echo "- Installation: https://github.com/organizations/candescent-dev/settings/installations"
-            echo "- Repository: https://github.com/${{ env.PUBLIC_REPO }}/settings/installations"
-            exit $PUSH_ERROR
+            
+            # Try to diagnose the issue
+            echo "Diagnosing issue..."
+            
+            # Check if it's a permission issue
+            if echo "$PUSH_OUTPUT" | grep -qi "permission\|denied\|forbidden\|403"; then
+              echo "❌ Permission denied - The GitHub App may not have write access"
+            fi
+            
+            # Check if it's a repository not found issue
+            if echo "$PUSH_OUTPUT" | grep -qi "not found\|404"; then
+              echo "❌ Repository not found - Check repository name and App installation"
+            fi
+            
+            # Check if it's a branch protection issue
+            if echo "$PUSH_OUTPUT" | grep -qi "protected\|force.*not allowed"; then
+              echo "❌ Branch protection - The target branch may be protected"
+              echo "   Solution: Disable branch protection or use a different branch"
+            fi
+            
+            # Check if it's an empty repository issue
+            if echo "$PUSH_OUTPUT" | grep -qi "no upstream\|no such ref"; then
+              echo "⚠️  Repository may be empty - this should have been handled automatically"
+            fi
+            
+            echo ""
+            echo "Troubleshooting steps:"
+            echo "1. Verify GitHub App is installed: https://github.com/organizations/candescent-dev/settings/installations"
+            echo "2. Check App permissions: https://github.com/organizations/candescent-dev/settings/apps/candescent-oidc-sync-bot"
+            echo "3. Verify repository exists: https://github.com/${{ env.PUBLIC_REPO }}"
+            echo "4. Check branch protection: https://github.com/${{ env.PUBLIC_REPO }}/settings/branches"
+            echo "5. Verify App has 'Contents: Write' permission"
+            
+            exit $PUSH_EXIT_CODE
           fi
 
       - name: Summary
