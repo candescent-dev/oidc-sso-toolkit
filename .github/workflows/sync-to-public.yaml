@@ -200,15 +200,36 @@ jobs:
           git config user.name "candescent-oidc-sync-bot[bot]"
           git config user.email "${{ secrets.SYNC_APP_ID }}+candescent-oidc-sync-bot[bot]@users.noreply.github.com"
           
+          # Disable credential helpers to use token from URL
+          git config --local credential.helper ""
+          
           # Remove existing remote if it exists
           git remote remove public 2>/dev/null || true
           
           # Add remote with token
           git remote add public https://x-access-token:${GH_TOKEN}@github.com/${{ env.PUBLIC_REPO }}.git
           
-          # Test connection
-          if ! git ls-remote public --heads $TARGET_BRANCH > /dev/null 2>&1; then
-            echo "⚠️  Warning: Cannot list branches (repository may be empty)"
+          # Test connection and diagnose issues
+          echo "Testing git connection to ${{ env.PUBLIC_REPO }}..."
+          GIT_LS_OUTPUT=$(git ls-remote public --heads $TARGET_BRANCH 2>&1)
+          GIT_LS_EXIT_CODE=$?
+          
+          if [ $GIT_LS_EXIT_CODE -ne 0 ]; then
+            echo "❌ Error: Cannot access repository"
+            echo "Git output: $GIT_LS_OUTPUT"
+            echo ""
+            echo "Diagnostics:"
+            echo "1. Verify repository exists: https://github.com/${{ env.PUBLIC_REPO }}"
+            echo "2. Check if repository is private (GitHub App must be installed on private repos)"
+            echo "3. Verify GitHub App is installed: https://github.com/organizations/candescent-dev/settings/installations"
+            echo "4. Ensure App has 'Contents: Write' permission"
+            echo "5. Verify repository name matches exactly: oidc-sso-toolkit"
+            echo ""
+            echo "If repository is private, ensure:"
+            echo "- GitHub App is installed on the repository"
+            echo "- App has 'Contents: Write' permission"
+            echo "- Installation ID matches: ${{ secrets.SYNC_INSTALLATION_ID }}"
+            exit 1
           fi
           
           # Check if this is a dry run
