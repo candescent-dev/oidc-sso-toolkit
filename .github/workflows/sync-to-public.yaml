@@ -90,20 +90,20 @@ jobs:
           
           const encodedHeader = Buffer.from(JSON.stringify(header)).toString('base64url');
           const encodedPayload = Buffer.from(JSON.stringify(payload)).toString('base64url');
-          const signatureInput = \`\${encodedHeader}.\${encodedPayload}\`;
+          const signatureInput = `${encodedHeader}.${encodedPayload}`;
           
           const sign = crypto.createSign('RSA-SHA256');
           sign.update(signatureInput);
           const signature = sign.sign(privateKey, 'base64url');
-          const jwt = \`\${signatureInput}.\${signature}\`;
+          const jwt = `${signatureInput}.${signature}`;
           
           // Exchange JWT for installation token
           const options = {
             hostname: 'api.github.com',
-            path: \`/app/installations/\${installationId}/access_tokens\`,
+            path: `/app/installations/${installationId}/access_tokens`,
             method: 'POST',
             headers: {
-              'Authorization': \`Bearer \${jwt}\`,
+              'Authorization': `Bearer ${jwt}`,
               'Accept': 'application/vnd.github.v3+json',
               'User-Agent': 'GitHub-Actions-Sync'
             }
