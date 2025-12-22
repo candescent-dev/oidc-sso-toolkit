@@ -5,13 +5,30 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run mode (test without pushing)'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+      test_branch:
+        description: 'Test on a different branch (optional, for testing)'
+        required: false
+        type: string
 
 env:
   PUBLIC_REPO: "candescent-dev/oidc-sso-toolkit"
+  DRY_RUN: ${{ github.event.inputs.dry_run == 'true' }}
+  TEST_BRANCH: ${{ github.event.inputs.test_branch || 'main' }}
 
 jobs:
   sync:
     runs-on: ubuntu-latest
+    # Only run on main branch pushes, or manual dispatch
+    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
     
     steps:
       - name: Checkout internal repo
@@ -29,6 +46,18 @@ jobs:
           owner: candescent-dev
           repositories: oidc-sso-toolkit
         continue-on-error: false
+        
+      - name: Debug token generation
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          echo "Token output from action:"
+          echo "Length: ${#GH_TOKEN}"
+          echo "First 50 chars: ${GH_TOKEN:0:50}"
+          echo "Last 50 chars: ${GH_TOKEN: -50}"
+          echo ""
+          echo "All outputs from app-token step:"
+          echo "${{ toJSON(steps.app-token.outputs) }}"
 
       - name: Verify GitHub App token
         env:
@@ -37,12 +66,16 @@ jobs:
           if [ -z "$GH_TOKEN" ]; then
             echo "❌ Error: GitHub App token is empty"
             echo "Check that SYNC_APP_ID and SYNC_APP_PRIVATE_KEY secrets are set correctly"
-            echo "Token output: ${{ steps.app-token.outputs.token }}"
             exit 1
           fi
           echo "✅ GitHub App token generated successfully"
           echo "Token length: ${#GH_TOKEN} characters"
-          echo "Token preview: ${GH_TOKEN:0:20}..."
+          
+          # Check token format (GitHub App tokens are typically 200+ chars)
+          if [ ${#GH_TOKEN} -lt 100 ]; then
+            echo "⚠️  Warning: Token is unusually short (${#GH_TOKEN} chars). Expected 200+ for GitHub App tokens."
+            echo "This might indicate the token generation didn't work correctly."
+          fi
           
           # Test token by checking if we can access the repo via API
           echo "Testing repository access to ${{ env.PUBLIC_REPO }} via API..."
@@ -59,83 +92,114 @@ jobs:
             echo "Response: $BODY"
             echo ""
             echo "Troubleshooting steps:"
-            echo "1. Verify the repository exists (even if private): https://github.com/${{ env.PUBLIC_REPO }}"
+            echo "1. Verify the repository exists: https://github.com/${{ env.PUBLIC_REPO }}"
             echo "2. Ensure the GitHub App is installed on the repository"
             echo "3. Check that the App has 'Contents: Write' permission"
             echo "4. Verify the repository name matches exactly: oidc-sso-toolkit"
-            echo "5. Check the App installation settings in GitHub"
             exit 1
           fi
           echo "✅ Repository API access verified (HTTP $HTTP_CODE)"
           
-          # Also test git access
-          echo "Testing git access..."
-          git config --global credential.helper store
-          echo "https://x-access-token:${GH_TOKEN}@github.com" > ~/.git-credentials
-          
-          if git ls-remote https://github.com/${{ env.PUBLIC_REPO }}.git > /dev/null 2>&1; then
-            echo "✅ Git access verified"
-          else
-            echo "⚠️  Git ls-remote failed, but API access works - will try push anyway"
-            git ls-remote https://github.com/${{ env.PUBLIC_REPO }}.git 2>&1 || true
-          fi
+          # Get repository details to verify access
+          echo "Repository details:"
+          echo "$BODY" | grep -E '"name"|"full_name"|"private"|"default_branch"' || true
 
       - name: Push to public repo
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          DRY_RUN: ${{ env.DRY_RUN }}
+          TARGET_BRANCH: ${{ env.TEST_BRANCH }}
         run: |
           # Configure git with GitHub App bot identity
           git config user.name "candescent-oidc-sync-bot[bot]"
           git config user.email "${{ secrets.SYNC_APP_ID }}+candescent-oidc-sync-bot[bot]@users.noreply.github.com"
           
-          # Configure git credential helper for this step
-          git config --global credential.helper store
-          echo "https://x-access-token:${GH_TOKEN}@github.com" > ~/.git-credentials
-          
           # Remove existing remote if it exists
           git remote remove public 2>/dev/null || true
           
-          # Add remote (git will use credentials from helper)
-          git remote add public https://github.com/${{ env.PUBLIC_REPO }}.git
+          # Add remote with token embedded in URL
+          # Try the standard format for GitHub App tokens
+          git remote add public https://x-access-token:${GH_TOKEN}@github.com/${{ env.PUBLIC_REPO }}.git
           
-          # Check if repository is empty (no branches)
-          echo "Checking repository state..."
-          BRANCHES=$(git ls-remote --heads public 2>&1 || echo "error")
-          if echo "$BRANCHES" | grep -q "error\|Repository not found"; then
-            echo "⚠️  Cannot list branches, but will attempt push anyway"
-            echo "Output: $BRANCHES"
+          # Debug: Show what we're trying to connect to (mask token)
+          echo "Remote URL format: https://x-access-token:***@github.com/${{ env.PUBLIC_REPO }}.git"
+          echo "Token length: ${#GH_TOKEN} characters"
+          echo "Dry run mode: $DRY_RUN"
+          echo "Target branch: $TARGET_BRANCH"
+          
+          # Test connection
+          echo "Testing git connection..."
+          if git ls-remote public --heads $TARGET_BRANCH > /dev/null 2>&1; then
+            echo "✅ Git connection successful"
+            echo "Existing branches in target repo:"
+            git ls-remote --heads public | head -5 || true
           else
-            echo "Available branches:"
-            echo "$BRANCHES" || echo "Repository appears empty"
+            ERROR_OUTPUT=$(git ls-remote public --heads $TARGET_BRANCH 2>&1 || true)
+            echo "Git ls-remote output: $ERROR_OUTPUT"
+            
+            # If token is suspiciously short, warn about it
+            if [ ${#GH_TOKEN} -lt 100 ]; then
+              echo ""
+              echo "⚠️  WARNING: Token is only ${#GH_TOKEN} characters long."
+              echo "GitHub App installation tokens are typically 200+ characters."
+              echo "This suggests the token might not be generated correctly."
+              echo ""
+              echo "Please verify:"
+              echo "1. SYNC_APP_ID secret is the numeric App ID"
+              echo "2. SYNC_APP_PRIVATE_KEY is the complete private key (including BEGIN/END lines)"
+              echo "3. The private key is the one associated with the GitHub App"
+            fi
+          fi
+          
+          # Check if this is a dry run
+          if [ "$DRY_RUN" = "true" ]; then
+            echo ""
+            echo "🔍 DRY RUN MODE - Testing only, no push will be performed"
+            echo ""
+            echo "Would push:"
+            echo "  From: $(git rev-parse --abbrev-ref HEAD) ($(git rev-parse --short HEAD))"
+            echo "  To:   ${{ env.PUBLIC_REPO }}:$TARGET_BRANCH"
+            echo ""
+            echo "✅ Dry run completed successfully - all checks passed!"
+            echo "To perform the actual sync, run this workflow with dry_run=false"
+            exit 0
           fi
           
           # Force push to public (mirror sync)
-          # If repository is empty, this will create the main branch
-          echo "Pushing to ${{ env.PUBLIC_REPO }}..."
-          if git push public main:main --force; then
+          echo "Pushing to ${{ env.PUBLIC_REPO }}:$TARGET_BRANCH..."
+          if git push public main:$TARGET_BRANCH --force; then
             echo "✅ Synced to public repository"
           else
             PUSH_ERROR=$?
             echo "❌ Push failed (exit code: $PUSH_ERROR)"
             echo ""
-            echo "Debugging information:"
-            echo "Repository: ${{ env.PUBLIC_REPO }}"
-            echo "Token length: ${#GH_TOKEN}"
+            echo "The token works for API calls but not for git operations."
+            echo "This usually means:"
+            echo "1. The token format is incorrect for git"
+            echo "2. The GitHub App doesn't have git-level permissions"
+            echo "3. The repository access is restricted"
             echo ""
-            echo "Please verify:"
-            echo "1. The GitHub App is installed on the repository"
-            echo "2. The App has 'Contents: Write' permission"
-            echo "3. The repository name is correct: oidc-sso-toolkit"
-            echo "4. The App installation includes this specific repository"
-            echo "5. Check GitHub App settings: https://github.com/organizations/candescent-dev/settings/apps/candescent-oidc-sync-bot"
+            echo "Please check:"
+            echo "- GitHub App settings: https://github.com/organizations/candescent-dev/settings/apps/candescent-oidc-sync-bot"
+            echo "- Installation: https://github.com/organizations/candescent-dev/settings/installations"
+            echo "- Repository: https://github.com/${{ env.PUBLIC_REPO }}/settings/installations"
             exit $PUSH_ERROR
           fi
 
       - name: Summary
+        env:
+          DRY_RUN: ${{ env.DRY_RUN }}
         run: |
-          echo "## Sync Complete 🔄" >> $GITHUB_STEP_SUMMARY
+          if [ "$DRY_RUN" = "true" ]; then
+            echo "## Sync Test 🔄" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "⚠️ **Dry Run Mode** - No changes were pushed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "## Sync Complete 🔄" >> $GITHUB_STEP_SUMMARY
+          fi
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Source:** ${{ github.repository }}" >> $GITHUB_STEP_SUMMARY
           echo "**Target:** ${{ env.PUBLIC_REPO }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch:** ${{ env.TEST_BRANCH }}" >> $GITHUB_STEP_SUMMARY
           echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
 
