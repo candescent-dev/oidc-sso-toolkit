@@ -194,7 +194,7 @@ For quick testing without installing Node.js, use the pre-built Docker image:
 docker pull ghcr.io/candescent-dev/oidc-sso-toolkit:latest
 
 # Run the container
-docker run -p 8000:8000 -p 9000:9000 ghcr.io/candescent-dev/oidc-sso-toolkit:latest
+docker run -p 9000:9000 -p 8000:8000 ghcr.io/candescent-dev/oidc-sso-toolkit:latest
 ```
 
 Then open `http://localhost:8000` in your browser.
@@ -207,7 +207,7 @@ If you prefer to build the Docker image yourself:
 git clone https://github.com/candescent-dev/oidc-sso-toolkit.git
 cd oidc-sso-toolkit
 docker build -t oidc-sso-toolkit .
-docker run -p 8000:8000 -p 9000:9000 oidc-sso-toolkit
+docker run -p 9000:9000 -p 8000:8000 oidc-sso-toolkit
 ```
 
 ---
@@ -270,7 +270,7 @@ This toolkit includes pre-generated RSA keys in `sample-web-app/backend/certs/` 
 If deploying to production or QA, generate your own keys:
 
 ```bash
-cd sample-web-app/backend/certs
+cd sample-web-app/backend
 cd dbk-devex-oidc-sso-toolkit\sample-web-app\backend; node generate-keys.js
 
 ```

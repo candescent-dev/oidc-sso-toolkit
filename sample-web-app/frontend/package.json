@@ -31,7 +31,7 @@
   },
   "scripts": {
     "dev": "vite",
-    "start": "PORT=8000 react-scripts start",
+    "start": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "test": "vitest",
