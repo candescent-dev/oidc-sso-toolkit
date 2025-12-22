@@ -181,37 +181,77 @@ jobs:
             exit 1
           fi
           
-          # Run script - token should be on stdout, errors on stderr
+          # Run script - capture both stdout and stderr
           echo "Executing token generation..."
-          INSTALLATION_TOKEN=$(node generate-token.js 2>token-errors.log)
+          echo "Running: node generate-token.js"
+          
+          # Test if Node.js can read the script
+          if [ ! -f generate-token.js ]; then
+            echo "❌ Error: generate-token.js file not found"
+            exit 1
+          fi
+          
+          echo "Script file exists, size: $(wc -c < generate-token.js) bytes"
+          
+          # Run script and capture everything
+          # Use a temp file to capture stdout since we need to see stderr too
+          node generate-token.js >token-output.log 2>token-errors.log
           SCRIPT_EXIT_CODE=$?
+          
+          # Show what we captured
+          echo ""
+          echo "Script execution completed with exit code: $SCRIPT_EXIT_CODE"
+          echo ""
+          
+          if [ -s token-errors.log ]; then
+            echo "=== STDERR OUTPUT ==="
+            cat token-errors.log
+            echo ""
+          fi
+          
+          if [ -s token-output.log ]; then
+            echo "=== STDOUT OUTPUT ==="
+            cat token-output.log
+            echo ""
+            INSTALLATION_TOKEN=$(cat token-output.log | tr -d '\n\r ' | head -1)
+          else
+            INSTALLATION_TOKEN=""
+          fi
           
           # Check for errors
           if [ $SCRIPT_EXIT_CODE -ne 0 ]; then
             echo "❌ Script failed with exit code: $SCRIPT_EXIT_CODE"
-            echo "Error output:"
-            cat token-errors.log
-            rm -f token-errors.log
+            echo ""
+            echo "Debugging information:"
+            echo "  Script exit code: $SCRIPT_EXIT_CODE"
+            echo "  Token variable length: ${#INSTALLATION_TOKEN}"
+            echo "  stdout log size: $([ -f token-output.log ] && wc -c < token-output.log || echo 0) bytes"
+            echo "  stderr log size: $([ -f token-errors.log ] && wc -c < token-errors.log || echo 0) bytes"
+            echo ""
+            echo "Checking files:"
+            echo "  generate-token.js: $([ -f generate-token.js ] && echo 'exists' || echo 'missing')"
+            echo "  private-key.pem: $([ -f private-key.pem ] && echo 'exists ($(wc -c < private-key.pem) bytes)' || echo 'missing')"
+            if [ -f private-key.pem ]; then
+              echo "  First line of key: $(head -1 private-key.pem | cut -c1-50)..."
+              echo "  Last line of key: $(tail -1 private-key.pem | cut -c1-50)..."
+            fi
+            rm -f token-output.log token-errors.log
             exit 1
           fi
+          
+          # Clean up temp files
+          rm -f token-output.log token-errors.log
           
           # Check if we got a token
           if [ -z "$INSTALLATION_TOKEN" ]; then
             echo "❌ No token received from script"
             echo "stdout was empty"
-            if [ -s token-errors.log ]; then
-              echo "stderr output:"
-              cat token-errors.log
-            fi
-            rm -f token-errors.log
+            echo "Script exit code was: $SCRIPT_EXIT_CODE"
             exit 1
           fi
           
           # Clean up token (remove any trailing whitespace/newlines)
           INSTALLATION_TOKEN=$(echo "$INSTALLATION_TOKEN" | tr -d '\n\r ' | head -1)
-          
-          # Remove error log if empty
-          rm -f token-errors.log
           
           echo "Token received:"
           echo "  Length: ${#INSTALLATION_TOKEN} characters"
