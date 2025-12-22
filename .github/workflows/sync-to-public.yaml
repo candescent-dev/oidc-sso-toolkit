@@ -311,16 +311,14 @@ jobs:
           # Exclude sync-to-public.yaml from being synced (internal workflow only)
           echo "Excluding internal workflow file from sync..."
           
-          # Check if file exists in public repo and remove it if present
-          # First, check if we can see it in the remote
-          if git ls-remote --heads public $TARGET_BRANCH > /dev/null 2>&1; then
-            # Clone public repo temporarily to check/remove the file
-            TEMP_CLONE=$(mktemp -d)
-            git clone --depth 1 --branch $TARGET_BRANCH "https://x-access-token:${GH_TOKEN}@github.com/${{ env.PUBLIC_REPO }}.git" "$TEMP_CLONE" 2>/dev/null || true
-            
+          # First, handle existing file in public repo by cloning and removing it
+          TEMP_CLONE=$(mktemp -d)
+          if git clone --depth 1 --branch $TARGET_BRANCH "https://x-access-token:${GH_TOKEN}@github.com/${{ env.PUBLIC_REPO }}.git" "$TEMP_CLONE" 2>/dev/null; then
             if [ -f "$TEMP_CLONE/.github/workflows/sync-to-public.yaml" ]; then
               echo "Removing sync-to-public.yaml from public repo..."
               cd "$TEMP_CLONE"
+              git config user.name "candescent-oidc-sync-bot[bot]"
+              git config user.email "${{ secrets.SYNC_APP_ID }}+candescent-oidc-sync-bot[bot]@users.noreply.github.com"
               git rm .github/workflows/sync-to-public.yaml
               git commit -m "Remove internal sync workflow" --no-verify || true
               git push origin $TARGET_BRANCH || true
@@ -329,21 +327,36 @@ jobs:
             rm -rf "$TEMP_CLONE"
           fi
           
-          # Remove from current index before pushing
-          git rm --cached .github/workflows/sync-to-public.yaml 2>/dev/null || true
+          # Now sync internal repo to public, excluding sync-to-public.yaml
+          # Use git archive to create a clean tree without the file
+          CURRENT_COMMIT=$(git rev-parse HEAD)
+          TEMP_DIR=$(mktemp -d)
           
-          # Check if target branch exists
+          # Export current tree excluding sync-to-public.yaml
+          git archive --format=tar "$CURRENT_COMMIT" | tar -xC "$TEMP_DIR" 2>/dev/null
+          rm -f "$TEMP_DIR/.github/workflows/sync-to-public.yaml" 2>/dev/null || true
+          
+          # Create a temporary git repo with the filtered content
+          cd "$TEMP_DIR"
+          git init -q
+          git config user.name "candescent-oidc-sync-bot[bot]"
+          git config user.email "${{ secrets.SYNC_APP_ID }}+candescent-oidc-sync-bot[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Sync from internal repo" --allow-empty -q || true
+          
+          # Add public remote and push
+          git remote add public "https://x-access-token:${GH_TOKEN}@github.com/${{ env.PUBLIC_REPO }}.git"
+          
           BRANCH_EXISTS=$(git ls-remote --heads public $TARGET_BRANCH 2>&1 | grep -c "refs/heads/$TARGET_BRANCH" || echo "0")
-          
-          # Push to public repository
           if [ "$BRANCH_EXISTS" = "0" ]; then
-            git push public main:$TARGET_BRANCH --set-upstream
+            git push public HEAD:$TARGET_BRANCH --set-upstream --force
           else
-            git push public main:$TARGET_BRANCH --force
+            git push public HEAD:$TARGET_BRANCH --force
           fi
           
-          # Restore sync-to-public.yaml in index (for internal repo only)
-          git reset HEAD .github/workflows/sync-to-public.yaml 2>/dev/null || true
+          # Cleanup
+          cd - > /dev/null
+          rm -rf "$TEMP_DIR"
           
           echo "✅ Synced to public repository (sync-to-public.yaml excluded)"
 
