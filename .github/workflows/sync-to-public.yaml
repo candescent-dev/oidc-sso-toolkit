@@ -280,26 +280,82 @@ jobs:
             echo "$EXISTING_BRANCHES" || echo "No branches found (empty repository)"
           fi
           
-          # Force push to public (mirror sync)
+          # Exclude sync-to-public.yaml from being synced (internal workflow only)
+          # Create a filtered commit that excludes the file but preserves all others
+          echo "Excluding internal workflow file from sync..."
+          
+          CURRENT_COMMIT=$(git rev-parse HEAD)
+          
+          # Check if sync-to-public.yaml exists in the current commit
+          if git ls-tree -r --name-only "$CURRENT_COMMIT" | grep -q "^\.github/workflows/sync-to-public\.yaml$"; then
+            echo "sync-to-public.yaml found in commit, creating filtered commit..."
+            
+            # Remove sync-to-public.yaml from index (doesn't affect working directory)
+            git rm --cached .github/workflows/sync-to-public.yaml 2>/dev/null || true
+            
+            # Verify we have all essential files before creating commit
+            if [ ! -f "package.json" ] || [ ! -f "Dockerfile" ] || [ ! -f "sample-web-app/backend/package.json" ]; then
+              echo "❌ Error: Essential files missing, aborting sync"
+              git reset HEAD .github/workflows/sync-to-public.yaml 2>/dev/null || true
+              exit 1
+            fi
+            
+            # Create commit that excludes sync-to-public.yaml
+            git commit -m "Sync from internal repo" --no-verify || true
+            SYNC_COMMIT=$(git rev-parse HEAD)
+            
+            # Verify the filtered commit has all essential files
+            if ! git ls-tree -r --name-only "$SYNC_COMMIT" | grep -q "^package\.json$" || \
+               ! git ls-tree -r --name-only "$SYNC_COMMIT" | grep -q "^Dockerfile$" || \
+               ! git ls-tree -r --name-only "$SYNC_COMMIT" | grep -q "^sample-web-app/backend/package\.json$"; then
+              echo "❌ Error: Filtered commit is missing essential files, aborting"
+              git reset --hard "$CURRENT_COMMIT" 2>/dev/null || true
+              exit 1
+            fi
+            
+            # Verify sync-to-public.yaml is NOT in the filtered commit
+            if git ls-tree -r --name-only "$SYNC_COMMIT" | grep -q "^\.github/workflows/sync-to-public\.yaml$"; then
+              echo "⚠️  Warning: sync-to-public.yaml still in filtered commit, but continuing"
+            else
+              echo "✅ Verified: sync-to-public.yaml excluded from filtered commit"
+            fi
+            
+            # Restore sync-to-public.yaml in index immediately (for internal repo)
+            git reset HEAD .github/workflows/sync-to-public.yaml 2>/dev/null || true
+            git checkout -- .github/workflows/sync-to-public.yaml 2>/dev/null || true
+          else
+            echo "sync-to-public.yaml not in commit, using current commit as-is"
+            SYNC_COMMIT="$CURRENT_COMMIT"
+          fi
+          
           echo ""
           echo "Pushing to ${{ env.PUBLIC_REPO }}:$TARGET_BRANCH..."
-          echo "Source branch: main ($(git rev-parse --short HEAD))"
+          echo "Source branch: main ($(git rev-parse --short $CURRENT_COMMIT))"
+          if [ "$SYNC_COMMIT" != "$CURRENT_COMMIT" ]; then
+            echo "Filtered commit: $(git rev-parse --short $SYNC_COMMIT) (excludes sync-to-public.yaml)"
+          fi
           
           # Check if target branch exists
           BRANCH_EXISTS=$(git ls-remote --heads public $TARGET_BRANCH 2>&1 | grep -c "refs/heads/$TARGET_BRANCH" || echo "0")
           
+          # Push filtered commit to public repo
           if [ "$BRANCH_EXISTS" = "0" ]; then
             echo "Target branch doesn't exist - will create it"
-            PUSH_CMD="git push public main:$TARGET_BRANCH --set-upstream"
+            PUSH_CMD="git push public $SYNC_COMMIT:refs/heads/$TARGET_BRANCH --set-upstream"
           else
             echo "Target branch exists - will force push"
-            PUSH_CMD="git push public main:$TARGET_BRANCH --force"
+            PUSH_CMD="git push public $SYNC_COMMIT:refs/heads/$TARGET_BRANCH --force"
           fi
           
           # Try push with verbose output
           echo "Executing: $PUSH_CMD"
           PUSH_OUTPUT=$($PUSH_CMD --verbose 2>&1)
           PUSH_EXIT_CODE=$?
+          
+          # Reset internal repo to original commit (restore sync-to-public.yaml)
+          if [ "$SYNC_COMMIT" != "$CURRENT_COMMIT" ]; then
+            git reset --hard "$CURRENT_COMMIT" 2>/dev/null || true
+          fi
           
           if [ $PUSH_EXIT_CODE -eq 0 ]; then
             echo "✅ Synced to public repository"
