@@ -61,13 +61,16 @@ COPY sample-web-app/backend/src/ssoConfig ./backend/src/ssoConfig
 COPY sample-web-app/backend/certs/private.pem ./backend/certs/private.pem
 COPY sample-web-app/backend/certs/public.pem ./backend/certs/public.pem
 
-# Copy startup script
-COPY start.sh ./start.sh
-RUN chmod +x ./start.sh
+# Copy startup script and ensure Unix line endings (remove CR if present)
+COPY start.sh /app/start.sh
+RUN chmod +x /app/start.sh && \
+    tr -d '\r' < /app/start.sh > /app/start.sh.tmp && \
+    mv /app/start.sh.tmp /app/start.sh && \
+    chmod +x /app/start.sh
 
 # Expose ports
-EXPOSE 8000 9000
+EXPOSE 8080 9000
 
-# Start both services
-CMD ["./start.sh"]
+# Start both services using sh to ensure proper execution
+CMD ["sh", "/app/start.sh"]
 

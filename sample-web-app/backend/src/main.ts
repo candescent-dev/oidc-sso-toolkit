@@ -31,16 +31,16 @@ async function bootstrap() {
     },
   );
 
-  // Update package.json start script
+  // Update package.json start script (using Vite instead of react-scripts)
   try {
     const packageJsonPath = resolve(__dirname, FRONTEND_PACKAGE_JSON_PATH);
     const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
     packageJson.scripts = {
       ...packageJson.scripts,
-      start: `PORT=${frontendPort} react-scripts start`,
+      start: `vite --port ${frontendPort}`,
     };
     writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2).trimEnd());
-    console.log(`Updated package.json start script with PORT=${frontendPort}`);
+    console.log(`Updated package.json start script with port ${frontendPort}`);
   } catch (err: any) {
     console.warn('Could not update package.json:', err.message);
   }
