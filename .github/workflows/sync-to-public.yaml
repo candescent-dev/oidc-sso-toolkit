@@ -44,8 +44,8 @@ jobs:
           echo "Token length: ${#GH_TOKEN} characters"
           echo "Token preview: ${GH_TOKEN:0:20}..."
           
-          # Test token by checking if we can access the repo
-          echo "Testing repository access to ${{ env.PUBLIC_REPO }}..."
+          # Test token by checking if we can access the repo via API
+          echo "Testing repository access to ${{ env.PUBLIC_REPO }} via API..."
           RESPONSE=$(curl -s -w "\n%{http_code}" -H "Authorization: token $GH_TOKEN" \
                -H "Accept: application/vnd.github.v3+json" \
                https://api.github.com/repos/${{ env.PUBLIC_REPO }})
@@ -54,7 +54,7 @@ jobs:
           BODY=$(echo "$RESPONSE" | sed '$d')
           
           if [ "$HTTP_CODE" != "200" ]; then
-            echo "❌ Error: Cannot access repository ${{ env.PUBLIC_REPO }}"
+            echo "❌ Error: Cannot access repository ${{ env.PUBLIC_REPO }} via API"
             echo "HTTP Status: $HTTP_CODE"
             echo "Response: $BODY"
             echo ""
@@ -66,7 +66,19 @@ jobs:
             echo "5. Check the App installation settings in GitHub"
             exit 1
           fi
-          echo "✅ Repository access verified (HTTP $HTTP_CODE)"
+          echo "✅ Repository API access verified (HTTP $HTTP_CODE)"
+          
+          # Also test git access
+          echo "Testing git access..."
+          git config --global credential.helper store
+          echo "https://x-access-token:${GH_TOKEN}@github.com" > ~/.git-credentials
+          
+          if git ls-remote https://github.com/${{ env.PUBLIC_REPO }}.git > /dev/null 2>&1; then
+            echo "✅ Git access verified"
+          else
+            echo "⚠️  Git ls-remote failed, but API access works - will try push anyway"
+            git ls-remote https://github.com/${{ env.PUBLIC_REPO }}.git 2>&1 || true
+          fi
 
       - name: Push to public repo
         env:
@@ -76,27 +88,48 @@ jobs:
           git config user.name "candescent-oidc-sync-bot[bot]"
           git config user.email "${{ secrets.SYNC_APP_ID }}+candescent-oidc-sync-bot[bot]@users.noreply.github.com"
           
+          # Configure git credential helper for this step
+          git config --global credential.helper store
+          echo "https://x-access-token:${GH_TOKEN}@github.com" > ~/.git-credentials
+          
           # Remove existing remote if it exists
           git remote remove public 2>/dev/null || true
           
-          # Add public remote using the app token
-          # Use x-access-token for GitHub App tokens (required format for App tokens)
-          git remote add public https://x-access-token:${GH_TOKEN}@github.com/${{ env.PUBLIC_REPO }}.git
+          # Add remote (git will use credentials from helper)
+          git remote add public https://github.com/${{ env.PUBLIC_REPO }}.git
           
-          # Verify remote was added
-          echo "Configured remote:"
-          git remote -v | grep public
-          
-          # Force push to public (mirror sync)
-          echo "Pushing to ${{ env.PUBLIC_REPO }}..."
-          if ! git push public main:main --force; then
-            echo "❌ Push failed"
-            echo "Attempting to diagnose..."
-            git ls-remote public 2>&1 || true
-            exit 1
+          # Check if repository is empty (no branches)
+          echo "Checking repository state..."
+          BRANCHES=$(git ls-remote --heads public 2>&1 || echo "error")
+          if echo "$BRANCHES" | grep -q "error\|Repository not found"; then
+            echo "⚠️  Cannot list branches, but will attempt push anyway"
+            echo "Output: $BRANCHES"
+          else
+            echo "Available branches:"
+            echo "$BRANCHES" || echo "Repository appears empty"
           fi
           
-          echo "✅ Synced to public repository"
+          # Force push to public (mirror sync)
+          # If repository is empty, this will create the main branch
+          echo "Pushing to ${{ env.PUBLIC_REPO }}..."
+          if git push public main:main --force; then
+            echo "✅ Synced to public repository"
+          else
+            PUSH_ERROR=$?
+            echo "❌ Push failed (exit code: $PUSH_ERROR)"
+            echo ""
+            echo "Debugging information:"
+            echo "Repository: ${{ env.PUBLIC_REPO }}"
+            echo "Token length: ${#GH_TOKEN}"
+            echo ""
+            echo "Please verify:"
+            echo "1. The GitHub App is installed on the repository"
+            echo "2. The App has 'Contents: Write' permission"
+            echo "3. The repository name is correct: oidc-sso-toolkit"
+            echo "4. The App installation includes this specific repository"
+            echo "5. Check GitHub App settings: https://github.com/organizations/candescent-dev/settings/apps/candescent-oidc-sync-bot"
+            exit $PUSH_ERROR
+          fi
 
       - name: Summary
         run: |
