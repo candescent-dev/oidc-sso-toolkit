@@ -21,6 +21,19 @@ private-key.pem
 *.swo
 *~
 
+# Environment files
+.env
+.env.local
+.env.*.local
+.secrets
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
 # OS
 .DS_Store
 Thumbs.db
