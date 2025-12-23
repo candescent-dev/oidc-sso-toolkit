@@ -13,7 +13,7 @@ import './OidcValidatorPage.css';
 
 const OidcValidatorPage: FC = () => {
   const dispatch = useAppDispatch();
-  const { runValidatorLoading, publishOidcSettingLoading, htmlFileUrl, xmlFileUrl } =
+  const { runValidatorLoading, publishOidcSettingLoading, htmlFileUrl, xmlFileUrl, testReport } =
     useAppSelector((state) => state.oidcValidator);
 
   const [downloadMessage, setDownloadMessage] = useState<string | null>(null);
@@ -94,8 +94,8 @@ const OidcValidatorPage: FC = () => {
     link.remove();
     if (downloadTimerRef.current) clearTimeout(downloadTimerRef.current);
     downloadTimerRef.current = window.setTimeout(() => {
-      setDownloadMessage(`${filename} downloaded successfully`);
-    }, 2000);
+      setDownloadMessage(`${filename} file is downloaded`);
+    }, 500);
   };
 
   return (
@@ -130,14 +130,66 @@ const OidcValidatorPage: FC = () => {
           <span className="title-label">Validation Report</span>
         </div>
         <div className="run-container">
-          {!htmlFileUrl ? (
-            <p>Click ‘Run Validator’ to start validation</p>
+          {!testReport ? (
+            <p>Click 'Run Validator' to start validation</p>
           ) : (
-            <iframe
-              src={htmlFileUrl}
-              title="E2E HTML Report"
-              style={{ width: '100%', height: '600px', border: 'none' }}
-            />
+            <>
+              {/* Test Summary */}
+              <div className="test-summary">
+                <div className="summary-item">
+                  <span className="summary-label">Total Tests:</span>
+                  <span className="summary-value">{testReport.totalTests}</span>
+                </div>
+                <div className="summary-item">
+                  <span className="summary-label">Passed:</span>
+                  <span className="summary-value passed">{testReport.passed}</span>
+                </div>
+                <div className="summary-item">
+                  <span className="summary-label">Failed:</span>
+                  <span className="summary-value failed">{testReport.failed}</span>
+                </div>
+                <div className="summary-item">
+                  <span className="summary-label">Skipped:</span>
+                  <span className="summary-value skipped">{testReport.skipped}</span>
+                </div>
+                <div className="summary-item">
+                  <span className="summary-label">Total Time:</span>
+                  <span className="summary-value">{testReport.totalTime.toFixed(2)}s</span>
+                </div>
+              </div>
+
+              {/* Test Cases Table */}
+              <div className="test-table-container">
+                <table className="test-cases-table">
+                  <thead>
+                    <tr>
+                      <th>Test Case</th>
+                      <th>Status</th>
+                      <th>Execution Time</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {testReport.testCases.map((testCase, index) => (
+                      <tr key={index} className={`test-row ${testCase.status}`}>
+                        <td className="test-name">
+                          {testCase.name}
+                          {testCase.failureMessage && (
+                            <div className="failure-message">{testCase.failureMessage}</div>
+                          )}
+                        </td>
+                        <td className="test-status">
+                          <span className={`status-badge ${testCase.status}`}>
+                            {testCase.status.toUpperCase()}
+                          </span>
+                        </td>
+                        <td className="test-time">{testCase.executionTime.toFixed(3)}s</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+            </>
           )}
         </div>
         {/* Download Report Buttons (Shown after successful API call) */}
