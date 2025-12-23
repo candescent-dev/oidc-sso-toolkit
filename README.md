@@ -9,7 +9,9 @@ A local development toolkit for partners and financial institutions (FIs) to bui
 - **JWT ID Tokens** - RS256-signed tokens with configurable claims
 - **E2E Validation** - Automated tests to verify your integration
 - **Downloadable Artifacts** - Metadata and JWK files for your client app
+
 **Note** - The following installation steps work across all operating systems, including macOS, Windows, and Linux.
+
 ## Quick Start - Local Machine Native Setup
 
 ### Prerequisites
