@@ -60,7 +60,7 @@ npm start
 ```
 > Note - If the above command triggers a security error. Please Bypass the security using the command here: Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass.
 
-> **Validation of server health (Optional)**: *Validate the server health here - 'http://localhost:8000/api/health'. If the backend port is modified, then open  
+> **Validation of server health (Optional)**: *Validate the server health here - 'http://localhost:8000/api/health'. If the frontend port is modified, then open  
 http://localhost:{port}/api/health* 
 
 ### 4. Open the Toolkit
