@@ -9,8 +9,8 @@ A local development toolkit for partners and financial institutions (FIs) to bui
 - **JWT ID Tokens** - RS256-signed tokens with configurable claims
 - **E2E Validation** - Automated tests to verify your integration
 - **Downloadable Artifacts** - Metadata and JWK files for your client app
-
-## Quick Start
+**Note** - The following installation steps work across all operating systems, including macOS, Windows, and Linux.
+## Quick Start - Local Machine Native Setup
 
 ### Prerequisites
 
@@ -23,7 +23,9 @@ A local development toolkit for partners and financial institutions (FIs) to bui
 git clone https://github.com/candescent-dev/oidc-sso-toolkit.git
 cd oidc-sso-toolkit
 ```
-> **Configure Backend Port (Optional):** 
+*Note - Make sure to setup and start backend server, before installing frontend server.* 
+
+> **Configure Backend & Frontend Port (Optional):** 
 *By default the frontend application binds to port 8000, and the backend application binds to port 9000. However, if required, these ports can be changed to any other desired values. Update the port numbers in /sample-web-app/config.json to new values for both frontend and backend, and restart the server to apply the updated ports.* 
 
 ### 2. Setup the Backend
@@ -32,14 +34,14 @@ cd oidc-sso-toolkit
 cd sample-web-app/backend
 npm install
 
-> Note- If the above command triggers a security error. Please Bypass the security using the command here: Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass.
+> Note: If the above command triggers a security error. Please Bypass the security using the command here: Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass.
 
 # Build and start
 npm run build
 npm start
 ```
 > **Validation of server health (Optional)**: *Validate the server health here - 'http://localhost:9000/api/health'. If the backend port is modified, then open  
-http://localhost:{port}/api/health* 
+'http://localhost:{port}/api/health'* 
 
 > **Note:** Default development certificates are included in `certs/` for convenience. For production use, generate your own keys (see [Security Notice](#security-notice) below).
 
@@ -54,14 +56,14 @@ cd sample-web-app/frontend
 npm install
 npm start
 ```
-> Note- If the above command triggers a security error. Please Bypass the security using the command here: Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass.
+> Note - If the above command triggers a security error. Please Bypass the security using the command here: Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass.
 
 > **Validation of server health (Optional)**: *Validate the server health here - 'http://localhost:8000/api/health'. If the backend port is modified, then open  
 http://localhost:{port}/api/health* 
 
 ### 4. Open the Toolkit
 
-Navigate to `http://localhost:8000`(If not 8000 then http://localhost:{port}')  in your browser.
+Navigate to `http://localhost:8000`(If not 8000 then 'http://localhost:{port}')  in your browser.
 
 ---
 
