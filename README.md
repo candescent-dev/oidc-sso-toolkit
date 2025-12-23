@@ -275,7 +275,7 @@ If deploying to production or QA, generate your own keys:
 
 ```bash
 cd sample-web-app/backend
-cd dbk-devex-oidc-sso-toolkit\sample-web-app\backend; node generate-keys.js
+cd oidc-sso-toolkit\sample-web-app\backend; node generate-keys.js
 
 ```
 
