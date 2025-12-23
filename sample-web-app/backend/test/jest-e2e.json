@@ -6,18 +6,6 @@
         "outputDirectory": "test-results/junit",
         "outputName": "jest-e2e.xml"
       }
-    ],
-    [
-      "jest-html-reporters",
-      {
-        "publicPath": "test-results/html",
-        "filename": "e2e-report.html",
-        "inlineSource": true,
-        "expand": true,
-        "includeConsoleLog": true,
-        "includeFailureMsg": true,
-        "includeSuiteFailure": true
-      }
     ]
   ],
   "moduleFileExtensions": ["js", "json", "ts"],
