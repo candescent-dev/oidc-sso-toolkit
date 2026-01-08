@@ -203,6 +203,29 @@ docker run -p 9000:9000 -p 8000:8000 ghcr.io/candescent-dev/oidc-sso-toolkit:lat
 
 Then open `http://localhost:8000` in your browser.
 
+### Docker Port Configuration
+
+If you want to use custom ports (e.g., change frontend from 8000 to 8080):
+
+1. **Update the config file** - Edit `sample-web-app/config.json`:
+   ```json
+   {
+     "frontendPort": 8080,
+     "backendPort": 9000
+   }
+   ```
+
+2. **Mount the config file when running the container**:
+   ```bash
+   # Linux/macOS
+   docker run -p 9000:9000 -p 8080:8080 -v "$(pwd)/sample-web-app/config.json:/app/config.json" oidc-sso-toolkit
+   
+   # Windows PowerShell
+   docker run -p 9000:9000 -p 8080:8080 -v "${PWD}\sample-web-app\config.json:/app/config.json" oidc-sso-toolkit
+   
+   # Windows CMD
+   docker run -p 9000:9000 -p 8080:8080 -v "%CD%\sample-web-app\config.json:/app/config.json" oidc-sso-toolkit
+
 ### Build Locally (Optional)
 
 If you prefer to build the Docker image yourself:
