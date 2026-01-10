@@ -201,6 +201,20 @@ docker pull ghcr.io/candescent-dev/oidc-sso-toolkit:latest
 docker run -p 9000:9000 -p 8000:8000 ghcr.io/candescent-dev/oidc-sso-toolkit:latest
 ```
 
+> **Note for ARM64 users (Apple Silicon):** The pre-built image is currently built for `linux/amd64`. If you encounter a "no matching manifest" error, use the `--platform` flag:
+> 
+> ```bash
+> docker pull --platform linux/amd64 ghcr.io/candescent-dev/oidc-sso-toolkit:latest
+> docker run --platform linux/amd64 -p 8000:8000 -p 9000:9000 ghcr.io/candescent-dev/oidc-sso-toolkit:latest
+> ```
+> 
+> Alternatively, build locally for your native platform (faster):
+> 
+> ```bash
+> docker build -t oidc-sso-toolkit:latest .
+> docker run -p 8000:8000 -p 9000:9000 oidc-sso-toolkit:latest
+> ```
+
 Then open `http://localhost:8000` in your browser.
 
 ### Docker Port Configuration
@@ -236,6 +250,8 @@ cd oidc-sso-toolkit
 docker build -t oidc-sso-toolkit .
 docker run -p 9000:9000 -p 8000:8000 oidc-sso-toolkit
 ```
+
+Building locally will automatically build for your native platform (ARM64 on Apple Silicon, AMD64 on Intel/AMD).
 
 ---
 
@@ -279,6 +295,8 @@ The `validator/` directory contains an internal test harness used by the E2E tes
 | Port already in use | Another service running | Edit `config.json` to change ports |
 | Token validation fails | JWK mismatch | Re-download JWK from the toolkit |
 | Backend won't start | Missing private key | Default keys should be in `certs/`. If missing, run: `openssl genrsa -out certs/private.pem 2048` |
+| Docker pull: "unauthorized" | Package visibility | The package must be public. Verify at `https://github.com/orgs/candescent-dev/packages/container/package/oidc-sso-toolkit` |
+| Docker pull: "no matching manifest for linux/arm64" | Image built for AMD64 only | Use `--platform linux/amd64` flag or build locally (see [Docker Setup](#alternative-setup-docker)) |
 
 ---
 

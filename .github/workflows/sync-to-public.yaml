@@ -209,8 +209,8 @@ jobs:
           
           # Override any git config set by checkout action
           # Use --local to avoid conflicts with global config
-          git config --local user.name "candescent-oidc-sync-bot[bot]"
-          git config --local user.email "${{ secrets.SYNC_APP_ID }}+candescent-oidc-sync-bot[bot]@users.noreply.github.com"
+          git config --local user.name "candescent-sync-bot[bot]"
+          git config --local user.email "${{ secrets.SYNC_APP_ID }}+candescent-sync-bot[bot]@users.noreply.github.com"
           
           # Disable ALL credential helpers (checkout action might set some)
           git config --local --unset-all credential.helper 2>/dev/null || true
@@ -309,7 +309,7 @@ jobs:
           fi
           
           # Exclude sync-to-public.yaml from being synced (internal workflow only)
-          echo "Excluding internal workflow file from sync..."
+          echo "Excluding sync-to-public.yaml from sync..."
           
           # First, handle existing file in public repo by cloning and removing it
           TEMP_CLONE=$(mktemp -d)
@@ -317,8 +317,8 @@ jobs:
             if [ -f "$TEMP_CLONE/.github/workflows/sync-to-public.yaml" ]; then
               echo "Removing sync-to-public.yaml from public repo..."
               cd "$TEMP_CLONE"
-              git config user.name "candescent-oidc-sync-bot[bot]"
-              git config user.email "${{ secrets.SYNC_APP_ID }}+candescent-oidc-sync-bot[bot]@users.noreply.github.com"
+              git config user.name "candescent-sync-bot[bot]"
+              git config user.email "${{ secrets.SYNC_APP_ID }}+candescent-sync-bot[bot]@users.noreply.github.com"
               git rm .github/workflows/sync-to-public.yaml
               git commit -m "Remove internal sync workflow" --no-verify || true
               git push origin $TARGET_BRANCH || true
@@ -400,7 +400,7 @@ jobs:
           set -e
           
           if [ $PUSH_EXIT_CODE -eq 0 ]; then
-            echo "✅ Synced to public repository (sync-to-public.yaml excluded)"
+            echo "✅ Synced to public repository (internal workflows excluded)"
             echo "$PUSH_OUTPUT"
           else
             echo "❌ Push failed (exit code: $PUSH_EXIT_CODE)"
