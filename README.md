@@ -1,6 +1,6 @@
 # OIDC SSO Toolkit
 
-<div align="center"> <img src="./documentation/Diagram OIDC Toolkit.png" alt="Diagram OIDC Toolkit" width="3219" height="500"/> <br/> OIDC Toolkit Flow Diagram</div>
+<div align="center"> <img src="./documentation/OIDC Toolkit Flow Diagram.png" alt="OIDC Toolkit Flow Diagram" width="3219" height="500"/> <br/> OIDC Toolkit Flow Diagram</div>
 
 <br/>
 
