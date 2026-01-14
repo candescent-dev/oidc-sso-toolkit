@@ -333,14 +333,11 @@ cd oidc-sso-toolkit\sample-web-app\backend; node generate-keys.js
 ```bash
 # Backend unit tests
 cd sample-web-app/backend
+npm install
 npm test
 
 # Backend E2E tests
 npm run test:e2e
-
-# Frontend E2E tests (requires Playwright)
-cd sample-web-app
-npx playwright test
 ```
 
 ### Tech Stack
